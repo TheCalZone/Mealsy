@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RecipeApp.Views.TabbedPages.SnacksForShoppingListPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:model="clr-namespace:RecipeApp.Models"
+    xmlns:viewmodels="clr-namespace:RecipeApp.ViewModels.TabBarViewModels">
+
+
+    <ContentPage.BindingContext>
+        <viewmodels:EssentialsForShoppingListViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Content>
+        <StackLayout Margin="0,5,0,0">
+            <Grid Margin="10,5,10,-10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25" />
+                </Grid.RowDefinitions>
+
+                <Label
+                    FontAttributes="Bold"
+                    FontSize="18"
+                    HorizontalOptions="Start"
+                    Text="Name"
+                    TextColor="#373737"
+                    VerticalOptions="Center" />
+                <Label
+                    FontAttributes="Bold"
+                    FontSize="18"
+                    HorizontalOptions="End"
+                    Text="Selected"
+                    TextColor="#373737"
+                    VerticalOptions="Center" />
+            </Grid>
+            <BoxView
+                Margin="0,5,0,0"
+                HeightRequest="1"
+                HorizontalOptions="FillAndExpand"
+                Color="#373737" />
+            <ListView
+                Margin="10"
+                HasUnevenRows="True"
+                HorizontalOptions="CenterAndExpand"
+                IsPullToRefreshEnabled="True"
+                IsRefreshing="{Binding IsBusy, Mode=OneWay}"
+                ItemsSource="{Binding Staples}"
+                RefreshCommand="{Binding RefreshCommand}"
+                SelectionMode="None"
+                VerticalOptions="CenterAndExpand">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="model:Staple">
+                        <ViewCell>
+                            <ViewCell.ContextActions>
+                                <MenuItem
+                                    Command="{Binding Source={x:Reference ShoppingListMaker}, Path=BindingContext.Delete1StapleCommand}"
+                                    CommandParameter="{Binding .}"
+                                    IsDestructive="True"
+                                    Text="Delete" />
+                                <MenuItem
+                                    Command="{Binding Source={x:Reference ShoppingListMaker}, Path=BindingContext.EditStapleCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Text="Edit" />
+                            </ViewCell.ContextActions>
+                            <StackLayout Padding="10" Orientation="Horizontal">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="Medium"
+                                    HorizontalOptions="StartAndExpand"
+                                    Text="{Binding Name}"
+                                    TextColor="#373737"
+                                    VerticalOptions="Center" />
+                                <CheckBox
+                                    HorizontalOptions="End"
+                                    IsChecked="{Binding IsSelected}"
+                                    Scale="1.5"
+                                    VerticalOptions="Center"
+                                    Color="#FF6347" />
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <Button
+                Margin="0,0,0,5"
+                BackgroundColor="Transparent"
+                Command="{Binding AddStapleCommand}"
+                HeightRequest="32"
+                HorizontalOptions="Center"
+                ImageSource="plus.png"
+                VerticalOptions="Center"
+                WidthRequest="32" />
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

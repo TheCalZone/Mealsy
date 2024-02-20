@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RecipeApp.Views.SignupPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:RecipeApp.ViewModels"
+    xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit">
+
+    <ContentPage.BindingContext>
+        <viewmodels:SignupViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Content>
+        <ScrollView>
+            <StackLayout Padding="15" Spacing="15">
+                <Label
+                    FontSize="Large"
+                    HorizontalOptions="CenterAndExpand"
+                    Text="Welcome to Mealsy!"
+                    VerticalOptions="Start" />
+
+                <Label Text="First Name *" />
+                <Entry x:Name="firstnameEntry" Placeholder="Enter your first name" />
+                <Label Text="Last Name" />
+                <Entry x:Name="lastnameEntry" Placeholder="Enter your last name" />
+
+                <Label Text="Email Address *" />
+                <Entry x:Name="emailEntry" Placeholder="Enter your email address" />
+
+                <Label Text="Password *" />
+                <Entry x:Name="passwordEntry" Placeholder="Enter a password" IsPassword="True"/>
+
+                <Label Text="Dietary Requirements" />
+                <Editor x:Name="dietPicker" Placeholder="Tell us about any dietary requirements" />
+
+                <Label Text="Other Dietary Information" />
+                <Editor x:Name="otherDietInfo" Placeholder="Any additional dietary requirements or restrictions" />
+
+                <Label Text="Favorite Cuisine" />
+                <Entry x:Name="favouriteCuisine" Placeholder="Enter your favorite cuisine" />
+
+                <Label Text="Profile Picture" />
+                <Button Text="Upload Profile Picture" />
+
+                <Button Clicked="Button_Clicked" Text="Sign Up" />
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+
+</ContentPage>

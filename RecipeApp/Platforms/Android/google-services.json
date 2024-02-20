@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1067194949884",
+    "project_id": "mealsy-b732b",
+    "storage_bucket": "mealsy-b732b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067194949884:android:7da832cdfb173472aab779",
+        "android_client_info": {
+          "package_name": "com.companyname.recipeapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1067194949884-5ugln6ok20ks4tc9r7uv1mjbvocnlggm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.companyname.recipeapp",
+            "certificate_hash": "bb8f58e9bf6e37badd1981c254ad7bbe81535ab5"
+          }
+        },
+        {
+          "client_id": "1067194949884-gs8g6fcnn9cjcdkl7hn2tl8u8jenm8hg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrN_Bto6Rr8Vpleu_s-ce_An6reydlWLI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1067194949884-gs8g6fcnn9cjcdkl7hn2tl8u8jenm8hg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

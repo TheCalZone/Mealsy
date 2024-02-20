@@ -1,0 +1,268 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0-android</TargetFrameworks>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>RecipeApp</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<MauiVersion>8.0.3</MauiVersion>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+
+		<!-- Display name -->
+		<ApplicationTitle>RecipeApp</ApplicationTitle>
+
+		<!-- App Identifier -->
+		<ApplicationId>com.companyname.recipeapp</ApplicationId>
+		<ApplicationIdGuid>13a6681b-a31a-46ab-a635-d7174d230990</ApplicationIdGuid>
+
+		<!-- Versions -->
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android|AnyCPU'">
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<EnableLongPaths>true</EnableLongPaths>
+		<BaseIntermediateOutputPath>obj\Debug\</BaseIntermediateOutputPath>
+		<BaseOutputPath>obj</BaseOutputPath>
+		<GenerateDocumentationFile>False</GenerateDocumentationFile>
+		<ProduceReferenceAssembly>True</ProduceReferenceAssembly>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-ios|AnyCPU'">
+	  <EnableSGenConc>True</EnableSGenConc>
+	  <MtouchDebug>True</MtouchDebug>
+	  <MtouchUseLlvm>True</MtouchUseLlvm>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-ios|AnyCPU'">
+	  <EnableSGenConc>True</EnableSGenConc>
+	  <MtouchDebug>True</MtouchDebug>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)'=='net8.0-ios'">
+	  <ProvisioningType>manual</ProvisioningType>
+	  <CodesignKey>iPhone Distribution</CodesignKey>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+
+		<!-- App Icon -->
+		<MauiIcon Include="Resources\AppIcon\saladicon.svg">
+			<BaseSize>168,168</BaseSize>
+		</MauiIcon>		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\Splash\saladiconsplash.svg" BaseSize="168,208" Color="#F7B548" />
+
+		<!-- Images -->
+		<MauiImage Include="Resources\Images\*" />
+		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
+
+		<!-- Custom Fonts -->
+		<MauiFont Include="Resources\Fonts\*" />
+
+		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Remove="Views\RecipesForShoppingListPage.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.58" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.6" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.6" />
+		<PackageReference Include="Plugin.Firebase" Version="2.0.12" />
+		<PackageReference Include="Xamarin.Firebase.iOS.Core" Version="8.10.0.3" />
+	</ItemGroup>
+	
+	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0-android'">
+		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.12.0.3" />
+		<PackageReference Include="Xamarin.AndroidX.Collection" Version="1.4.0" />
+		<PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.4.0" />
+		<PackageReference Include="Xamarin.AndroidX.Activity.Ktx" Version="1.8.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="google-services.json" />
+	  <None Remove="Platforms\Android\google-services.json" />
+	  <None Remove="Platforms\Android\Resources\google-services.json" />
+	  <None Remove="Platforms\Android\Resources\values\strings.xml" />
+	  <None Remove="Platforms\iOS\GoogleService-Info.plist" />
+	  <None Remove="Resources\AppIcon\healthy-food.png" />
+	  <None Remove="Resources\AppIcon\saladicon.svg" />
+	  <None Remove="Resources\Images\add_to_list_svg.svg" />
+	  <None Remove="Resources\Images\cake_icon.png" />
+	  <None Remove="Resources\Images\checkbox.png" />
+	  <None Remove="Resources\Images\copy.png" />
+	  <None Remove="Resources\Images\copy20px.png" />
+	  <None Remove="Resources\Images\duplicate.png" />
+	  <None Remove="Resources\Images\edit.png" />
+	  <None Remove="Resources\Images\ExpandLess.png" />
+	  <None Remove="Resources\Images\ExpandMore.png" />
+	  <None Remove="Resources\Images\fridge_icon.png" />
+	  <None Remove="Resources\Images\icon_about.png" />
+	  <None Remove="Resources\Images\icon_feed.png" />
+	  <None Remove="Resources\Images\icon_list.png" />
+	  <None Remove="Resources\Images\icon_menu.png" />
+	  <None Remove="Resources\Images\ic_checkbox_checked.png" />
+	  <None Remove="Resources\Images\logo.png" />
+	  <None Remove="Resources\Images\menu_icon.png" />
+	  <None Remove="Resources\Images\minus.png" />
+	  <None Remove="Resources\Images\plus.png" />
+	  <None Remove="Resources\Images\plus_icon.png" />
+	  <None Remove="Resources\Images\plus_icon_empty.png" />
+	  <None Remove="Resources\Images\redo.png" />
+	  <None Remove="Resources\Images\remove_icon.png" />
+	  <None Remove="Resources\Images\restaurant.png" />
+	  <None Remove="Resources\Images\salad.png" />
+	  <None Remove="Resources\Images\save_icon.png" />
+	  <None Remove="Resources\Images\search.png" />
+	  <None Remove="Resources\Images\search_40.png" />
+	  <None Remove="Resources\Images\search_icon.png" />
+	  <None Remove="Resources\Images\star_Fill0.png" />
+	  <None Remove="Resources\Images\star_Fill1.png" />
+	  <None Remove="Resources\Images\tick_icon.png" />
+	  <None Remove="Resources\Images\undo.png" />
+	  <None Remove="Resources\Splash\saladiconsplash.svg" />
+	  <None Remove="Resources\Splash\splash.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <COMReference Include="MSXML2">
+	    <WrapperTool>tlbimp</WrapperTool>
+	    <VersionMinor>0</VersionMinor>
+	    <VersionMajor>6</VersionMajor>
+	    <Guid>f5078f18-c551-11d3-89b9-0000f81fe221</Guid>
+	    <Lcid>0</Lcid>
+	    <Isolated>false</Isolated>
+	    <EmbedInteropTypes>true</EmbedInteropTypes>
+	  </COMReference>
+	  <COMReference Include="WSManAutomation">
+	    <WrapperTool>tlbimp</WrapperTool>
+	    <VersionMinor>0</VersionMinor>
+	    <VersionMajor>1</VersionMajor>
+	    <Guid>f010be25-296d-4036-980f-5a0669a17577</Guid>
+	    <Lcid>0</Lcid>
+	    <Isolated>false</Isolated>
+	    <EmbedInteropTypes>true</EmbedInteropTypes>
+	  </COMReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
+		<PackageReference Include="CommunityToolkit.Maui.Core" Version="7.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+		<PackageReference Include="OpenAI" Version="1.10.0" />
+		<PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
+		<PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
+		<PackageReference Include="SQLiteNetExtensions" Version="2.1.0" />
+		<PackageReference Include="SQLiteNetExtensions.Async" Version="2.1.0" />
+		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
+		<PackageReference Include="UraniumUI.Material" Version="2.7.4" />
+		<PackageReference Include="Xamarin.Build.Download" Version="0.11.4" />
+		<PackageReference Include="Xamarin.CommunityToolkit.MauiCompat" Version="2.0.2-preview1013" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Effects\" />
+	  <Folder Include="Platforms\Android\Services\" />
+	  <Folder Include="Resources\AppiconIcon\" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0-android'">
+		<GoogleServicesJson Include="google-services.json" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<BundleResource Include="GoogleService-Info.plist" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<GoogleServicesJson Include="Platforms\Android\google-services.json" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <MauiAsset Include="GoogleService-Info.plist" />
+	  <MauiAsset Include="Platforms\iOS\GoogleService-Info.plist" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Views\AccountPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\AddRecipePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\ChatPage.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\EditdetailsPage.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\EditExtraPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\EditRecipePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Homepage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\LoginPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\MealPlannerPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\MealPlanOverviewPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\RecipeDetailsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\RecipePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\ShoppingListCreator.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\ShoppingListMakerPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\ShoppingListPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\SignupPage.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\TabbedPages\EssentialsForShoppingListPage.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\TabbedPages\RecipesForTabs.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\TabbedPages\SnacksForTabs.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="credentials.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+</Project>

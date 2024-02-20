@@ -1,0 +1,301 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RecipeApp.Views.ShoppingListPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:model="clr-namespace:RecipeApp.Models"
+    xmlns:tool="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewmodels="clr-namespace:RecipeApp.ViewModels"
+    xmlns:views="clr-namespace:RecipeApp.CustomViews"
+    x:Name="ShoppingPage"
+    Title="Shopping List"
+    NavigationPage.HasNavigationBar="True">
+
+    <ContentPage.BindingContext>
+        <viewmodels:ShoppingListViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Command="{Binding AddGroupCommand}" IconImageSource="plus_icon.png" />
+        <ToolbarItem Command="{Binding EditShoppingListCommand}" IconImageSource="edit.png" />
+        <ToolbarItem Command="{Binding ShowHelpCommand}" IconImageSource="icon_about.png" />
+    </ContentPage.ToolbarItems>
+
+
+    <!--<ListView
+                x:Name="ListViewShopping"
+                GroupDisplayBinding="{Binding Key}"
+                HasUnevenRows="True"
+                IsGroupingEnabled="True"
+                ItemsSource="{Binding ListOfIngredients, Mode=TwoWay}"
+                SelectionMode="None"
+                SeparatorVisibility="None"
+                VerticalOptions="FillAndExpand">
+                <ListView.GroupHeaderTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Border Padding="0" BackgroundColor="#eeeeee">
+                                <StackLayout Orientation="Horizontal">
+                                    <Entry
+                                        x:Name="HeaderEntry"
+                                        Margin="5,0,0,0"
+                                        BackgroundColor="Transparent"
+                                        ClearButtonVisibility="WhileEditing"
+                                        FontAttributes="Bold"
+                                        FontSize="Medium"
+                                        HorizontalOptions="FillAndExpand"
+                                        Placeholder="Header"
+                                        PlaceholderColor="DarkGray"
+                                        Text="{Binding Key, Mode=TwoWay}"
+                                        TextColor="Black"
+                                        VerticalOptions="CenterAndExpand" />
+                                    <Button
+                                        Margin="0,0,5,0"
+                                        BackgroundColor="Transparent"
+                                        BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
+                                        Command="{Binding RemoveGroupCommand}"
+                                        CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
+                                        HeightRequest="32"
+                                        HorizontalOptions="End"
+                                        ImageSource="minus.png"
+                                        IsVisible="{Binding IsEditing}"
+                                        WidthRequest="32" />
+                                    <Button
+                                        Margin="0,0,5,0"
+                                        BackgroundColor="Transparent"
+                                        BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
+                                        Command="{Binding AddIngredientCommand}"
+                                        CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
+                                        HeightRequest="32"
+                                        HorizontalOptions="End"
+                                        ImageSource="plus.png"
+                                        IsVisible="{Binding IsEditing}"
+                                        WidthRequest="32" />
+                                </StackLayout>
+                            </Border>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.GroupHeaderTemplate>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="model:Ingredient">
+                        <ViewCell>
+                            <StackLayout HorizontalOptions="Fill" Orientation="Horizontal">
+                                <Entry
+                                    x:Name="ItemEntry"
+                                    HorizontalOptions="FillAndExpand"
+                                    Placeholder="Ingredient"
+                                    PlaceholderColor="DarkGray"
+                                    ReturnType="Done"
+                                    Text="{Binding Name}"
+                                    TextColor="Black" />
+                                <Button
+                                    Margin="0,0,5,0"
+                                    BackgroundColor="Transparent"
+                                    Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveIngredientCommand}"
+                                    CommandParameter="{Binding .}"
+                                    HeightRequest="32"
+                                    HorizontalOptions="End"
+                                    ImageSource="minus.png"
+                                    IsVisible="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.IsEditing}"
+                                    WidthRequest="32" />
+                                <CheckBox
+                                    HorizontalOptions="End"
+                                    IsChecked="{Binding InBasket, Mode=TwoWay}"
+                                    Scale="1.5"
+                                    Color="#FF6347">
+                                    <CheckBox.Behaviors>
+                                        <behaviors:EventToCommandBehavior Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.CheckBoxChangedCommand}" EventName="CheckedChanged" />
+                                    </CheckBox.Behaviors>
+                                </CheckBox>
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>-->
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <HorizontalStackLayout Spacing="25">
+            <!--  Top Border  -->
+            <Border
+                Grid.Row="0"
+                Padding="5"
+                BackgroundColor="{Binding CheckedColor}"
+                HorizontalOptions="Start"
+                StrokeThickness="4">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="40,0,0,40" />
+                </Border.StrokeShape>
+                <Label
+                    Padding="3"
+                    FontAttributes="Bold"
+                    HorizontalOptions="CenterAndExpand"
+                    Text="{Binding CheckedText}"
+                    TextColor="White" />
+            </Border>
+            <Button Command="{Binding ClearListCommand}" Text="Clear List" />
+            <Button Command="{Binding ClearSelectedCommand}" Text="Clear Selected" />
+        </HorizontalStackLayout>
+
+        <!--  CollectionView  -->
+        <CollectionView
+            x:Name="CollectionViewShopping"
+            Grid.Row="1"
+            IsGrouped="True"
+            ItemsSource="{Binding ListOfIngredients, Mode=TwoWay}">
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate>
+                    <Border
+                        Padding="0"
+                        BackgroundColor="#eeeeee"
+                        HeightRequest="45">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="5,5,5,5" />
+                        </Border.StrokeShape>
+                        <StackLayout Orientation="Horizontal">
+                            <Entry
+                                x:Name="HeaderEntry"
+                                Margin="5,0,0,0"
+                                BackgroundColor="Transparent"
+                                ClearButtonVisibility="WhileEditing"
+                                FontAttributes="Bold"
+                                FontSize="Medium"
+                                HorizontalOptions="FillAndExpand"
+                                Placeholder="Header"
+                                PlaceholderColor="DarkGray"
+                                Text="{Binding Key, Mode=TwoWay}"
+                                TextColor="Black"
+                                VerticalOptions="CenterAndExpand"
+                                VerticalTextAlignment="Center" />
+                            <Button
+                                Margin="0,0,5,0"
+                                BackgroundColor="Transparent"
+                                BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
+                                Command="{Binding RemoveGroupCommand}"
+                                CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
+                                HeightRequest="32"
+                                HorizontalOptions="End"
+                                ImageSource="minus.png"
+                                IsVisible="{Binding IsEditing}"
+                                WidthRequest="32" />
+                            <Button
+                                Margin="0,0,5,0"
+                                BackgroundColor="Transparent"
+                                BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
+                                Command="{Binding AddIngredientCommand}"
+                                CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
+                                HeightRequest="32"
+                                HorizontalOptions="End"
+                                ImageSource="plus.png"
+                                IsVisible="{Binding IsEditing}"
+                                WidthRequest="32" />
+                        </StackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="model:Ingredient">
+                    <StackLayout HorizontalOptions="Fill" Orientation="Horizontal">
+                        <Entry
+                            x:Name="ItemEntry"
+                            HorizontalOptions="FillAndExpand"
+                            Placeholder="Ingredient"
+                            PlaceholderColor="DarkGray"
+                            ReturnType="Done"
+                            Text="{Binding Name}" />
+                        <ImageButton
+                            BindingContext="{Binding .}"
+                            Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ShowNoteCommand}"
+                            CommandParameter="{Binding .}"
+                            HeightRequest="20"
+                            HorizontalOptions="Start"
+                            IsVisible="{Binding HasNote}"
+                            Source="icon_about"
+                            VerticalOptions="Center">
+                            <ImageButton.Behaviors>
+                                <tool:IconTintColorBehavior TintColor="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.IconColor}" />
+                            </ImageButton.Behaviors>
+                        </ImageButton>
+                        <ImageButton
+                            Margin="0,0,5,0"
+                            BackgroundColor="Transparent"
+                            Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveIngredientCommand}"
+                            CommandParameter="{Binding .}"
+                            HeightRequest="32"
+                            HorizontalOptions="End"
+                            IsVisible="{Binding BindingContext.IsEditing, Source={x:Reference ShoppingPage}}"
+                            Source="minus.png"
+                            WidthRequest="32" />
+                        <CheckBox
+                            HorizontalOptions="End"
+                            IsChecked="{Binding InBasket, Mode=TwoWay}"
+                            Scale="1.5"
+                            Color="#FF6347">
+                            <CheckBox.Behaviors>
+                                <behaviors:EventToCommandBehavior Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.CheckBoxChangedCommand}" EventName="CheckedChanged" />
+                            </CheckBox.Behaviors>
+                        </CheckBox>
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+
+        <!--  Bottom Menu  -->
+        <StackLayout Grid.Row="2">
+            <StackLayout>
+                <Frame BorderColor="Black" IsVisible="{Binding ShowPlainText}">
+                    <VerticalStackLayout>
+                        <StackLayout>
+                            <StackLayout HorizontalOptions="StartAndExpand" Orientation="Horizontal">
+                                <Button
+                                    BackgroundColor="Transparent"
+                                    Command="{Binding CopyPlainTextCommand}"
+                                    HeightRequest="20"
+                                    ImageSource="copy20px"
+                                    WidthRequest="20" />
+                                <Label
+                                    FontSize="Micro"
+                                    Text="Copy PlainText"
+                                    VerticalTextAlignment="Center" />
+                            </StackLayout>
+                            <views:CustomEditor
+                                x:Name="PlainTextEntry"
+                                AutoSize="TextChanges"
+                                EnterPressedCommand="{Binding ProcessListFromEnterCommand}"
+                                HeightRequest="300"
+                                Text="{Binding ShoppingListText, Mode=TwoWay}"
+                                TextColor="Black">
+                            </views:CustomEditor>
+
+                        </StackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+                <Button
+                    Command="{Binding ProcessPastedListCommand}"
+                    IsVisible="{Binding ShowPlainText}"
+                    Text="Process" />
+            </StackLayout>
+
+            <StackLayout
+                HorizontalOptions="FillAndExpand"
+                Orientation="Horizontal"
+                Spacing="10">
+                <Button
+                    Command="{Binding UndoCommand}"
+                    HorizontalOptions="StartAndExpand"
+                    Text="Undo" />
+                <Button Command="{Binding ShowPlainTextCommand}" Text="Plain Text" />
+                <Button
+                    Command="{Binding RedoCommand}"
+                    HorizontalOptions="EndAndExpand"
+                    Text="Redo" />
+            </StackLayout>
+        </StackLayout>
+    </Grid>
+</ContentPage>

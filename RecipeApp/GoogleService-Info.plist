@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1067194949884-pbr5bbd66ka2hqros2khfpa5ccvdp825.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1067194949884-pbr5bbd66ka2hqros2khfpa5ccvdp825</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1067194949884-5ugln6ok20ks4tc9r7uv1mjbvocnlggm.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDfws5SlkWB0Vtt47YT39lbOwrhqNJttIE</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1067194949884</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.companyname.recipeapp</string>
+	<key>PROJECT_ID</key>
+	<string>mealsy-b732b</string>
+	<key>STORAGE_BUCKET</key>
+	<string>mealsy-b732b.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1067194949884:ios:42663f840336cbe6aab779</string>
+</dict>
+</plist>

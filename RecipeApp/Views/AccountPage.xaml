@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RecipeApp.Views.AccountPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:RecipeApp.ViewModels"
+    xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    Title="Account">
+
+    <ContentPage.BindingContext>
+        <viewmodels:AccountPageViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <xct:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+
+    <StackLayout>
+        <StackLayout
+            Padding="20"
+            IsVisible="{Binding IsAuthenticated, Converter={StaticResource InvertedBoolConverter}}"
+            Spacing="20"
+            VerticalOptions="Center">
+            <Label
+                FontSize="32"
+                HorizontalOptions="Center"
+                Text="Welcome!" />
+
+            <Entry
+                x:Name="emailEntry"
+                Keyboard="Email"
+                Placeholder="Email"
+                ReturnType="Next"
+                Text="{Binding EmailEntryText}"
+                TextChanged="EmailEntry_TextChanged" />
+
+            <Entry
+                x:Name="passwordEntry"
+                IsPassword="True"
+                Placeholder="Password"
+                ReturnType="Done"
+                Text="{Binding PasswordEntryText}"
+                TextChanged="PasswordEntry_TextChanged" />
+
+            <Button
+                x:Name="signInButton"
+                Command="{Binding SignInCommand}"
+                
+                IsEnabled="False"
+                Text="Sign In" />
+
+            <Button
+                x:Name="signUpButton"
+                Command="{Binding SignupCommand}"
+                Text="Sign Up" />
+
+            <Button
+                x:Name="forgotPasswordButton"
+                Command="{Binding ResetPasswordCommand}"
+                Text="Forgot Password?" />
+        </StackLayout>
+
+        <StackLayout Padding="20" IsVisible="{Binding IsAuthenticated}">
+            <Frame
+                Padding="10"
+                CornerRadius="10"
+                HasShadow="True"
+                HorizontalOptions="FillAndExpand"
+                VerticalOptions="Start">
+                <StackLayout>
+                    <StackLayout Orientation="Horizontal">
+                        <StackLayout
+                            Padding="10,0,0,10"
+                            HorizontalOptions="StartAndExpand"
+                            VerticalOptions="Center">
+                            <HorizontalStackLayout Spacing="5">
+                                <Label
+                                    FontSize="20"
+                                    Text="{Binding CurrentAppUser.FirstName, Mode=TwoWay}"
+                                    TextColor="#434343" />
+                                <Label
+                                    FontSize="20"
+                                    Text="{Binding CurrentAppUser.LastName, Mode=TwoWay}"
+                                    TextColor="#434343" />
+                            </HorizontalStackLayout>
+                            <Label
+                                FontSize="16"
+                                Text="{Binding CurrentAppUser.Email, Mode=TwoWay}"
+                                TextColor="Gray" />
+                        </StackLayout>
+                    </StackLayout>
+
+                    <BoxView
+                        HeightRequest="2"
+                        HorizontalOptions="FillAndExpand"
+                        Color="LightGray" />
+
+                    <StackLayout
+                        Padding="10"
+                        BackgroundColor="White"
+                        Spacing="10">
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="16"
+                            Text="Dietary Restrictions"
+                            TextColor="#434343" />
+                        <Label
+                            FontSize="14"
+                            Text="{Binding CurrentAppUser.DietRestrictions}"
+                            TextColor="Gray" />
+
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="16"
+                            Text="Favorite Cuisines"
+                            TextColor="#434343" />
+                        <Label
+                            FontSize="14"
+                            Text="{Binding CurrentAppUser.FavouriteCuisines}"
+                            TextColor="Gray" />
+                    </StackLayout>
+                </StackLayout>
+
+            </Frame>
+            <StackLayout
+                Padding="10"
+                Spacing="10"
+                VerticalOptions="FillAndExpand">
+                <Button
+                    Command="{Binding EditDetailsCommand}"
+                    CornerRadius="5"
+                    Text="Edit details"
+                    TextColor="White" />
+                <Button
+                    CornerRadius="5"
+                    Text="Manage Subscription"
+                    TextColor="White" />
+                <Button
+                    CornerRadius="5"
+                    Text="My Recipes"
+                    TextColor="White" />
+                <Button
+                    Command="{Binding SignOutCommand}"
+                    CornerRadius="5"
+                    Text="Sign Out"
+                    TextColor="White" />
+            </StackLayout>
+        </StackLayout>
+    </StackLayout>
+</ContentPage>

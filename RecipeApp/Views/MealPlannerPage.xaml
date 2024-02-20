@@ -1,0 +1,418 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RecipeApp.Views.MealPlannerPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:RecipeApp.Converter"
+    xmlns:viewmodels="clr-namespace:RecipeApp.ViewModels"
+    x:Name="MealPlannner"
+    Title="Meal Plan">
+
+    <ContentPage.BindingContext>
+        <viewmodels:MealPlannerViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:Base64ToImageSourceConverter x:Key="Base64ToImageSourceConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ContentPage.Content>
+        <ScrollView>
+            <StackLayout Margin="10" Spacing="10">
+                <Label
+                    Margin="0,0,0,10"
+                    FontAttributes="Bold"
+                    FontSize="Large"
+                    HorizontalOptions="Center"
+                    Text="{Binding SelectedDay.MealDay}"
+                    TextDecorations="Underline" />
+                <Frame BackgroundColor="DimGrey">
+                    <StackLayout>
+                        <!--  Breakfast Section  -->
+                        <Label FontAttributes="Bold" Text="Breakfast" />
+                        <Picker
+                            x:Name="BreakfastPicker"
+                            Title="Select a Recipe"
+                            ItemDisplayBinding="{Binding RecipeName}"
+                            ItemsSource="{Binding Recipes}"
+                            SelectedItem="{Binding SelectedBreakfast, Mode=TwoWay}" />
+                        <!--  Add Recipe Button for Breakfast  -->
+                        <HorizontalStackLayout>
+                            <Label Text="Extras" />
+                            <ImageButton
+                                Margin="-10,-12,-10,-10"
+                                Command="{Binding AddBreakFastRecipeCommand}"
+                                Scale="0.5"
+                                Source="plus_icon" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding SelectedDay.BreakfastRecipes, Mode=TwoWay}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Padding="5" Text="{Binding RecipeName}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <HorizontalStackLayout>
+                            <Label Text="Notes" />
+                            <ImageButton
+                                Margin="-10"
+                                Command="{Binding AddBreakFastNoteCommand}"
+                                Scale="0.5"
+                                Source="add_note" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding SelectedDay.BreakfastNotes, Mode=TwoWay}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding .}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+                <!--<Border
+                        Margin="10"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 10,10,10,10">
+                        <Grid>
+                            <Image
+                                Aspect="AspectFill"
+                                BackgroundColor="LightGray"
+                                HeightRequest="200"
+                                Source="{Binding SelectedBreakfast.RecipeImage, Converter={StaticResource Base64ToImageSourceConverter}}"
+                                WidthRequest="400" />
+                            <Grid BackgroundColor="#FFC057" VerticalOptions="End">
+                                <StackLayout HorizontalOptions="FillAndExpand" Spacing="5">
+                                    <Label
+                                        Margin="0,0,0,-10"
+                                        FontAttributes="Bold"
+                                        FontSize="25"
+                                        HorizontalOptions="Center"
+                                        HorizontalTextAlignment="Center"
+                                        Text="{Binding SelectedBreakfast.RecipeName}"
+                                        TextColor="White"
+                                        VerticalOptions="End" />
+                                    <Grid
+                                        Padding="10"
+                                        BackgroundColor="Transparent"
+                                        HorizontalOptions="FillAndExpand">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackLayout
+                                            Grid.Column="0"
+                                            HorizontalOptions="StartAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Serving Size: "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedBreakfast.Serving}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                        <StackLayout
+                                            Grid.Column="1"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Prep Time(m): "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedBreakfast.PrepTime}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                        <StackLayout
+                                            Grid.Column="2"
+                                            HorizontalOptions="EndAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Rating: "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedBreakfast.Rating}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                    </Grid>
+                                </StackLayout>
+                            </Grid>
+                        </Grid>
+                    </Border>-->
+
+
+                <Frame BackgroundColor="DimGrey">
+                    <StackLayout>
+                        <!--  Breakfast Section  -->
+                        <Label FontAttributes="Bold" Text="Lunch" />
+                        <Picker
+                            x:Name="LunchPicker"
+                            Title="Select a Recipe"
+                            ItemDisplayBinding="{Binding RecipeName}"
+                            ItemsSource="{Binding Recipes}"
+                            SelectedItem="{Binding SelectedLunch, Mode=TwoWay}" />
+                        <!--  Add Recipe Button for Breakfast  -->
+                        <HorizontalStackLayout>
+                            <Label Text="Extras" />
+                            <ImageButton
+                                Margin="-10,-12,-10,-10"
+                                Command="{Binding AddLunchRecipeCommand}"
+                                Scale="0.5"
+                                Source="plus_icon" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding SelectedDay.LunchRecipes, Mode=TwoWay}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Padding="5" Text="{Binding RecipeName}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <HorizontalStackLayout>
+                            <Label Text="Notes" />
+                            <ImageButton
+                                Margin="-10"
+                                Command="{Binding AddLunchNoteCommand}"
+                                Scale="0.5"
+                                Source="add_note" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding SelectedDay.LunchNotes, Mode=TwoWay}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding .}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+                <!--<Border
+                        Margin="10"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 10,10,10,10">
+                        <Grid>
+                            <Image
+                                Aspect="AspectFill"
+                                BackgroundColor="LightGray"
+                                HeightRequest="200"
+                                Source="{Binding SelectedLunch.RecipeImage, Converter={StaticResource Base64ToImageSourceConverter}}"
+                                WidthRequest="400" />
+                            <Grid BackgroundColor="#FFC057" VerticalOptions="End">
+                                <StackLayout HorizontalOptions="FillAndExpand" Spacing="5">
+                                    <Label
+                                        Margin="0,0,0,-10"
+                                        FontAttributes="Bold"
+                                        FontSize="25"
+                                        HorizontalOptions="Center"
+                                        HorizontalTextAlignment="Center"
+                                        Text="{Binding SelectedLunch.RecipeName}"
+                                        TextColor="White"
+                                        VerticalOptions="End" />
+                                    <Grid
+                                        Padding="10"
+                                        BackgroundColor="Transparent"
+                                        HorizontalOptions="FillAndExpand">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackLayout
+                                            Grid.Column="0"
+                                            HorizontalOptions="StartAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Serving Size: "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedLunch.Serving}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                        <StackLayout
+                                            Grid.Column="1"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Prep Time(m): "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedLunch.PrepTime}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                        <StackLayout
+                                            Grid.Column="2"
+                                            HorizontalOptions="EndAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Rating: "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedLunch.Rating}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                    </Grid>
+                                </StackLayout>
+                            </Grid>
+                        </Grid>
+                    </Border>-->
+
+                <Frame BackgroundColor="DimGrey">
+                    <StackLayout>
+                        <!--  Breakfast Section  -->
+                        <Label FontAttributes="Bold" Text="Dinner" />
+                        <Picker
+                            x:Name="DinnerPicker"
+                            Title="Select a Recipe"
+                            ItemDisplayBinding="{Binding RecipeName}"
+                            ItemsSource="{Binding Recipes}"
+                            SelectedItem="{Binding SelectedDinner, Mode=TwoWay}" />
+                        <!--  Add Recipe Button for Breakfast  -->
+                        <HorizontalStackLayout>
+                            <Label Text="Extras" />
+                            <ImageButton
+                                Margin="-10,-12,-10,-10"
+                                Command="{Binding AddDinnerRecipeCommand}"
+                                Scale="0.5"
+                                Source="plus_icon" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding SelectedDay.DinnerRecipes, Mode=TwoWay}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Padding="5" Text="{Binding RecipeName}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <HorizontalStackLayout>
+                            <Label Text="Notes" />
+                            <ImageButton
+                                Margin="-10"
+                                Command="{Binding AddDinnerNoteCommand}"
+                                Scale="0.5"
+                                Source="add_note" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding SelectedDay.DinnerNotes, Mode=TwoWay}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding .}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+
+                <!--<Border
+                        Margin="10"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 10,10,10,10">
+                        <Grid>
+                            <Image
+                                Aspect="AspectFill"
+                                BackgroundColor="LightGray"
+                                HeightRequest="200"
+                                Source="{Binding SelectedDinner.RecipeImage, Converter={StaticResource Base64ToImageSourceConverter}}"
+                                WidthRequest="400" />
+                            <Grid BackgroundColor="#FFC057" VerticalOptions="End">
+                                <StackLayout HorizontalOptions="FillAndExpand" Spacing="5">
+                                    <Label
+                                        Margin="0,0,0,-10"
+                                        FontAttributes="Bold"
+                                        FontSize="25"
+                                        HorizontalOptions="Center"
+                                        HorizontalTextAlignment="Center"
+                                        Text="{Binding SelectedDinner.RecipeName}"
+                                        TextColor="White"
+                                        VerticalOptions="End" />
+                                    <Grid
+                                        Padding="10"
+                                        BackgroundColor="Transparent"
+                                        HorizontalOptions="FillAndExpand">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackLayout
+                                            Grid.Column="0"
+                                            HorizontalOptions="StartAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Serving Size: "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedDinner.Serving}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                        <StackLayout
+                                            Grid.Column="1"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Prep Time(m): "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedDinner.PrepTime}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                        <StackLayout
+                                            Grid.Column="2"
+                                            HorizontalOptions="EndAndExpand"
+                                            Orientation="Horizontal">
+                                            <Label
+                                                FontSize="14"
+                                                Text="Rating: "
+                                                TextColor="White" />
+                                            <Label
+                                                FontAttributes="Bold"
+                                                FontSize="16"
+                                                LineBreakMode="NoWrap"
+                                                Text="{Binding SelectedDinner.Rating}"
+                                                TextColor="White" />
+                                        </StackLayout>
+                                    </Grid>
+                                </StackLayout>
+                            </Grid>
+                        </Grid>
+                    </Border>-->
+                <Button
+                    Margin="0,10,0,0"
+                    BackgroundColor="MediumSeaGreen"
+                    Command="{Binding SaveMealPlanCommand}"
+                    Text="Save" />
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>
