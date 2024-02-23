@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0-android</TargetFrameworks>
+		<TargetFrameworks>net8.0-ios</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>RecipeApp</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -30,6 +30,10 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android|AnyCPU'">
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidKeyStore>True</AndroidKeyStore>
+	  <AndroidSigningStorePass>IL90tj75!</AndroidSigningStorePass>
+	  <AndroidSigningKeyAlias>cal</AndroidSigningKeyAlias>
+	  <AndroidSigningKeyPass>IL90tj75!</AndroidSigningKeyPass>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -38,6 +42,8 @@
 		<BaseOutputPath>obj</BaseOutputPath>
 		<GenerateDocumentationFile>False</GenerateDocumentationFile>
 		<ProduceReferenceAssembly>True</ProduceReferenceAssembly>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<AndroidSigningKeyStore>Cal.keystore</AndroidSigningKeyStore>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-ios|AnyCPU'">
@@ -56,11 +62,18 @@
 	  <CodesignKey>iPhone Distribution</CodesignKey>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
+	  <AndroidKeyStore>True</AndroidKeyStore>
+	  <AndroidSigningStorePass>IL90tj75!</AndroidSigningStorePass>
+	  <AndroidSigningKeyAlias>cal</AndroidSigningKeyAlias>
+	  <AndroidSigningKeyPass>IL90tj75!</AndroidSigningKeyPass>
+	</PropertyGroup>
+
 
 	<ItemGroup>
 
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\saladicon.svg">
+		<MauiIcon Include="Resources\AppIcon\saladiconandroid.svg">
 			<BaseSize>168,168</BaseSize>
 		</MauiIcon>		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\saladiconsplash.svg" BaseSize="168,208" Color="#F7B548" />
@@ -81,9 +94,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.58" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.6" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.6" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.7" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.7" />
 		<PackageReference Include="Plugin.Firebase" Version="2.0.12" />
 		<PackageReference Include="Xamarin.Firebase.iOS.Core" Version="8.10.0.3" />
 	</ItemGroup>
@@ -96,13 +109,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="google-services.json" />
+	  <None Remove="credentials.json" />
 	  <None Remove="Platforms\Android\google-services.json" />
 	  <None Remove="Platforms\Android\Resources\google-services.json" />
 	  <None Remove="Platforms\Android\Resources\values\strings.xml" />
 	  <None Remove="Platforms\iOS\GoogleService-Info.plist" />
 	  <None Remove="Resources\AppIcon\healthy-food.png" />
 	  <None Remove="Resources\AppIcon\saladicon.svg" />
+	  <None Remove="Resources\AppIcon\saladiconandroid.svg" />
 	  <None Remove="Resources\Images\add_to_list_svg.svg" />
 	  <None Remove="Resources\Images\cake_icon.png" />
 	  <None Remove="Resources\Images\checkbox.png" />
@@ -181,13 +195,15 @@
 	  <Folder Include="Platforms\Android\Services\" />
 	  <Folder Include="Resources\AppiconIcon\" />
 	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0-android'">
-		<GoogleServicesJson Include="google-services.json" />
-	</ItemGroup>
 	
 	<ItemGroup>
 		<BundleResource Include="GoogleService-Info.plist" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Content Include="credentials.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -197,6 +213,16 @@
 	<ItemGroup>
 	  <MauiAsset Include="GoogleService-Info.plist" />
 	  <MauiAsset Include="Platforms\iOS\GoogleService-Info.plist" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <MauiIcon Include="Resources\AppIcon\saladicon.svg" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Compile Update="Views\AccountPage.xaml.cs">
+	    <DependentUpon>AccountPage.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -257,12 +283,6 @@
 	  <MauiXaml Update="Views\TabbedPages\SnacksForTabs.xaml">
 	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 	  </MauiXaml>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="credentials.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 
 </Project>

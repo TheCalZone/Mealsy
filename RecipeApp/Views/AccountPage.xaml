@@ -17,7 +17,6 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-
     <StackLayout>
         <StackLayout
             Padding="20"

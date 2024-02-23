@@ -85,33 +85,7 @@
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
 
-                                        <Label
-                                            Grid.Column="0"
-                                            FontAttributes="Bold"
-                                            FontSize="Small"
-                                            HorizontalOptions="CenterAndExpand"
-                                            Text="Quantity" />
-                                        <Label
-                                            Grid.Column="1"
-                                            FontAttributes="Bold"
-                                            FontSize="Small"
-                                            HorizontalOptions="CenterAndExpand"
-                                            Text="Ingredient" />
-                                        <Label
-                                            Grid.Column="2"
-                                            FontAttributes="Bold"
-                                            HorizontalOptions="CenterAndExpand"
-                                            Text="Tag" />
-                                        <Label
-                                            Grid.Column="3"
-                                            FontAttributes="Bold"
-                                            HorizontalOptions="CenterAndExpand"
-                                            Text="Key Ing" />
-                                        <Label
-                                            Grid.Column="4"
-                                            FontAttributes="Bold"
-                                            HorizontalOptions="CenterAndExpand"
-                                            Text="Note" />
+
 
 
                                     </Grid>
@@ -186,29 +160,35 @@
                                         <!--  For CheckBox  -->
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
                                         <RowDefinition Height="40" />
                                     </Grid.RowDefinitions>
                                     <Editor
                                         Grid.Column="0"
+                                        Grid.Row="1"
                                         Placeholder="Quantity"
                                         Text="{Binding Quantity, Mode=TwoWay}" />
                                     <Editor
                                         Grid.Column="1"
+                                        Grid.Row="1"
                                         Placeholder="Ingredient"
                                         Text="{Binding Name, Mode=TwoWay}" />
 
                                     <Editor
                                         Grid.Column="2"
+                                        Grid.Row="1"
                                         Placeholder="Tag"
                                         Text="{Binding Tag, Mode=TwoWay}" />
 
                                     <CheckBox
                                         Grid.Column="3"
+                                        Grid.Row="1"
                                         HorizontalOptions="Fill"
                                         IsChecked="{Binding MainIngredient, Mode=TwoWay}"
                                         VerticalOptions="Center" />
                                     <ImageButton
                                         Grid.Column="4"
+                                        Grid.Row="1"
                                         Command="{Binding Source={x:Reference AddPage}, Path=BindingContext.AddNoteCommand, Mode=TwoWay}"
                                         CommandParameter="{Binding .}"
                                         Scale="0.75"
@@ -219,6 +199,7 @@
                                     </ImageButton>
                                     <Button
                                         Grid.Column="5"
+                                        Grid.Row="1"
                                         Margin="0,0,10,0"
                                         BackgroundColor="Transparent"
                                         Command="{Binding Source={x:Reference AddPage}, Path=BindingContext.RemoveIngredientCommand, Mode=TwoWay}"
@@ -226,6 +207,40 @@
                                         HorizontalOptions="End"
                                         ImageSource="minus.png"
                                         Scale="0.75" />
+
+                                    <Label
+                                            Grid.Column="0"
+                                        Grid.Row="0"
+                                            FontAttributes="Bold"
+                                            FontSize="Small"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Text="Quantity" />
+                                    <Label
+                                            Grid.Column="1"
+                                        Grid.Row="0"
+                                            FontAttributes="Bold"
+                                            FontSize="Small"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Text="Ingredient" />
+                                    <Label
+                                            Grid.Column="2"
+                                        Grid.Row="0"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Text="Tag" />
+                                    <Label
+                                            Grid.Column="3"
+                                        Grid.Row="0"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Text="Key Ing" />
+                                    <Label
+                                            Grid.Column="4"
+                                        Grid.Row="0"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="CenterAndExpand"
+                                            Text="Note" />
+                                    
                                 </Grid>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -258,7 +273,7 @@
                                     FontAttributes="Bold"
                                     FontSize="18"
                                     Text="Optional" />
-                                <Image
+                                <ImageButton
                                     Margin="10,0,0,0"
                                     HeightRequest="18"
                                     Source="ExpandMore.png"

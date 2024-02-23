@@ -241,7 +241,7 @@ namespace RecipeApp.ViewModels
         async Task GoToList()
         {
             var IsManualList = true;
-            await Shell.Current.GoToAsync($"//ShoppingListMakerPage/ShoppingListPage?IsManualList={IsManualList}");
+            await Shell.Current.GoToAsync($"//ShoppingListPage?IsManualList={IsManualList}");
         }
 
         private async void LoadDataAsync(string userId)

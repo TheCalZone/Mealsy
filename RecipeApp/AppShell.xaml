@@ -90,6 +90,11 @@
             Icon="icon_menu.png"
             Route="RecipePage" />
         <ShellContent
+            Title="Shopping List"
+            ContentTemplate="{DataTemplate local:ShoppingListPage}"
+            Icon="add_to_shopping.png"
+            Route="ShoppingListPage" />
+        <ShellContent
             Title="List Creator"
             ContentTemplate="{DataTemplate local:ShoppingListMakerPage}"
             Icon="icon_list.png"

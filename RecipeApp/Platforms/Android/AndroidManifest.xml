@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.recipeapp" android:versionCode="1" android:versionName="0.1">
-	<application android:allowBackup="true" android:icon="@mipmap/saladicon" android:supportsRtl="true" android:label="Mealsy"></application>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.recipeapp" android:versionCode="1" android:versionName="0.1.0.1">
+	<application android:allowBackup="true" android:icon="@mipmap/saladiconandroid" android:supportsRtl="true" android:label="Mealsy"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.MANAGE_MEDIA" />
@@ -10,5 +10,5 @@
 	<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
 	<uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="30" />
+	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 </manifest>

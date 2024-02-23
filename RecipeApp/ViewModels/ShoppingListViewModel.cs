@@ -588,6 +588,10 @@ namespace RecipeApp.ViewModels
             // Iterate through each item in the list
             foreach (string item in items)
             {
+                if (string.IsNullOrWhiteSpace(item))
+                {
+                    continue;
+                }
                 // Separate the note from the ingredient name
                 string ingredientName = item;
                 string ingredientNote = null;

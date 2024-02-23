@@ -9,6 +9,9 @@ namespace RecipeApp.ViewModels
     internal class EditdetailsViewModel : CustomViewModelBase
     {
 
+        private IFirebaseUser user;
+        public IFirebaseUser User { get => user; set =>SetProperty(ref user, value); }
+
         private string email;
         private string firstName;
         private string lastName;
@@ -30,19 +33,15 @@ namespace RecipeApp.ViewModels
             SaveChangesCommand = new AsyncCommand(SaveChanges);
         }
 
-        public void InitializeAsync()
+        public async void InitializeAsync()
         {
-            LoadUsers();
+            User = CrossFirebaseAuth.Current.CurrentUser;
+            CurrentAppUser = await FirestoreService.GetUserAsync(User.Uid);
             Email = CurrentAppUser.Email;
             FirstName = CurrentAppUser.FirstName;
             LastName = CurrentAppUser.LastName;
             DietRestrictions = CurrentAppUser.DietRestrictions;
             FavouriteCuisines = CurrentAppUser.FavouriteCuisines;
-        }
-
-        public async void LoadUsers()
-        {
-            CurrentAppUser =  await FirestoreService.GetUserAsync(CrossFirebaseAuth.Current.CurrentUser.Uid);
         }
 
         private async Task SaveChanges()

@@ -14,6 +14,7 @@ namespace RecipeApp.Views
 
         public AccountPage()
         {
+
             InitializeComponent();
             User = CrossFirebaseAuth.Current.CurrentUser;
             ((AccountPageViewModel)BindingContext).User = User;

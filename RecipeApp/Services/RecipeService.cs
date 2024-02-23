@@ -662,6 +662,7 @@ namespace RecipeApp.Services
             await Init();
 
             await db.ExecuteAsync($"DELETE FROM {nameof(Recipe)}");
+            Recipes.Clear();
         }
 
     }

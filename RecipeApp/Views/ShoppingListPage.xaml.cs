@@ -59,22 +59,27 @@ namespace RecipeApp.Views
 
                 IngredientsJson = Preferences.Get("IngredientsJson", string.Empty);
 
-                if (IngredientsJson != null)
+                if (!string.IsNullOrEmpty(IngredientsJson))
                 {
                     ListOfIngredients = JsonConvert.DeserializeObject<List<Ingredient>>(HttpUtility.UrlDecode(IngredientsJson));
+
+                    var groupedIngredients = ListOfIngredients
+                        .GroupBy(i => i.Tag)
+                        .OrderBy(g => g.Key)
+                        .Select(g => new IngredientGroup(g.Key, g.ToList()))
+                        .ToList();
+
+                    CollectionIngredients = new ObservableRangeCollection<IngredientGroup>(ListOfIngredients
+                        .GroupBy(i => i.Tag?.ToLower() ?? string.Empty)
+                        .OrderBy(g => g.Key)
+                        .Select(g => new IngredientGroup(g.Key, g.ToList()))
+                        .ToList());
+                }
+                else
+                {
+                    ListOfIngredients = new List<Ingredient>();
                 }
 
-                var groupedIngredients = ListOfIngredients
-                    .GroupBy(i => i.Tag)
-                    .OrderBy(g => g.Key)
-                    .Select(g => new IngredientGroup(g.Key, g.ToList()))
-                    .ToList();
-
-                CollectionIngredients = new ObservableRangeCollection<IngredientGroup>(ListOfIngredients
-                    .GroupBy(i => i.Tag?.ToLower() ?? string.Empty)
-                    .OrderBy(g => g.Key)
-                    .Select(g => new IngredientGroup(g.Key, g.ToList()))
-                    .ToList());
 
 
                 ((ShoppingListViewModel)BindingContext).PlainIngredients = ListOfIngredients;

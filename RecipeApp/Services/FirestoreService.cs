@@ -11,7 +11,12 @@ namespace RecipeApp.Services
 {
     public static class FirestoreService
     {
-        public static string UserId { get; set; } = CrossFirebaseAuth.Current.CurrentUser.Uid;
+        public static string UserId
+        {
+            get { return CrossFirebaseAuth.Current.CurrentUser?.Uid;}
+
+            set { UserId = value;} 
+        }
 
         public static async Task SetUserData(string uid, Dictionary<object,object> data)
         {
@@ -22,44 +27,45 @@ namespace RecipeApp.Services
         public static async Task<AppUser> GetUserAsync(string uid)
         {
 
-            var documentRef = CrossFirebaseFirestore.Current.GetCollection("users");
-
-            //GetDocumentsAsync("users").GetDocumentSnapshotAsync<Dictionary<object, object>>();
-
-            var userdict = await documentRef.GetDocument(uid).GetDocumentSnapshotAsync<AppUser>();
-            
-            Console.WriteLine(userdict);
-
-
-
-            Console.WriteLine(documentRef);
-
-            try
+            if (UserId != null)
             {
-                if (documentRef != null)
+                var documentRef = CrossFirebaseFirestore.Current.GetCollection("users");
+
+                //GetDocumentsAsync("users").GetDocumentSnapshotAsync<Dictionary<object, object>>();
+
+                var userdict = await documentRef.GetDocument(uid).GetDocumentSnapshotAsync<AppUser>();
+
+
+                try
                 {
-                    return new AppUser
+                    if (documentRef != null)
                     {
-                        FirstName = userdict.Data.FirstName,
-                        LastName = userdict.Data.LastName,
-                        Email = userdict.Data.Email,
-                        DietRestrictions = userdict.Data.DietRestrictions,
-                        FavouriteCuisines = userdict.Data.FavouriteCuisines,
-                        FirebaseUID = userdict.Data.FirebaseUID
-                    };
+                        return new AppUser
+                        {
+                            FirstName = userdict.Data.FirstName,
+                            LastName = userdict.Data.LastName,
+                            Email = userdict.Data.Email,
+                            DietRestrictions = userdict.Data.DietRestrictions,
+                            FavouriteCuisines = userdict.Data.FavouriteCuisines,
+                            FirebaseUID = userdict.Data.FirebaseUID
+                        };
+                    }
+                    else
+                    {
+                        return new AppUser();
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
+                    // Handle or log the exception as appropriate
+                    // For example:
+                    Console.WriteLine($"Error fetching user data: {ex.Message}");
                     return new AppUser();
                 }
             }
-            catch (Exception ex)
-            {
-                // Handle or log the exception as appropriate
-                // For example:
-                Console.WriteLine($"Error fetching user data: {ex.Message}");
-                return new AppUser();
-            }
+
+            return null;
+
         }
 
         public static async Task AddRecipe(Recipe recipe)
@@ -104,7 +110,9 @@ namespace RecipeApp.Services
 
         public static async Task UpdateRecipe(Recipe recipe)
         {
-            var updatedRecipe = new Dictionary<object, object>
+            if (UserId != null)
+            {
+                var updatedRecipe = new Dictionary<object, object>
                 {
                     {"recipe_name", recipe.RecipeName },
                     {"recipe_method", recipe.RecipeMethod},
@@ -118,8 +126,8 @@ namespace RecipeApp.Services
                 {"firebaseUID", CrossFirebaseAuth.Current.CurrentUser?.Uid ?? ""}
                 };
 
-            await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("recipes").GetDocument(recipe.Id.ToString()).SetDataAsync(updatedRecipe);
-
+                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("recipes").GetDocument(recipe.Id.ToString()).SetDataAsync(updatedRecipe);
+            }
         }
 
         public static async Task<List<Recipe>> GetAllRecipesAsync()
@@ -165,6 +173,8 @@ namespace RecipeApp.Services
 
         public static async Task<List<Snack>> GetAllSnacks()
         {
+            if (UserId != null)
+            {
                 List<Snack> snacks = new();
 
                 var snapshot = await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocumentsAsync<Snack>();
@@ -181,6 +191,14 @@ namespace RecipeApp.Services
                     snacks.Add(snack);
                 }
                 return snacks;
+
+            }
+            else
+            {
+                var toast = Toast.Make("Unable to retrieve snacks, please sign in first.", ToastDuration.Short, 14);
+                await toast.Show();
+                return null;
+            }
 
         }
 
@@ -202,13 +220,16 @@ namespace RecipeApp.Services
 
         public static async Task UpdateSnack( Snack snack)
         {
-            var updatedSnack = new Dictionary<object, object> {
+            if (UserId != null)
+            {
+                var updatedSnack = new Dictionary<object, object> {
                 { "name", snack.Name},
                 { "tag",snack.Tag},
                 {"lastupdated",snack.LastUpdated }
                 };
 
-            await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).SetDataAsync(updatedSnack);
+                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).SetDataAsync(updatedSnack);
+            }
         }
 
         public static async Task<List<Staple>> GetAllEssentials()
@@ -271,19 +292,23 @@ namespace RecipeApp.Services
 
         public static async Task UpdateStaple(Staple staple)
         {
-            var updatedStaple = new Dictionary<object, object>
+            if (UserId != null)
+            {
+                var updatedStaple = new Dictionary<object, object>
             {
                 { "name", staple.Name },
                 { "tag", staple.Tag },
                 { "lastupdated", staple.LastUpdated }
             };
 
-            await CrossFirebaseFirestore.Current
-                .GetCollection("users")
-                .GetDocument(UserId)
-                .GetCollection("staples")
-                .GetDocument(staple.Name)
-                .SetDataAsync(updatedStaple);
+                await CrossFirebaseFirestore.Current
+                    .GetCollection("users")
+                    .GetDocument(UserId)
+                    .GetCollection("staples")
+                    .GetDocument(staple.Name)
+                    .SetDataAsync(updatedStaple);
+
+            }
         }
 
         public static async Task DeleteAllRecipes()

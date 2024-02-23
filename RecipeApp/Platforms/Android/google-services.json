@@ -37,6 +37,13 @@
             {
               "client_id": "1067194949884-gs8g6fcnn9cjcdkl7hn2tl8u8jenm8hg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1067194949884-pbr5bbd66ka2hqros2khfpa5ccvdp825.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.companyname.recipeapp"
+              }
             }
           ]
         }
