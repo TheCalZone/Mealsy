@@ -167,7 +167,6 @@ namespace RecipeApp.ViewModels
         public MvvmHelpers.Commands.Command BulkAddIngredientsCommand { get; set; }
         public MvvmHelpers.Commands.Command ShowBulkEditorForGroupCommand { get; set; }
         public AsyncCommand ImportRecipeCommand { get; set; }
-
         public AsyncCommand SaveCommand { get; set; }
 
         public AddRecipeViewModel()

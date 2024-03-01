@@ -11,12 +11,12 @@ namespace RecipeApp.ViewModels
     {
         public AsyncCommand SaveMealPlanCommand { get; }
 
-        public MvvmHelpers.Commands.Command AddBreakFastNoteCommand { get; }
-        public MvvmHelpers.Commands.Command AddLunchNoteCommand { get; }
-        public MvvmHelpers.Commands.Command AddDinnerNoteCommand { get; }
-        public MvvmHelpers.Commands.Command AddBreakFastRecipeCommand { get;}
-        public MvvmHelpers.Commands.Command AddLunchRecipeCommand{ get;}
-        public MvvmHelpers.Commands.Command AddDinnerRecipeCommand { get;}
+        public MvvmHelpers.Commands.Command AddBreakFastNoteCommand { get; set; }
+        public MvvmHelpers.Commands.Command AddLunchNoteCommand { get; set; }
+        public MvvmHelpers.Commands.Command AddDinnerNoteCommand { get; set; }
+        public MvvmHelpers.Commands.Command AddBreakFastRecipeCommand { get; set; }
+        public MvvmHelpers.Commands.Command AddLunchRecipeCommand{ get; set; }
+        public MvvmHelpers.Commands.Command AddDinnerRecipeCommand { get; set; }
 
 
         public ObservableRangeCollection<Recipe> Recipes { get; set; }

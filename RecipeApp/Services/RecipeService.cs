@@ -46,17 +46,22 @@ namespace RecipeApp.Services
             db = new SQLiteAsyncConnection(DatabasePath, Flags);
             try
             {
-                if (!File.Exists(DatabasePath))
-                {
                     await db.CreateTableAsync<Recipe>();
-                    await db.CreateTableAsync<Ingredient>();
+                    try
+                    {
+                        await db.CreateTableAsync<Ingredient>();
+                        // Consider adding this for all related tables, not just Recipe
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to create Ingredient table: {ex.Message}");
+                        // Handle the exception appropriately
+                    }
                     await db.CreateTableAsync<MealPlan>();
                     await db.CreateTableAsync<MealPlanDay>();
                     await db.CreateTableAsync<Snack>();
                     await db.CreateTableAsync<Staple>();
                     await db.CreateTableAsync<ShoppingList>();
-                }
-                
 
             }
             catch (Exception ex)

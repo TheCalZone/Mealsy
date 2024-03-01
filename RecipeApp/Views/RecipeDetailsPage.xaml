@@ -164,7 +164,7 @@
                                 <Image
                                     Margin="10,0,0,0"
                                     HeightRequest="18"
-                                    Source="ExpandMore.png"
+                                    Source="ExpandMore"
                                     VerticalOptions="Center"
                                     WidthRequest="18" />
                             </StackLayout>

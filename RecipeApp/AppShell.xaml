@@ -98,7 +98,8 @@
             Title="List Creator"
             ContentTemplate="{DataTemplate local:ShoppingListMakerPage}"
             Icon="icon_list.png"
-            Route="ShoppingListMakerPage" />
+            Route="ShoppingListMakerPage">
+        </ShellContent>
         <!--<ShellContent Title="Shopping List" Icon="icon_list.png" Route="ShoppingListPage" ContentTemplate="{DataTemplate local:ShoppingListPage}" />-->
         <ShellContent
             Title="Meal Planner"

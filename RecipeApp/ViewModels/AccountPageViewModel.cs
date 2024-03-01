@@ -40,13 +40,13 @@ namespace RecipeApp.ViewModels
         }
         private bool isAuthenticated;
 
-        public MvvmHelpers.Commands.Command SignOutCommand { get; }
-        public MvvmHelpers.Commands.Command SignInCommand { get; }
+        public MvvmHelpers.Commands.Command SignOutCommand { get; set; }
+        public MvvmHelpers.Commands.Command SignInCommand { get; set; }
 
-        public MvvmHelpers.Commands.Command SignupCommand { get; }
+        public MvvmHelpers.Commands.Command SignupCommand { get; set; }
 
-        public MvvmHelpers.Commands.Command ResetPasswordCommand { get; }
-        public AsyncCommand EditDetailsCommand { get; }
+        public MvvmHelpers.Commands.Command ResetPasswordCommand { get; set; }
+        public AsyncCommand EditDetailsCommand { get; set; }
 
         public bool IsAuthenticated { get => isAuthenticated; set => SetProperty(ref isAuthenticated, value); }
 

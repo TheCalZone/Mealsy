@@ -18,11 +18,11 @@ namespace RecipeApp.Views
             //((AddRecipeViewModel)BindingContext).ListOfIngredients= new ObservableRangeCollection<IngredientGroup> { new IngredientGroup { new Ingredient { Name = "" } } };
         }
 
-        void OnEntryFocused(object sender, FocusEventArgs e)
-        {
-            // Scroll the ScrollView to keep the focused Entry visible
-            AddRecipeScrollView.ScrollToAsync((View)sender, ScrollToPosition.MakeVisible, true);
-        }
+        //void OnEntryFocused(object sender, FocusEventArgs e)
+        //{
+        //    // Scroll the ScrollView to keep the focused Entry visible
+        //    AddRecipeScrollView.ScrollToAsync((View)sender, ScrollToPosition.MakeVisible, true);
+        //}
 
         void OnEntryCompleted(object sender, EventArgs e)
         {

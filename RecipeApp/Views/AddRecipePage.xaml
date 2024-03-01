@@ -34,26 +34,101 @@
     </ContentPage.ToolbarItems>-->
 
     <ContentPage.Content>
-        <Grid>
-            <ScrollView x:Name="AddRecipeScrollView">
-                <StackLayout Margin="20">
-                    <Label FontAttributes="Bold" Text="Recipe Name" />
-                    <Entry Placeholder="Recipe Name" Text="{Binding RecipeName}" />
-                    <!--  Header Grid  -->
-
-
-                    <!--  CollectionView with Grid  -->
                     <CollectionView
                         x:Name="IngredientsCollection"
                         IsGrouped="True"
-                        ItemsSource="{Binding ListOfIngredients, Mode=TwoWay}">
+                        ItemsSource="{Binding ListOfIngredients, Mode=OneTime}">
+                        <CollectionView.Header>
+                <Grid>
+                    <!-- Wrap all your header content in this Grid (or another layout of your choice) -->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <!-- Add more RowDefinitions as needed -->
+                    </Grid.RowDefinitions>
+
+                    <Label Grid.Row="0" FontAttributes="Bold" Text="Recipe Name" />
+                    <Entry Grid.Row="1" Placeholder="Recipe Name" Text="{Binding RecipeName}" />
+                    <!-- Add more elements as needed -->
+                </Grid>
+            </CollectionView.Header>
+            <CollectionView.Footer>
+                <StackLayout>
+                <Button
+                            Margin="10"
+                            BackgroundColor="PaleGreen"
+                            Command="{Binding AddGroupCommand}"
+                            Text="Add Section"
+                            TextColor="DarkSlateGray" />
+
+                            <Label FontAttributes="Bold" Text="Recipe Tags" />
+                            <Editor
+                        Margin="0,-10,0,0"
+                        AutoSize="TextChanges"
+                        Placeholder="Tags (Separate each tag by a comma)"
+                        Text="{Binding TagsText}" />
+                            <Label FontAttributes="Bold" Text="Recipe Method" />
+                            <Editor
+                        AutoSize="TextChanges"
+                        Placeholder="Method"
+                        Text="{Binding RecipeMethod}" />
+                            <xct:Expander x:Name="Optional" IsExpanded="False">
+                                <xct:Expander.Header>
+                                    <StackLayout Margin="0,0,0,10" Orientation="Horizontal">
+                                        <Label
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    Text="Optional" />
+                                        <ImageButton
+                                    Margin="10,0,0,0"
+                                    HeightRequest="18"
+                                    Source="expandmore"
+                                    VerticalOptions="Center"
+                                    WidthRequest="18" />
+                                    </StackLayout>
+                                </xct:Expander.Header>
+                                <StackLayout>
+                                    <Label FontAttributes="Bold" Text="Serving Size" />
+                                    <Entry Placeholder="Enter a number." Text="{Binding ServingText}">
+                                        <Entry.Behaviors>
+                                            <xct:NumericValidationBehavior
+                                        InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                        MaximumValue="100.0"
+                                        MinimumValue="1.0" />
+                                        </Entry.Behaviors>
+                                    </Entry>
+                                    <Label FontAttributes="Bold" Text="Prep Time" />
+                                    <Entry Placeholder="Enter a number." Text="{Binding PrepText}">
+                                        <Entry.Behaviors>
+                                            <xct:NumericValidationBehavior
+                                        InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                        MaximumValue="100.0"
+                                        MinimumValue="1.0" />
+                                        </Entry.Behaviors>
+                                    </Entry>
+                                    <Label FontAttributes="Bold" Text="Rating" />
+                                    <Entry Placeholder="Enter a number." Text="{Binding RatingText}">
+                                        <Entry.Behaviors>
+                                            <xct:NumericValidationBehavior
+                                        InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                        MaximumValue="100.0"
+                                        MinimumValue="1.0" />
+                                        </Entry.Behaviors>
+                                    </Entry>
+                                </StackLayout>
+                            </xct:Expander>
+
+                            <Button Command="{Binding UploadImageCommand}" Text="Upload Image" />
+                            <Button Command="{Binding SaveCommand}" Text="Save" />
+                </StackLayout>
+                        </CollectionView.Footer>
                         <CollectionView.GroupHeaderTemplate>
                             <DataTemplate x:DataType="models:IngredientGroup">
-                                <StackLayout>
+                                <StackLayout MaximumHeightRequest="60"
+                                             MinimumHeightRequest="60">
                                     <Border
                                         Padding="0"
-                                        BackgroundColor="#eeeeee"
-                                        HeightRequest="45">
+                                        BackgroundColor="#eeeeee">
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="5,5,5,5" />
                                         </Border.StrokeShape>
@@ -64,7 +139,6 @@
                                                 BackgroundColor="Transparent"
                                                 ClearButtonVisibility="WhileEditing"
                                                 Completed="OnEntryCompleted"
-                                                Focused="OnEntryFocused"
                                                 FontAttributes="Bold"
                                                 FontSize="Medium"
                                                 HorizontalOptions="FillAndExpand"
@@ -84,10 +158,6 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-
-
-
-
                                     </Grid>
                                 </StackLayout>
                             </DataTemplate>
@@ -105,7 +175,6 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <!--  Add Ingredient Button  -->
                                         <Button
                                             Grid.Column="0"
                                             Background="PaleGreen"
@@ -114,7 +183,6 @@
                                             Text="Add Ingredient"
                                             TextColor="DarkSlateGrey" />
 
-                                        <!--  Toggle Bulk Editor Visibility Button  -->
                                         <Button
                                             Grid.Column="1"
                                             BackgroundColor="DarkOrange"
@@ -122,14 +190,12 @@
                                             CommandParameter="{Binding .}"
                                             Text="Bulk Editor" />
 
-                                        <!--  Remove Group Button  -->
                                         <Button
                                             Grid.Column="2"
                                             Command="{Binding Source={x:Reference IngredientsCollection}, Mode=TwoWay, Path=BindingContext.RemoveGroupCommand}"
                                             CommandParameter="{Binding .}"
                                             Text="Remove Section" />
                                     </Grid>
-                                    <!--  Bulk Editor Section  -->
                                     <StackLayout IsVisible="{Binding IsGroupBulkEditorVisible}">
                                         <ScrollView>
                                             <Editor
@@ -137,7 +203,6 @@
                                                 Placeholder="Bulk Ingredients"
                                                 Text="{Binding BulkEditorText, Mode=TwoWay}" />
                                         </ScrollView>
-                                        <!--  Bulk Add Ingredients Button  -->
                                         <Button
                                             Command="{Binding Source={x:Reference IngredientsCollection}, Mode=TwoWay, Path=BindingContext.BulkAddIngredientsCommand}"
                                             CommandParameter="{Binding .}"
@@ -157,7 +222,6 @@
                                         <ColumnDefinition Width="20" />
                                         <ColumnDefinition Width="50" />
                                         <ColumnDefinition Width="20" />
-                                        <!--  For CheckBox  -->
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*" />
@@ -205,7 +269,7 @@
                                         Command="{Binding Source={x:Reference AddPage}, Path=BindingContext.RemoveIngredientCommand, Mode=TwoWay}"
                                         CommandParameter="{Binding .}"
                                         HorizontalOptions="End"
-                                        ImageSource="minus.png"
+                                        ImageSource="minus"
                                         Scale="0.75" />
 
                                     <Label
@@ -233,7 +297,8 @@
                                         Grid.Row="0"
                                             FontAttributes="Bold"
                                             HorizontalOptions="CenterAndExpand"
-                                            Text="Key Ing" />
+                                            Text="Key Ing" 
+                                        LineBreakMode="TailTruncation"/>
                                     <Label
                                             Grid.Column="4"
                                         Grid.Row="0"
@@ -245,77 +310,5 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
-                    <HorizontalStackLayout HorizontalOptions="CenterAndExpand">
-                        <Button
-                            Margin="10"
-                            BackgroundColor="PaleGreen"
-                            Command="{Binding AddGroupCommand}"
-                            Text="Add Section"
-                            TextColor="DarkSlateGray" />
-
-                    </HorizontalStackLayout>
-
-                    <Label FontAttributes="Bold" Text="Recipe Tags" />
-                    <Editor
-                        Margin="0,-10,0,0"
-                        AutoSize="TextChanges"
-                        Placeholder="Tags (Separate each tag by a comma)"
-                        Text="{Binding TagsText}" />
-                    <Label FontAttributes="Bold" Text="Recipe Method" />
-                    <Editor
-                        AutoSize="TextChanges"
-                        Placeholder="Method"
-                        Text="{Binding RecipeMethod}" />
-                    <xct:Expander x:Name="Optional" IsExpanded="False">
-                        <xct:Expander.Header>
-                            <StackLayout Margin="0,0,0,10" Orientation="Horizontal">
-                                <Label
-                                    FontAttributes="Bold"
-                                    FontSize="18"
-                                    Text="Optional" />
-                                <ImageButton
-                                    Margin="10,0,0,0"
-                                    HeightRequest="18"
-                                    Source="ExpandMore.png"
-                                    VerticalOptions="Center"
-                                    WidthRequest="18" />
-                            </StackLayout>
-                        </xct:Expander.Header>
-                        <StackLayout>
-                            <Label FontAttributes="Bold" Text="Serving Size" />
-                            <Entry Placeholder="Enter a number." Text="{Binding ServingText}">
-                                <Entry.Behaviors>
-                                    <xct:NumericValidationBehavior
-                                        InvalidStyle="{StaticResource InvalidEntryStyle}"
-                                        MaximumValue="100.0"
-                                        MinimumValue="1.0" />
-                                </Entry.Behaviors>
-                            </Entry>
-                            <Label FontAttributes="Bold" Text="Prep Time" />
-                            <Entry Placeholder="Enter a number." Text="{Binding PrepText}">
-                                <Entry.Behaviors>
-                                    <xct:NumericValidationBehavior
-                                        InvalidStyle="{StaticResource InvalidEntryStyle}"
-                                        MaximumValue="100.0"
-                                        MinimumValue="1.0" />
-                                </Entry.Behaviors>
-                            </Entry>
-                            <Label FontAttributes="Bold" Text="Rating" />
-                            <Entry Placeholder="Enter a number." Text="{Binding RatingText}">
-                                <Entry.Behaviors>
-                                    <xct:NumericValidationBehavior
-                                        InvalidStyle="{StaticResource InvalidEntryStyle}"
-                                        MaximumValue="100.0"
-                                        MinimumValue="1.0" />
-                                </Entry.Behaviors>
-                            </Entry>
-                        </StackLayout>
-                    </xct:Expander>
-
-                    <Button Command="{Binding UploadImageCommand}" Text="Upload Image" />
-                    <Button Command="{Binding SaveCommand}" Text="Save" />
-                </StackLayout>
-            </ScrollView>
-        </Grid>
     </ContentPage.Content>
 </ContentPage>

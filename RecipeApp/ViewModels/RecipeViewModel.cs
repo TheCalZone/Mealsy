@@ -17,13 +17,13 @@ namespace RecipeApp.ViewModels
         public ObservableRangeCollection<Recipe> OriginalRecipes { get => originalRecipes; set => SetProperty(ref originalRecipes, value); }
 
         // Commands
-        public AsyncCommand CreateNewRecipe { get; }
-        public AsyncCommand<Recipe> DeleteRecipeCommand { get; }
-        public AsyncCommand<Recipe> SelectedCommand { get; }
-        public MvvmHelpers.Commands.Command RefreshCommand { get; }
-        public AsyncCommand ShowHelpCommand { get; }
+        public AsyncCommand CreateNewRecipe { get; set; }
+        public AsyncCommand<Recipe> DeleteRecipeCommand { get; set; }
+        public AsyncCommand<Recipe> SelectedCommand { get; set; }
+        public MvvmHelpers.Commands.Command RefreshCommand { get; set; }
+        public AsyncCommand ShowHelpCommand { get; set; }
 
-        public AsyncCommand DeleteAllRecipesCommand { get; }
+        public AsyncCommand DeleteAllRecipesCommand { get; set; }
 
         // SelectedRecipe property
         Recipe selectedRecipe;

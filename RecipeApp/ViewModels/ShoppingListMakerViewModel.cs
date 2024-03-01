@@ -67,25 +67,25 @@ namespace RecipeApp.ViewModels
         private Color stapleColour = Color.FromArgb("#FF6347");
 
         public MealPlan MealPlan { get; set; }
-        public AsyncCommand GoShoppingCommand { get; }
-        public AsyncCommand RefreshCommand { get; }
-        public AsyncCommand ShowHelpCommand { get; }
-        public MvvmHelpers.Commands.Command ShowPlainTextCommand { get; }
-        public AsyncCommand AddSnackCommand { get; }
-        public AsyncCommand<Snack> DeleteSnackCommand { get; }
-        public AsyncCommand AddStapleCommand { get; }
-        public AsyncCommand<Staple> DeleteStaplesCommand { get; }
-        public AsyncCommand ShowSnacksCommand { get; }
-        public AsyncCommand ShowStaplesCommand { get; }
-        public AsyncCommand<Snack> EditSnackCommand { get; }
-        public AsyncCommand<Staple> EditStapleCommand { get; }
-        public AsyncCommand BlankShoppingCommand { get; }
-        public AsyncCommand CreateNewRecipe { get; }
-        public MvvmHelpers.Commands.Command ClearPickerSelectionCommand { get; }
+        public AsyncCommand GoShoppingCommand { get; set; }
+        public AsyncCommand RefreshCommand { get; set; }
+        public AsyncCommand ShowHelpCommand { get; set; }
+        public MvvmHelpers.Commands.Command ShowPlainTextCommand { get; set; }
+        public AsyncCommand AddSnackCommand { get; set; }
+        public AsyncCommand<Snack> DeleteSnackCommand { get; set; }
+        public AsyncCommand AddStapleCommand { get; set; }
+        public AsyncCommand<Staple> DeleteStaplesCommand { get; set; }
+        public AsyncCommand ShowSnacksCommand { get; set; }
+        public AsyncCommand ShowStaplesCommand { get; set; }
+        public AsyncCommand<Snack> EditSnackCommand { get; set; }
+        public AsyncCommand<Staple> EditStapleCommand { get; set; }
+        public AsyncCommand BlankShoppingCommand { get; set; }
+        public AsyncCommand CreateNewRecipe { get; set; }
+        public MvvmHelpers.Commands.Command ClearPickerSelectionCommand { get; set; }
 
 
-        public AsyncCommand SaveCommand { get; }
-        public MvvmHelpers.Commands.Command ClearSelectedCommand { get; }
+        public AsyncCommand SaveCommand { get; set; }
+        public MvvmHelpers.Commands.Command ClearSelectedCommand { get; set; }
         private ObservableRangeCollection<Staple> staples;
         public ObservableRangeCollection<Staple> Staples { get => staples; set => SetProperty(ref staples, value); }
         private ObservableRangeCollection<Staple> originalStaples;
@@ -99,7 +99,7 @@ namespace RecipeApp.ViewModels
         public ObservableRangeCollection<Recipe> originalRecipes;
         public ObservableRangeCollection<Recipe> OriginalRecipes { get => originalRecipes; set => SetProperty(ref originalRecipes, value); }
         public ObservableRangeCollection<string> Filters { get; set; } = new ObservableRangeCollection<string>();
-        public AsyncCommand<Recipe> SelectedCommand { get; }
+        public AsyncCommand<Recipe> SelectedCommand { get; set; }
         public List<Ingredient> ListOfIngredients { get; set; }
         public List<Ingredient> PlainListOfIngredients { get; set; } = new List<Ingredient>();
         public Color SnackColour { get => snackColour; set => SetProperty(ref snackColour, value); }
@@ -346,7 +346,7 @@ namespace RecipeApp.ViewModels
                         Count = g.Count()
                     })
                     .OrderBy(item => item.Name) // Or any other ordering you prefer
-                    .Select(item => item.Count > 1 ? $"{item.Name} x{item.Count}" : item.Name)
+                    .Select(item => item.Count() > 1 ? $"{item.Name} x{item.Count()}" : item.Name)
                     .ToList();
 
                 // Convert the consolidated list back to the string format expected for storage

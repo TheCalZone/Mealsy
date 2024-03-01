@@ -12,17 +12,17 @@ namespace RecipeApp.ViewModels
     internal class MealPlanOverviewViewModel : CustomViewModelBase
     {
         private MealPlanDay _selectedDay;
-        public AsyncCommand<MealPlanDay> SelectMealPlanDayCommand { get; }
+        public AsyncCommand<MealPlanDay> SelectMealPlanDayCommand { get; set; }
 
-        public AsyncCommand DeleteMealPlanDayCommand { get; }
-        public AsyncCommand SaveMealPlanCommand { get; }
-        public AsyncCommand ShopMealPlanCommand { get; }
-        public AsyncCommand ClearMealPlanCommand { get; }
-        public MvvmHelpers.Commands.Command AddDayCommand { get; }
+        public AsyncCommand DeleteMealPlanDayCommand { get; set; }
+        public AsyncCommand SaveMealPlanCommand { get; set; }
+        public AsyncCommand ShopMealPlanCommand { get; set; }
+        public AsyncCommand ClearMealPlanCommand { get; set; }
+        public MvvmHelpers.Commands.Command AddDayCommand { get; set; }
 
 
         Dictionary<Ingredient, int> ingredientCounts = new Dictionary<Ingredient, int>();
-        public ObservableRangeCollection<Recipe> Recipes { get; }
+        public ObservableRangeCollection<Recipe> Recipes { get; set; }
         private MealPlan mealPlan;
         public MealPlan MealPlan { get => mealPlan; set => SetProperty(ref mealPlan, value); }
 

@@ -17,9 +17,9 @@
     </ContentPage.BindingContext>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Command="{Binding CreateNewRecipe}" IconImageSource="plus_icon.png" />
-        <ToolbarItem Command="{Binding ToggleSearchBarCommand}" IconImageSource="search_40.png" />
-        <ToolbarItem Command="{Binding ShowHelpCommand}" IconImageSource="icon_about.png" />
+        <ToolbarItem Command="{Binding CreateNewRecipe}" Text="+" />
+        <ToolbarItem Command="{Binding ToggleSearchBarCommand}" Text="search" />
+        <ToolbarItem Command="{Binding ShowHelpCommand}" Text="?"/>
     </ContentPage.ToolbarItems>
 
 

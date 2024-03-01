@@ -33,23 +33,23 @@
                 <Button
                     BackgroundColor="Transparent"
                     Command="{Binding QuickAddToShoppingListCommand}"
-                    ImageSource="add_to_shopping.svg" />
+                    ImageSource="add_to_shopping.png" />
                 <Button
                     BackgroundColor="Transparent"
                     Command="{Binding QuickAddNewRecipeCommand}"
-                    ImageSource="recipeadd.svg" />
+                    ImageSource="recipeadd.png" />
                 <Button
                     BackgroundColor="Transparent"
                     Command="{Binding QuickAddToShoppingListCommand}"
-                    ImageSource="add_to_shopping.svg" />
+                    ImageSource="add_to_shopping.png" />
                 <Button
                     BackgroundColor="Transparent"
                     Command="{Binding QuickAddToShoppingListCommand}"
-                    ImageSource="add_to_shopping.svg" />
+                    ImageSource="add_to_shopping.png" />
                 <Button
                     BackgroundColor="Transparent"
                     Command="{Binding QuickAddToShoppingListCommand}"
-                    ImageSource="add_to_shopping.svg" />
+                    ImageSource="add_to_shopping.png" />
             </StackLayout>
         </Border>
 

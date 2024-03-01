@@ -13,10 +13,10 @@ namespace RecipeApp.ViewModels
 
         private bool methodVisible = false;
         public bool MethodVisible { get => methodVisible; set => SetProperty(ref methodVisible, value); }
-        public AsyncCommand EditCommand { get; }
-        public MvvmHelpers.Commands.Command ShowMethodCommand { get; }
-        public AsyncCommand CopyRecipeCommand { get; }
-        public MvvmHelpers.Commands.Command EditFavouriteCommand { get; }
+        public AsyncCommand EditCommand { get; set; }
+        public MvvmHelpers.Commands.Command ShowMethodCommand { get; set; }
+        public AsyncCommand CopyRecipeCommand { get; set; }
+        public MvvmHelpers.Commands.Command EditFavouriteCommand { get; set; }
 
         public MvvmHelpers.Commands.Command AddRecipeToListCommand { get;private set; }
         public MvvmHelpers.Commands.Command DeleteRecipeCommand { get; private set; }

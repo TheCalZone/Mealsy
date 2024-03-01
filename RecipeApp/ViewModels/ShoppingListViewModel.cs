@@ -12,10 +12,10 @@ namespace RecipeApp.ViewModels
         private ObservableRangeCollection<IngredientGroup> originalIngredients;
         public ObservableRangeCollection<IngredientGroup> OriginalIngredients
         { get => originalIngredients; set => SetProperty(ref originalIngredients, value); }
-        public AsyncCommand CopyPlainTextCommand { get; }
-        public MvvmHelpers.Commands.Command<Ingredient> ShowNoteCommand { get; }
-        public MvvmHelpers.Commands.Command ClearListCommand { get; }
-        public MvvmHelpers.Commands.Command ClearSelectedCommand { get; }
+        public AsyncCommand CopyPlainTextCommand { get; set; }
+        public MvvmHelpers.Commands.Command<Ingredient> ShowNoteCommand { get; set; }
+        public MvvmHelpers.Commands.Command ClearListCommand { get; set; }
+        public MvvmHelpers.Commands.Command ClearSelectedCommand { get; set; }
 
         private Color iconColor;
         public Color IconColor
@@ -352,30 +352,34 @@ namespace RecipeApp.ViewModels
                 var listofIngredients = ListOfIngredients;
                 var groupToRemove = listofIngredients.FirstOrDefault(g => g.Key == key);
 
-                foreach (var ingredient in groupToRemove)
-                {
-                    PlainIngredients.Remove(ingredient);
-                }
-
-                _undoStack.Push(new ListViewAction
-                {
-                    Type = ActionType.RemoveGroup,
-                    Group = groupToRemove,
-                    GroupIndex = listOfIngredients.IndexOf(groupToRemove)
-                });
-
                 if (groupToRemove != null)
                 {
-                    listofIngredients.Remove(groupToRemove);
-                }
+                    foreach (var ingredient in groupToRemove)
+                    {
+                        PlainIngredients.Remove(ingredient);
+                    }
 
-                ListOfIngredients = listOfIngredients;
-                UpdateCheckedText();
+                    _undoStack.Push(new ListViewAction
+                    {
+                        Type = ActionType.RemoveGroup,
+                        Group = groupToRemove,
+                        GroupIndex = listOfIngredients.IndexOf(groupToRemove)
+                    });
 
-                if (IsManualList)
-                {
-                    UpdateShoppingText();
-                    SaveShoppingList();
+                    if (groupToRemove != null)
+                    {
+                        listofIngredients.Remove(groupToRemove);
+                    }
+
+                    ListOfIngredients = listOfIngredients;
+                    UpdateCheckedText();
+
+                    if (IsManualList)
+                    {
+                        UpdateShoppingText();
+                        SaveShoppingList();
+                    }
+
                 }
             }
             else
