@@ -189,6 +189,26 @@ namespace RecipeApp.Services
 
 
 
+        public static async Task SyncShoppingLibrary()
+        {
+            var account=UserId; if (account==null) return;
+            var snacks=await GetAllSnacks(); var staples=await GetAllEssentials();
+            if (account!=UserId) throw new InvalidOperationException("Your account changed during sync.");
+            await RecipeService.MergeShoppingLibrary(account,snacks,staples);
+            foreach (var snack in RecipeService.Snacks.Where(s => s.FirebaseUID==account).ToList())
+            {
+                if (account!=UserId) throw new InvalidOperationException("Your account changed during sync.");
+                var remote=snacks.FirstOrDefault(s => (s.CloudKey ?? s.Name)==(snack.CloudKey ?? snack.Name));
+                if (remote==null || (!remote.IsDeleted && snack.LastUpdated>remote.LastUpdated)) await UpdateSnack(snack);
+            }
+            foreach (var staple in RecipeService.Staples.Where(s => s.FirebaseUID==account).ToList())
+            {
+                if (account!=UserId) throw new InvalidOperationException("Your account changed during sync.");
+                var remote=staples.FirstOrDefault(s => (s.CloudKey ?? s.Name)==(staple.CloudKey ?? staple.Name));
+                if (remote==null || (!remote.IsDeleted && staple.LastUpdated>remote.LastUpdated)) await UpdateStaple(staple);
+            }
+        }
+
         public static async Task<List<Snack>> GetAllSnacks()
         {
             if (UserId != null)
@@ -204,6 +224,7 @@ namespace RecipeApp.Services
                         FirebaseUID = doc.Data.FirebaseUID, LastUpdated = doc.Data.LastUpdated,
                         Name = doc.Data.Name,
                         Tag = doc.Data.Tag,
+                        Quantity = doc.Data.Quantity, Note = doc.Data.Note, IsDeleted = doc.Data.IsDeleted, CloudKey = doc.Data.CloudKey ?? doc.Data.FirestoreID ?? doc.Data.Name,
                         Id = doc.Data.Id,
                     };
 
@@ -225,7 +246,7 @@ namespace RecipeApp.Services
         {
             if (UserId != null)
             {
-                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).SetDataAsync(snack);
+                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.CloudKey ?? snack.FirestoreID ?? snack.Name).SetDataAsync(snack);
             }
         }
 
@@ -233,7 +254,9 @@ namespace RecipeApp.Services
         {
             if (UserId != null)
             {
-                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).DeleteDocumentAsync();
+                var key=snack.CloudKey ?? snack.FirestoreID ?? snack.Name;
+                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(key)
+                    .SetDataAsync(new Dictionary<object,object> { {"name",snack.Name}, {"cloudKey",key}, {"firebaseUID",UserId}, {"deleted",true}, {"lastUpdated",DateTimeOffset.UtcNow} });
             }
         }
 
@@ -242,14 +265,16 @@ namespace RecipeApp.Services
             if (UserId != null)
             {
                 var updatedSnack = new Dictionary<object, object> {
-                { "name", snack.Name},
+                { "name", snack.Name}, { "deleted",false},
                 { "tag",snack.Tag},
+                { "cloudKey",snack.CloudKey ?? snack.FirestoreID ?? snack.Name},
+                { "quantity",snack.Quantity ?? ""}, { "note",snack.Note ?? ""},
                 {"lastUpdated",snack.LastUpdated },
                 {"sqlId",snack.Id},
                 {"firebaseUID",UserId}
                 };
 
-                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).SetDataAsync(updatedSnack);
+                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.CloudKey ?? snack.FirestoreID ?? snack.Name).SetDataAsync(updatedSnack);
             }
         }
 
@@ -269,6 +294,7 @@ namespace RecipeApp.Services
                         FirebaseUID = doc.Data.FirebaseUID, LastUpdated = doc.Data.LastUpdated,
                         Name = doc.Data.Name,
                         Tag = doc.Data.Tag,
+                        Quantity = doc.Data.Quantity, Note = doc.Data.Note, IsDeleted = doc.Data.IsDeleted, CloudKey = doc.Data.CloudKey ?? doc.Data.FirestoreID ?? doc.Data.Name,
                         Id = doc.Data.Id,
                     };
 
@@ -294,7 +320,7 @@ namespace RecipeApp.Services
                     .GetCollection("users")
                     .GetDocument(UserId)
                     .GetCollection("staples")
-                    .GetDocument(staple.Name)
+                    .GetDocument(staple.CloudKey ?? staple.FirestoreID ?? staple.Name)
                     .SetDataAsync(staple);
             }
         }
@@ -303,12 +329,9 @@ namespace RecipeApp.Services
         {
             if (UserId != null)
             {
-                await CrossFirebaseFirestore.Current
-                    .GetCollection("users")
-                    .GetDocument(UserId)
-                    .GetCollection("staples")
-                    .GetDocument(staple.Name)
-                    .DeleteDocumentAsync();
+                var key=staple.CloudKey ?? staple.FirestoreID ?? staple.Name;
+                await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("staples").GetDocument(key)
+                    .SetDataAsync(new Dictionary<object,object> { {"name",staple.Name}, {"cloudKey",key}, {"firebaseUID",UserId}, {"deleted",true}, {"lastUpdated",DateTimeOffset.UtcNow} });
             }
         }
 
@@ -318,8 +341,10 @@ namespace RecipeApp.Services
             {
                 var updatedStaple = new Dictionary<object, object>
             {
-                { "name", staple.Name },
+                { "name", staple.Name }, { "deleted",false },
                 { "tag", staple.Tag },
+                { "cloudKey", staple.CloudKey ?? staple.FirestoreID ?? staple.Name },
+                { "quantity", staple.Quantity ?? "" }, { "note", staple.Note ?? "" },
                 { "lastUpdated", staple.LastUpdated },
                 { "sqlId", staple.Id },
                 { "firebaseUID", UserId }
@@ -329,7 +354,7 @@ namespace RecipeApp.Services
                     .GetCollection("users")
                     .GetDocument(UserId)
                     .GetCollection("staples")
-                    .GetDocument(staple.Name)
+                    .GetDocument(staple.CloudKey ?? staple.FirestoreID ?? staple.Name)
                     .SetDataAsync(updatedStaple);
 
             }

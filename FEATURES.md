@@ -41,10 +41,19 @@ See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest U
   account when desired. Recipe shortcuts preserve existing item details/checkmarks.
 
 **Shopping-list creator, essentials and snacks**
-- Select recipes, household essentials/staples and snacks to build a shopping list.
-- Search/select/deselect entries, review ingredients, and consolidate repeated
-  ingredients. Create a fresh personal list or append selected ingredients.
-- Maintain reusable essentials and snacks with quantities/categories/details.
+- Three-step flow: choose meals, check the cupboard and extras, review the list.
+- Search/tag filters, servings per batch and repeated-batch controls.
+- Non-main ingredients, common herbs/spices/oils and saved essentials become cupboard
+  checks. Snacks and essentials are reusable checklists, selected only when needed.
+- Save recipe ingredients as essentials; manage usual purchase quantities, categories
+  and notes with safe editing, cancellation and confirmed deletion.
+- Compatible metric quantities, fractions and repeated packs consolidate; uncertain
+  quantities and differing notes remain visible for review. No guessed density conversions.
+- Review/edit amounts and notes before appending or confirming personal-list replacement.
+  Compatible uncollected rows merge; existing collected purchases retain their state.
+- Recipe details, community recipes and meal-plan imports use the same review flow.
+- Private library sync preserves metadata and stable identities across renames/devices.
+- See [shopping creator behaviour and device checks](SHOPPING_CREATOR.md).
 
 **Meal planning**
 - Add/manage plan days; assign multiple recipes to breakfast, lunch and dinner.

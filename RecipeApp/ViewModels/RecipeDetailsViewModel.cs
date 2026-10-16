@@ -145,8 +145,7 @@ namespace RecipeApp.ViewModels
         {
             try
             {
-                ShoppingListStore.AppendIngredients(Recipe.Ingredients);
-                await Toast.Make("Recipe added to shopping list", ToastDuration.Short, 14).Show();
+                await Shell.Current.Navigation.PushAsync(new ShoppingListMakerPage(new[] { new RecipeShoppingChoice(Recipe) { Selected=true } }));
             }
             catch (Exception)
             {

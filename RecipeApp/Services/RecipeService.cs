@@ -283,6 +283,30 @@ namespace RecipeApp.Services
         }
 
 
+        public static async Task MergeShoppingLibrary(string account, IEnumerable<Snack> snacks, IEnumerable<Staple> staples)
+        {
+            if (string.IsNullOrWhiteSpace(account)) throw new ArgumentException("An account is required.", nameof(account));
+            await GetSnacksForLocal(); await GetStaplesForLocal();
+            foreach (var incoming in snacks)
+            {
+                var key=incoming.CloudKey ?? incoming.FirestoreID ?? incoming.Name;
+                var local=Snacks.FirstOrDefault(s => s.FirebaseUID==account && ((s.CloudKey ?? s.Name)==key));
+                if (incoming.IsDeleted) { if (local!=null) await DeleteSnack(local); continue; }
+                if (local!=null && local.LastUpdated>incoming.LastUpdated) continue;
+                var item=new Snack { Id=local?.Id ?? 0, Name=incoming.Name, Tag=incoming.Tag, Quantity=incoming.Quantity ?? "", Note=incoming.Note ?? "", CloudKey=key, FirebaseUID=account, LastUpdated=incoming.LastUpdated };
+                if (local==null) await InsertSnack(item); else await UpdateSnack(item);
+            }
+            foreach (var incoming in staples)
+            {
+                var key=incoming.CloudKey ?? incoming.FirestoreID ?? incoming.Name;
+                var local=Staples.FirstOrDefault(s => s.FirebaseUID==account && ((s.CloudKey ?? s.Name)==key));
+                if (incoming.IsDeleted) { if (local!=null) await DeleteStaple(local); continue; }
+                if (local!=null && local.LastUpdated>incoming.LastUpdated) continue;
+                var item=new Staple { Id=local?.Id ?? 0, Name=incoming.Name, Tag=incoming.Tag, Quantity=incoming.Quantity ?? "", Note=incoming.Note ?? "", CloudKey=key, FirebaseUID=account, LastUpdated=incoming.LastUpdated };
+                if (local==null) await InsertStaple(item); else await UpdateStaple(item);
+            }
+        }
+
         #region Snack Actions
         public static async Task DeleteSnack(Snack snack)
         {
@@ -306,15 +330,9 @@ namespace RecipeApp.Services
         public static async Task UpdateSnack(Snack snack)
         {
             await Init();
-            try
-            {
-                await db.UpdateAsync(snack); // Update the snack
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Error updating snack " + ex.Message);
-            }
+            await db.UpdateAsync(snack);
+            var index = Snacks.FindIndex(s => s.Id == snack.Id);
+            if (index >= 0) Snacks[index] = snack;
         }
 
         public static async Task<Snack> GetSnackByName(string snackName)
@@ -347,14 +365,9 @@ namespace RecipeApp.Services
         public static async Task UpdateStaple(Staple staple)
         {
             await Init();
-            try
-            {
-                await db.UpdateAsync(staple); // Update the recipe
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Error updating staple " + ex.Message);
-            }
+            await db.UpdateAsync(staple);
+            var index = Staples.FindIndex(s => s.Id == staple.Id);
+            if (index >= 0) Staples[index] = staple;
         }
         public static async Task<Staple> GetStapleByName(string stapleName)
         {

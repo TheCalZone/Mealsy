@@ -28,6 +28,7 @@
     </ContentPage.Resources>
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Household" Clicked="Household_Clicked" />
+        <ToolbarItem Text="Plan from recipes &amp; checklists" Clicked="Creator_Clicked" Order="Secondary" />
         <ToolbarItem Text="Sync now" Clicked="Sync_Clicked" Order="Secondary" />
         <ToolbarItem Text="Resolve sync conflict" Clicked="Resolve_Clicked" Order="Secondary" />
         <ToolbarItem Text="Paste list" Command="{Binding PasteCommand}" Order="Secondary" />

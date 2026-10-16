@@ -116,19 +116,31 @@ public class ShoppingListDocument
     {
         var result = new List<ShoppingListItem>();
         var category = "Other";
-        foreach (var raw in (text ?? "").Replace("\r", "").Split('\n'))
+        foreach (var raw in (text ?? "").Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
         {
             var line = raw.Trim();
             if (line.Length == 0) continue;
-            if (line.StartsWith('[') && line.EndsWith(']'))
+            if ((line.StartsWith('[') && line.EndsWith(']')) || line.EndsWith(':'))
             {
-                category = CategoryName(line[1..^1]);
+                category = CategoryName(line.StartsWith('[') ? line[1..^1] : line[..^1]);
                 continue;
             }
             var collected = line.StartsWith("[x] ", StringComparison.OrdinalIgnoreCase);
             if (collected || line.StartsWith("[ ] ")) line = line[4..].Trim();
             else if (line.StartsWith("- ") || line.StartsWith("• ")) line = line[2..].Trim();
-            if (line.Length > 0) result.Add(new() { Name = line, Category = category, InBasket = collected });
+            if (line.Length > 0)
+            {
+                var item=new ShoppingListItem { Name=line, Category=category, InBasket=collected };
+                var separator=line.IndexOf(" — ",StringComparison.Ordinal);
+                if (separator>0)
+                {
+                    item.Name=line[..separator].Trim(); var detail=line[(separator+3)..].Trim();
+                    var note=System.Text.RegularExpressions.Regex.Match(detail,@"^(.*?) \((.*)\)$");
+                    item.Quantity=note.Success ? note.Groups[1].Value : detail;
+                    item.Note=note.Success ? note.Groups[2].Value : "";
+                }
+                result.Add(item);
+            }
         }
         return result;
     }
@@ -136,27 +148,56 @@ public class ShoppingListDocument
     public void AppendText(string text)
     {
         var additions = ParseText(text);
-        foreach (var item in additions)
-            if (!items.Any(existing => existing.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase)
-                && existing.Category.Equals(item.Category, StringComparison.OrdinalIgnoreCase))) items.Add(item);
+        foreach (var item in additions) MergeItem(items,item);
         Commit();
     }
 
-    public static List<ShoppingListItem> FromIngredients(IEnumerable<Ingredient> ingredients) => ingredients
-        .Where(i => !string.IsNullOrWhiteSpace(i?.Name))
-        .GroupBy(i => (i.Name.Trim().ToUpperInvariant(), CategoryName(i.Tag).ToUpperInvariant(),
-            (i.Quantity ?? "").Trim().ToUpperInvariant(), (i.Note ?? "").Trim().ToUpperInvariant()))
-        .Select(g =>
+    public static List<ShoppingListItem> FromIngredients(IEnumerable<Ingredient> ingredients)
+    {
+        var rows = new List<(ShoppingListItem Item, ShoppingQuantity.Amount Amount)>();
+        foreach (var i in ingredients ?? Enumerable.Empty<Ingredient>())
         {
-            var first = g.First();
-            var quantity = (first.Quantity ?? "").Trim();
-            return new ShoppingListItem
+            if (string.IsNullOrWhiteSpace(i?.Name)) continue;
+            var item = new ShoppingListItem { Name=i.Name.Trim(), Category=CategoryName(i.Tag), Quantity=i.Quantity?.Trim() ?? "", Note=i.Note?.Trim() ?? "", InBasket=i.InBasket };
+            ShoppingQuantity.TryParse(item.Quantity,out var amount);
+            var merged=false;
+            for (var index=0; index<rows.Count; index++)
             {
-                Name = first.Name.Trim(), Category = CategoryName(first.Tag), Note = first.Note ?? "",
-                Quantity = g.Count() > 1 ? (quantity.Length == 0 ? g.Count().ToString() : $"{g.Count()} × {quantity}") : quantity,
-                InBasket = g.All(i => i.InBasket)
-            };
-        }).ToList();
+                var existing=rows[index];
+                if (!SameItem(existing.Item,item) || existing.Item.InBasket!=item.InBasket) continue;
+                if (amount!=null && existing.Amount?.Unit==amount.Unit)
+                {
+                    try { rows[index]=(existing.Item,existing.Amount with { Value=checked(existing.Amount.Value+amount.Value) }); merged=true; break; }
+                    catch (OverflowException) { }
+                }
+                if (string.IsNullOrWhiteSpace(existing.Item.Quantity) && string.IsNullOrWhiteSpace(item.Quantity)) { merged=true; break; }
+            }
+            if (!merged) rows.Add((item,amount));
+        }
+        // Round only after the full import has been added, not once per ingredient.
+        foreach (var row in rows) if (row.Amount!=null) row.Item.Quantity=ShoppingQuantity.Format(row.Amount);
+        return rows.Select(r => r.Item).ToList();
+    }
+
+    private static bool SameItem(ShoppingListItem a, ShoppingListItem b) =>
+        ShoppingQuantity.Identity(a.Name) == ShoppingQuantity.Identity(b.Name) &&
+        ShoppingQuantity.Identity(a.Category) == ShoppingQuantity.Identity(b.Category) &&
+        ShoppingQuantity.Identity(a.Note) == ShoppingQuantity.Identity(b.Note);
+    private static void MergeItem(List<ShoppingListItem> target, ShoppingListItem item)
+    {
+        // Collected items belong to a previous purchase; never increase their amount.
+        foreach (var existing in target.Where(e => SameItem(e, item) && e.InBasket == item.InBasket))
+        {
+            if (ShoppingQuantity.TryAdd(existing.Quantity, item.Quantity, out var total)) { existing.Quantity = total; return; }
+            if (string.IsNullOrWhiteSpace(existing.Quantity) && string.IsNullOrWhiteSpace(item.Quantity)) return;
+        }
+        target.Add(item);
+    }
+    public void AppendIngredients(IEnumerable<Ingredient> ingredients)
+    {
+        foreach (var item in FromIngredients(ingredients)) { item.InBasket = false; MergeItem(items, item); }
+        Commit();
+    }
 
     public void MergeLegacyText(string text)
     {

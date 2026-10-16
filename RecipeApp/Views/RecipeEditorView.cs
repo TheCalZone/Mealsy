@@ -36,7 +36,7 @@ public class RecipeEditorView : ContentView
         pictures.Add(Button("Remove photo", () => { model.Draft.Recipe.RecipeImage = ""; UpdatePhoto(); model.Changed(); return Task.CompletedTask; }, true));
         pictures.Add(Text("Photos are resized for quick saving; location metadata is removed.", 12)); body.Add(Card(pictures));
         var ingredients = new VerticalStackLayout { Spacing = 10 };
-        ingredients.Add(Text("02  INGREDIENTS", 12, true)); ingredients.Add(Text("Group ingredients into sections such as Sauce or Topping. Quantities can use fractions or words.", 14));
+        ingredients.Add(Text("02  INGREDIENTS", 12, true)); ingredients.Add(Text("Group ingredients into sections such as Sauce or Topping. Quantities can use fractions or words. Non-main ingredients are offered as cupboard checks when planning a shop.", 14));
         ingredients.Add(sections);
         ingredients.Add(Button("+ Add ingredient section", async () => {
             var name = await Shell.Current.DisplayPromptAsync("New ingredient section", "What is this section called?", placeholder: "Sauce", maxLength: 100);
@@ -138,7 +138,7 @@ public class RecipeEditorView : ContentView
                 category.SelectedIndexChanged += (_, _) => { item.Tag = category.SelectedItem?.ToString() ?? "Other"; model.Changed(); }; advanced.Add(category);
                 advanced.Add(Field(nameof(item.Note), "Ingredient note · optional", "finely chopped, room temperature…", 500, context: item));
                 var key = new CheckBox { BindingContext = item }; key.SetBinding(CheckBox.IsCheckedProperty, nameof(item.MainIngredient)); key.CheckedChanged += (_, _) => model.Changed();
-                advanced.Add(new HorizontalStackLayout { Children = { key, Text("Key ingredient for list selection", 12) } });
+                advanced.Add(new HorizontalStackLayout { Children = { key, Text("Main ingredient", 12) } });
                 row.Add(advanced);
                 var controls = new HorizontalStackLayout { Spacing = 6 };
                 controls.Add(Button("↑", () => { Move(section.Items, item, -1); return Task.CompletedTask; }, true));

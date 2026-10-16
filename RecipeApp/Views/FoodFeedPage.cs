@@ -121,8 +121,7 @@ public class FeedRecipePage : ContentPage
             await DisplayAlert("Recipe saved", "A private copy is now in your recipe book. Editing it won't change the shared post.", "OK");
         }));
         body.Add(FoodFeedPage.Button("Add ingredients to my shopping list", async () => {
-            ShoppingListStore.AppendIngredients(post.Recipe.ToRecipe("").Ingredients);
-            await DisplayAlert("Ingredients added", "Added to your personal shopping list.", "OK");
+            await Navigation.PushAsync(new ShoppingListMakerPage(new[] { new RecipeShoppingChoice(post.Recipe.ToRecipe("")) { Selected=true } }));
         }));
         body.Remove(reader);
         var layout = new Grid { RowDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) } };

@@ -22,6 +22,8 @@
     <Compile Include="../RecipeApp/Services/RecipeDraftStore.cs" Link="RecipeDraftStore.cs" />
     <Compile Include="../RecipeApp/Services/RecipePresentation.cs" Link="RecipePresentation.cs" />
     <Compile Include="../RecipeApp/Services/RecipeService.cs" Link="RecipeService.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingQuantity.cs" Link="ShoppingQuantity.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingPlan.cs" Link="ShoppingPlan.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />

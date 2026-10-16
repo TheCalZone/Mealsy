@@ -125,17 +125,10 @@ namespace RecipeApp.ViewModels
 
                 await UpdateLocalData(Recipes.ToList(), SqlRecipes.ToList(), recipe => RecipeService.UpdateRecipeAndIngredientsAsync(recipe, recipe.Ingredients));
 
-                // Fetch snacks
-                Snacks.AddRange(await FirestoreService.GetAllSnacks());
-                SqlSnacks.AddRange(RecipeService.Snacks);
+                await FirestoreService.SyncShoppingLibrary();
+                Snacks.AddRange(RecipeService.Snacks.Where(s => s.FirebaseUID==userId));
+                Staples.AddRange(RecipeService.Staples.Where(s => s.FirebaseUID==userId));
 
-                await UpdateLocalData(Snacks.ToList(), SqlSnacks.ToList(), RecipeService.UpdateSnack);
-
-                // Fetch staples
-                Staples.AddRange(await FirestoreService.GetAllEssentials());
-                SqlStaples.AddRange(RecipeService.Staples);
-
-                await UpdateLocalData(Staples.ToList(), SqlStaples.ToList(), RecipeService.UpdateStaple);
             }
             catch (Exception)
             {

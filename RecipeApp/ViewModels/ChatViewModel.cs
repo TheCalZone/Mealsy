@@ -54,8 +54,7 @@ public class ChatViewModel : BaseViewModel
             DisplayRecipe = new Recipe
             {
                 RecipeName = match.Groups[1].Value.Trim(), RecipeMethod = match.Groups[3].Value.Trim(),
-                Ingredients = match.Groups[2].Value.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(line => new Ingredient { Name = line.Trim(), MainIngredient = true }).ToList(),
+                Ingredients = RecipeDraft.ParseIngredients(match.Groups[2].Value).SelectMany(section => section.Items).ToList(),
                 Tags = "all", FirebaseUID = AuthHelper.UserId
             };
         }

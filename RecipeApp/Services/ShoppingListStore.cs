@@ -27,7 +27,7 @@ public static class ShoppingListStore
         var document = string.IsNullOrWhiteSpace(saved) ? new ShoppingListDocument() : ShoppingListDocument.Deserialize(saved);
         var legacy = Preferences.Get(LegacyKey, "");
         if (legacy != Preferences.Get(ExportKey, "") || string.IsNullOrWhiteSpace(saved)) document.MergeLegacyText(legacy);
-        foreach (var item in ShoppingListDocument.FromIngredients(ingredients)) document.Add(item);
+        document.AppendIngredients(ingredients);
         Save(document);
     }
 }

@@ -250,7 +250,7 @@ public class ShoppingListViewModel : CustomViewModelBase
         var before = Total;
         document.AppendText(text);
         SearchText = "";
-        Changed($"{Total - before} items added from clipboard");
+        Changed($"List updated from clipboard · {Total - before} new rows · Compatible amounts combined");
     }
     private async Task ShareAsync()
     {

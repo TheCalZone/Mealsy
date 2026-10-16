@@ -73,75 +73,18 @@ namespace RecipeApp.ViewModels
 
         public async Task ShopMealPlan()
         {
-            List<Ingredient> ListOfIngredients = new List<Ingredient>();
-            List<Recipe> dailyRecipes = new List<Recipe>();
-
-            ingredientCounts.Clear();
-            var occurrences = MealPlan.Days.SelectMany(day =>
-                day.BreakfastRecipesIDs.Concat(day.LunchRecipesIDs).Concat(day.DinnerRecipesIDs)
-                    .Concat(new[] { day.BreakfastRecipeId, day.LunchRecipeId, day.DinnerRecipeId }.Where(id => id != 0))
-                    .Distinct()).GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
-            foreach (var id in occurrences.Keys)
+            try
             {
-                var recipe = await RecipeService.GetRecipe(id);
-                if (recipe != null) dailyRecipes.Add(recipe);
-            }
-
-            foreach (Recipe recipe in dailyRecipes)
-            {
-                if (recipe.Serving > 0)
+                var choices=new List<RecipeShoppingChoice>();
+                foreach (var entry in ShoppingPlan.MealOccurrences(MealPlan.Days))
                 {
-                    int timesRecipeAppears = occurrences[recipe.Id];
-                    int timesToAdd = (int)Math.Ceiling((double)timesRecipeAppears / recipe.Serving);
-
-                    foreach (Ingredient ingredient in recipe.Ingredients)
-                    {
-                        if (ingredient.MainIngredient)
-                        {
-                            for (int i = 0; i < timesToAdd; i++)
-                            {
-                                if (ingredientCounts.ContainsKey(ingredient))
-                                {
-                                    ingredientCounts[ingredient]++;
-                                }
-                                else
-                                {
-                                    ingredientCounts.Add(ingredient, 1);
-                                }
-                            }
-
-                        }
-                    }
+                    var recipe=await RecipeService.GetRecipe(entry.Key);
+                    if (recipe==null) throw new InvalidOperationException("A meal-plan recipe was deleted. Update the plan before shopping.");
+                    choices.Add(new RecipeShoppingChoice(recipe) { Selected=true, Batches=entry.Value.ToString() });
                 }
-                else
-                {
-                    foreach (Ingredient ingredient in recipe.Ingredients)
-                    {
-                        if (ingredient.MainIngredient)
-                        {
-                            if (ingredientCounts.ContainsKey(ingredient))
-                            {
-                                ingredientCounts[ingredient]++;
-                            }
-                            else
-                            {
-                                ingredientCounts.Add(ingredient, 1);
-                            }
-                        }
-                    }
-                }
+                await Shell.Current.Navigation.PushAsync(new ShoppingListMakerPage(choices));
             }
-
-            foreach (KeyValuePair<Ingredient, int> entry in ingredientCounts)
-            {
-                ListOfIngredients.Add(new Ingredient { Name = entry.Key.Name + " x" + entry.Value, Tag = entry.Key.Tag});
-            }
-
-
-            var ingredientsJson = JsonConvert.SerializeObject(ListOfIngredients);
-
-            var route = $"//MealPlanOverviewPage/ShoppingListPage?ingredientsJson={Uri.EscapeDataString(ingredientsJson)}";
-            await Shell.Current.GoToAsync(route);
+            catch (Exception e) { await Shell.Current.DisplayAlert("Meal plan",e is InvalidOperationException ? e.Message : "The shopping review couldn't be opened. Your saved list hasn't changed.","OK"); }
         }
 
         public async Task ClearMealPlan()

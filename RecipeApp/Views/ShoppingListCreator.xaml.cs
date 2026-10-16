@@ -1,11 +1,5 @@
-﻿namespace RecipeApp.Views
+namespace RecipeApp.Views;
+public partial class ShoppingListCreator : ShoppingListMakerPage
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class ShoppingListCreator : TabbedPage
-    {
-        public ShoppingListCreator ()
-        {
-            InitializeComponent();
-        }
-    }
+    public ShoppingListCreator()  { InitializeComponent(); }
 }

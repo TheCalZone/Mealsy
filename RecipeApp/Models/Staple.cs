@@ -22,6 +22,18 @@ namespace RecipeApp.Models
         [FirestoreProperty("tag")]
         public string Tag { get; set; }
 
+        [Ignore]
+        [FirestoreProperty("deleted")]
+        public bool IsDeleted { get; set; }
+
+        [FirestoreProperty("cloudKey")]
+        public string CloudKey { get; set; }
+
+        [FirestoreProperty("quantity")]
+        public string Quantity { get; set; } = "";
+        [FirestoreProperty("note")]
+        public string Note { get; set; } = "";
+
         public bool IsSelected
         {
             get => isSelected;

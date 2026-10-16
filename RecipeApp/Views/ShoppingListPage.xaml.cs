@@ -5,9 +5,11 @@ using System.Text.Json;
 namespace RecipeApp.Views;
 
 [QueryProperty(nameof(IsManualList), nameof(IsManualList))]
+[QueryProperty(nameof(OpenPersonal), nameof(OpenPersonal))]
 [QueryProperty(nameof(IngredientsJson), "ingredientsJson")]
 public partial class ShoppingListPage : ContentPage
 {
+    public bool OpenPersonal { get; set; }
     public bool IsManualList { get; set; }
     public string IngredientsJson { get; set; }
     private ShoppingListViewModel Model => (ShoppingListViewModel)BindingContext;
@@ -24,7 +26,8 @@ public partial class ShoppingListPage : ContentPage
         try
         {
             var uid = HouseholdService.UserId;
-            if (listAccount != uid || !string.IsNullOrEmpty(IngredientsJson)) SelectPersonal();
+            if (listAccount != uid || !string.IsNullOrEmpty(IngredientsJson) || OpenPersonal) SelectPersonal();
+            OpenPersonal=false;
             if (householdId == null) ListSelector.Text = uid == null ? "Device list ▾" : "Personal list ▾";
             listAccount = uid;
             // Confirm continuing membership before displaying a cached household list.
@@ -122,6 +125,7 @@ public partial class ShoppingListPage : ContentPage
             catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and the Firebase household deployment.", "OK"); }
         }
     }
+    private async void Creator_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new ShoppingListMakerPage());
     private async void Household_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new HouseholdPage());
     private async void Sync_Clicked(object sender, EventArgs e) => await SyncAsync(true);
     private async void Resolve_Clicked(object sender, EventArgs e)

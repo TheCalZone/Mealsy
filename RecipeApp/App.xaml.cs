@@ -71,17 +71,8 @@ public partial class App : Application
 
             await UpdateLocalData(recipes.ToList(), sqlRecipes.ToList(), recipe => RecipeService.UpdateRecipeAndIngredientsAsync(recipe, recipe.Ingredients), recipe => RecipeService.AddRecipe(recipe), recipe => FirestoreService.AddRecipe(recipe));
 
-            // Fetch snacks
-            var snacks = await FirestoreService.GetAllSnacks();
-            var sqlSnacks = RecipeService.Snacks.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
+            await FirestoreService.SyncShoppingLibrary();
 
-            await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.AddSnack(snack.Name), snack => FirestoreService.AddSnack(snack));
-
-            // Fetch staples
-            var staples = await FirestoreService.GetAllEssentials();
-            var sqlStaples = RecipeService.Staples.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
-
-            await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.AddStaple(staple.Name), staple => FirestoreService.AddStaple(staple));
         }
         catch (Exception ex)
         {

@@ -76,6 +76,9 @@ public class ShoppingListTests
         Assert.Equal(3, list.Items.Count);
         Assert.Equal("Produce", list.Items.Single(i => i.Name == "Apples").Category);
         Assert.True(list.Items.Single(i => i.Name == "Pears").InBasket);
+        list.AppendText("[Other]\r- Soap\r• Toothpaste");
+        Assert.Equal(5,list.Items.Count);
+        Assert.Contains(list.Items,i => i.Name=="Toothpaste");
     }
 
     [Fact]
@@ -133,7 +136,7 @@ public class ShoppingListTests
             new Ingredient { Name = "Lemon + lime", Tag = "Veg" }
         });
         var milk = Assert.Single(items, i => i.Name == "Milk");
-        Assert.Equal("2 × 1 L", milk.Quantity);
+        Assert.Equal("2 L", milk.Quantity);
         Assert.Equal("Oat", milk.Note);
         Assert.Equal("Produce", Assert.Single(items, i => i.Name == "Lemon + lime").Category);
     }
