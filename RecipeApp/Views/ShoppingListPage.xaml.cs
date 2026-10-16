@@ -31,7 +31,7 @@ public partial class ShoppingListPage : ContentPage
             if (householdId != null)
             {
                 var info = await HouseholdService.StatusAsync();
-                if (info.HouseholdId != householdId) SelectPersonal();
+                if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();
             }
             if (!visible) return;
             var incoming = IngredientsJson; IngredientsJson = null;
@@ -113,6 +113,7 @@ public partial class ShoppingListPage : ContentPage
             {
                 var info = await HouseholdService.StatusAsync();
                 if (info.HouseholdId == null) { await Navigation.PushAsync(new HouseholdPage()); return; }
+                if (!info.FamilyEnabled) { await Navigation.PushAsync(new PlanPage()); return; }
                 Model.Persist(); generation++; conflict = false; householdId = info.HouseholdId; sharedName = info.Name; listAccount = HouseholdService.UserId;
                 Model.SelectList(CacheKey); Model.Load(true, null); ListSelector.Text = sharedName + " ▾";
                 await SyncAsync(true);

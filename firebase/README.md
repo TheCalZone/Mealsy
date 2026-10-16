@@ -1,5 +1,8 @@
 # Household shopping lists
 
+Household creation, invitations and shared-list access now require an active annual
+subscription held by the owner; see [monetization setup](../MONETIZATION.md).
+
 Every person signs in with their **own Firebase Authentication account**. A household
 has one owner and up to 20 members. Each account has a private personal shopping list
 and can join one household with one shared list. All members can add, edit, remove,

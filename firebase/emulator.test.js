@@ -15,6 +15,7 @@ before(async () => {
   rules = await initializeTestEnvironment({projectId: 'demo-mealsy', firestore: {rules: readFileSync(`${__dirname}/firestore.rules`, 'utf8')}});
   await rules.clearFirestore();
   app = initializeApp({projectId: 'demo-mealsy'}, 'household-tests'); db = getFirestore(app); handle = createHandler(db);
+  await db.doc('billingEntitlements/owner').set({active: true, expiresAt: Date.now() + 86400000});
 });
 after(async () => { if (rules) await rules.cleanup(); if (app) await deleteApp(app); });
 const call = (uid, data) => handle({auth: uid ? {uid, token: {email: `${uid}@example.com`}} : null, data});

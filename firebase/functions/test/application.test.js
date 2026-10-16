@@ -27,7 +27,9 @@ function database() {
   }};
 }
 function fixture() {
-  const db = database(); const handler = createHandler(db);
+  const db = database();
+  for (const uid of ["parent", "stranger"]) db.docs.set(`billingEntitlements/${uid}`, {active: true, expiresAt: Date.now() + 86400000});
+  const handler = createHandler(db);
   const call = (uid, data) => handler({auth: uid ? {uid, token: {email: `${uid}@example.com`}} : null, data});
   return {db, call};
 }
@@ -38,7 +40,7 @@ async function family(f) {
   await f.call('child', {action: 'join', code}); return householdId;
 }
 test('all actions require authentication', async () => {
-  const f = fixture(); await assert.rejects(f.call(null, {action: 'status'}), {code: 'unauthenticated'}); assert.equal(f.db.docs.size, 0);
+  const f = fixture(); const before = f.db.docs.size; await assert.rejects(f.call(null, {action: 'status'}), {code: 'unauthenticated'}); assert.equal(f.db.docs.size, before);
 });
 test('create/join return the same household with owner and members', async () => {
   const f = fixture(); const id = await family(f);

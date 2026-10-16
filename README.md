@@ -2,6 +2,13 @@
 
 Mealsy is a .NET 8 MAUI Android app for recipes, meal planning, and shopping lists.
 
+## Plans and feature inventory
+
+The free tier keeps personal cooking/planning and the food community. **Mealsy
+Family (£24/year in the UK)** unlocks household sharing and removes ads for the
+owner and their household. Live billing/ads require publisher setup; see
+[monetization setup](MONETIZATION.md) and the [complete current features](FEATURES.md).
+
 ## Android development
 
 Prerequisites: .NET SDK 8, the `maui-android` workload, JDK 17, and Android SDK
@@ -25,7 +32,7 @@ adb shell am start -a android.intent.action.MAIN \
   -c android.intent.category.LAUNCHER -p com.companyname.recipeapp
 ```
 
-Use an Android device or a running emulator (Android 5/API 21 or newer).
+Use an Android device or a running emulator (Android 6/API 23 or newer).
 For startup diagnostics, inspect `adb logcat -b crash -d` and confirm the app
 stays open. Exercise recipe creation and shopping-list navigation as a smoke test.
 Run the platform-independent SQLite regression tests with:

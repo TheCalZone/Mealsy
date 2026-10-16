@@ -136,7 +136,8 @@
                     TextColor="White" />
                 <Button
                     CornerRadius="5"
-                    Text="Manage Subscription"
+                    Text="Mealsy Family · £24/year"
+                    Clicked="Plan_Clicked"
                     TextColor="White" />
                 <Button
                     CornerRadius="5"

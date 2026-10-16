@@ -42,11 +42,17 @@ public class HouseholdPage : ContentPage
         content.Add(new Label { Text = "Shop together", FontSize = 30, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#214D35") });
         content.Add(new Label { Text = "Each person keeps a private list and their own login. Everyone in your household can add, edit, remove and collect items on the household list.", TextColor = Color.FromArgb("#354B3C") });
         if (account == null) { content.Add(new Label { Text = "Sign in or create an account on the Account tab to get started.", TextColor = Colors.Black }); return; }
+        PlanStatus plan;
+        try { plan = await PlanService.RefreshAsync(); }
+        catch (Exception) { plan = PlanService.Cached ?? new PlanStatus(false, false, false, 0, true, "", ""); }
+        // Membership cleanup must remain available even if Play's API is unavailable.
+        content.Add(Action(plan.FamilyEnabled ? "Mealsy Family · Manage plan" : "Unlock Mealsy Family · £24/year", async () => await Navigation.PushAsync(new PlanPage())));
         var household = await HouseholdService.StatusAsync();
         CheckAccount();
         if (household.HouseholdId == null)
         {
-            content.Add(Action("Create a household", async () => {
+            if (!plan.OwnPlan) content.Add(new Label { Text = "A subscription held by the owner is required to create a household. You can join an owner who already subscribes.", TextColor = Colors.Black });
+            if (plan.OwnPlan) content.Add(Action("Create a household", async () => {
                 var name = await DisplayPromptAsync("Create household", "What would you like to call your household?", placeholder: "Our family", maxLength: 80);
                 if (string.IsNullOrWhiteSpace(name)) return;
                 CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "create", name }); await Refresh();
@@ -60,6 +66,7 @@ public class HouseholdPage : ContentPage
         }
         else
         {
+            if (!household.FamilyEnabled) content.Add(new Label { Text = "Family sharing is paused. The household owner needs to renew or restore their annual plan. Your household data has been kept.", TextColor = Colors.Black });
             content.Add(new Label { Text = household.Name, FontSize = 24, TextColor = Color.FromArgb("#214D35"), FontAttributes = FontAttributes.Bold });
             content.Add(new Label { Text = $"{household.Members.Count} of 20 members", TextColor = Colors.Black });
             foreach (var member in household.Members)
@@ -74,7 +81,7 @@ public class HouseholdPage : ContentPage
             }
             if (household.Owner == account)
             {
-                content.Add(Action("Invite a family member", async () => {
+                if (household.FamilyEnabled) content.Add(Action("Invite a family member", async () => {
                     CheckAccount();
                     var invite = await HouseholdService.CallAsync<System.Text.Json.JsonElement>(new { action = "invite" });
                     var code = invite.GetProperty("code").GetString();

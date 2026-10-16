@@ -39,6 +39,9 @@ public static class MauiProgram
         .ConfigureMauiHandlers(handlers =>
         {
             handlers.AddHandler(typeof(CustomEditor), typeof(CustomEditorHandler));
+#if ANDROID
+            handlers.AddHandler(typeof(RecipeApp.Controls.AdBanner), typeof(RecipeApp.Platforms.Android.AdBannerHandler));
+#endif
         });
 
 #if DEBUG

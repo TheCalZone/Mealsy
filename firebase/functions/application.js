@@ -1,5 +1,6 @@
 const {randomBytes, createHash} = require('node:crypto');
 const {fail, applyChanges, requireMember, requireOwner} = require('./domain');
+const {requireFamily, active} = require('./entitlements');
 const hash = token => createHash('sha256').update(token).digest('hex');
 function createHandler(db) {
 return async function handle(request) {
@@ -14,6 +15,7 @@ return async function handle(request) {
     const ref = db.collection('households').doc();
     await db.runTransaction(async tx => {
       if ((await tx.get(accountRef)).exists) fail('failed-precondition', 'Leave your current household first.');
+      await requireFamily(tx, db, uid);
       tx.create(ref, {name, owner: uid, members: {[uid]: email}});
       tx.create(accountRef, {householdId: ref.id});
     });
@@ -31,6 +33,7 @@ return async function handle(request) {
       const ref = db.doc(`households/${invitation.householdId}`);
       const household = (await tx.get(ref)).data();
       if (!household) fail('not-found', 'This household no longer exists.');
+      await requireFamily(tx, db, household.owner);
       if (Object.keys(household.members).length >= 20) fail('resource-exhausted', 'A household supports 20 members.');
       tx.update(ref, {members: {...household.members, [uid]: email}});
       tx.create(accountRef, {householdId: ref.id});
@@ -58,10 +61,14 @@ return async function handle(request) {
     const household = (await tx.get(ref)).data();
     requireMember(household, uid);
     if (data.householdId && data.householdId !== ref.id) fail('permission-denied', 'The household changed. Reopen its list.');
-    if (data.action === 'status') return {householdId: ref.id, name: household.name, owner: household.owner,
-      members: Object.entries(household.members).map(([id, label]) => ({id, label}))};
+    if (data.action === 'status') {
+      const plan = (await tx.get(db.doc(`billingEntitlements/${household.owner}`))).data();
+      return {householdId: ref.id, name: household.name, owner: household.owner, familyEnabled: active(plan),
+        members: Object.entries(household.members).map(([id, label]) => ({id, label}))};
+    }
     if (['read', 'patch'].includes(data.action)) {
       if (data.scope !== 'household' || data.householdId !== ref.id) fail('invalid-argument', 'Choose a list.');
+      await requireFamily(tx, db, household.owner);
       const listRef = ref.collection('lists').doc('shopping');
       const current = (await tx.get(listRef)).data()?.items || {};
       const items = data.action === 'patch' ? applyChanges(current, data.changes) : current;
@@ -86,6 +93,7 @@ return async function handle(request) {
       tx.delete(ref.collection('lists').doc('shopping')); tx.delete(ref); return {};
     }
     if (data.action === 'invite') {
+      await requireFamily(tx, db, household.owner);
       const code = randomBytes(24).toString('hex');
       // One outstanding invitation per household. New code revokes its predecessor.
       if (household.inviteHash) tx.delete(db.doc(`householdInvites/${household.inviteHash}`));

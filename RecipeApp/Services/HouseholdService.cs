@@ -6,7 +6,7 @@ using System.Text.Json;
 namespace RecipeApp.Services;
 
 public record HouseholdMember(string Id, string Label);
-public record HouseholdInfo(string HouseholdId, string Name, string Owner, List<HouseholdMember> Members);
+public record HouseholdInfo(string HouseholdId, string Name, string Owner, List<HouseholdMember> Members, bool FamilyEnabled);
 public class HouseholdException : Exception
 {
     public string Code { get; }

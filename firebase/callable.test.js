@@ -31,3 +31,7 @@ test('authenticated food publication validates public content before accessing F
   const result = await fetch(endpoint.replace('/household', '/foodFeed'), {method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${account.idToken}`}, body: JSON.stringify({data: {action: 'publish', id: 'test', caption: '', authorName: '', recipe: null, photo: ''}})});
   assert.equal(result.status, 400); assert.equal((await result.json()).error.status, 'INVALID_ARGUMENT');
 });
+test('billing callable rejects unsigned purchase verification requests', async () => {
+  const response = await fetch(endpoint.replace('/household', '/billing'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: {action: 'verify', token: 'untrusted-token'}})});
+  assert.equal(response.status, 401); assert.equal((await response.json()).error.status, 'UNAUTHENTICATED');
+});

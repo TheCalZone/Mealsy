@@ -20,7 +20,7 @@ public class FoodFeedPage : ContentPage
         var layout = new VerticalStackLayout { Padding = 16, Spacing = 14, Children = {
             Text("The Mealsy table", 30, true), Text("Recipes, kitchen wins and inspiration from the community.", 15),
             Button("Share something delicious", async () => await Navigation.PushAsync(new FeedComposerPage())),
-            status } };
+            status, new RecipeApp.Controls.AdBanner() } };
         var collection = new CollectionView { ItemsSource = posts, SelectionMode = SelectionMode.None, Header = layout, Footer = more,
             ItemTemplate = new DataTemplate(() => {
                 var holder = new ContentView { Padding = new Thickness(16, 0, 16, 16) };
