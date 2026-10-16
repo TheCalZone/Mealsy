@@ -15,6 +15,11 @@ namespace RecipeApp.Views
             InitializeComponent();
         }
 
+        private async void ShareToFeed_Clicked(object sender, EventArgs e)
+        {
+            if (Recipe != null) await Navigation.PushAsync(new FeedComposerPage(Recipe));
+        }
+
         protected override async void OnAppearing()
         {
             base.OnAppearing();

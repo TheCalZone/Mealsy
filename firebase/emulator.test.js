@@ -44,3 +44,20 @@ test('real transactions enforce single-use acceptance, shared editing, privacy a
   await call('owner', {action: 'remove', member});
   await assert.rejects(call(member, {action: 'read', scope: 'household', householdId}), {code: 'failed-precondition'});
 });
+test('feed Firestore transactions count likes once and enforce hidden-post access', async () => {
+  const feed = require('./functions/feed').createFeedHandler(db);
+  const request = (uid, data, moderator = false) => feed({auth: {uid, token: {feedModerator: moderator}}, data});
+  await request('feed-owner', {action: 'publish', id: 'real-feed-post', caption: 'A real emulator meal', authorName: 'Cook', recipe: null, photo: ''});
+  await Promise.all(Array.from({length: 4}, () => request('reader', {action: 'like', postId: 'real-feed-post', liked: true})));
+  const listed = await request('reader', {action: 'list'});
+  assert.equal(listed.posts[0].likeCount, 1); assert.equal(listed.posts[0].liked, true);
+  await request('reader', {action: 'comment', postId: 'real-feed-post', id: 'real-comment', text: 'Looks delicious', authorName: 'Reader'});
+  assert.equal((await request('reader', {action: 'comments', postId: 'real-feed-post'})).comments.length, 1);
+  await request('mod', {action: 'moderate', postId: 'real-feed-post', hidden: true}, true);
+  assert.equal((await request('reader', {action: 'list'})).posts.length, 0);
+  await assert.rejects(request('reader', {action: 'comments', postId: 'real-feed-post'}), {code: 'not-found'});
+  const signedIn = rules.authenticatedContext('feed-owner').firestore();
+  for (const path of ['feedPosts/real-feed-post', 'feedPosts/real-feed-post/likes/reader', 'feedPosts/real-feed-post/comments/real-comment', 'feedPosts/real-feed-post/reports/reader', 'feedLimits/feed-owner']) {
+    await assertFails(getDoc(doc(signedIn, path))); await assertFails(setDoc(doc(signedIn, path), {authorId: 'feed-owner'}));
+  }
+});

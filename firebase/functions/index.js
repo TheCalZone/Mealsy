@@ -14,3 +14,13 @@ exports.household = onCall({region: 'us-central1', maxInstances: 10, timeoutSeco
     throw new HttpsError('internal', 'Could not complete the request. Please try again.');
   }
 });
+
+const feed = require('./feed').createFeedHandler(getFirestore());
+exports.foodFeed = onCall({region: 'us-central1', maxInstances: 10, timeoutSeconds: 30}, async request => {
+  try { return await feed(request); }
+  catch (error) {
+    if (error instanceof DomainError) throw new HttpsError(error.code, error.message);
+    console.error('Feed operation failed', error.code || error.name);
+    throw new HttpsError('internal', 'The food feed is unavailable. Please try again.');
+  }
+});

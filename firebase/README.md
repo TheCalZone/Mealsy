@@ -127,3 +127,9 @@ private list isolation, offline edit/restart/reconnect, conflicting edits, invit
 reuse/expiry/revocation, member removal, leaving and owner deletion. Confirm a
 removed account cannot reopen the household list and that everyone's personal lists
 remain after leaving/removal/deletion.
+
+## Food community
+
+The same backend also includes `foodFeed` and an optional desktop studio. See
+[Food feed deployment and moderation](FEED.md) for web configuration, Hosting, and
+moderator roles.

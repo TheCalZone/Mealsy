@@ -22,6 +22,7 @@
     <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />
+    <Compile Include="../RecipeApp/Models/FoodPost.cs" Link="FoodPost.cs" />
     <Compile Include="../RecipeApp/Models/ShoppingListItem.cs" Link="ShoppingListItem.cs" />
     <Compile Include="../RecipeApp/Interfaces/IIdentifiable.cs" Link="IIdentifiable.cs" />
     <Compile Include="../RecipeApp/Models/Recipe.cs;../RecipeApp/Models/Ingredient.cs;../RecipeApp/Models/Snack.cs;../RecipeApp/Models/Staple.cs;../RecipeApp/Models/MealPlan.cs;../RecipeApp/Models/MealPlanDay.cs;../RecipeApp/Models/ShoppingList.cs" Link="Models/%(Filename)%(Extension)" />

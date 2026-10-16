@@ -19,3 +19,15 @@ test('callable accepts an Auth emulator token and returns domain validation erro
   const result = await post({action: 'create', name: ''}, account.idToken);
   assert.equal(result.status, 400); assert.equal(result.body.error.status, 'INVALID_ARGUMENT');
 });
+test('food feed callable rejects unsigned requests before database access', async () => {
+  const response = await fetch(endpoint.replace('/household', '/foodFeed'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: {action: 'list'}})});
+  assert.equal(response.status, 401); assert.equal((await response.json()).error.status, 'UNAUTHENTICATED');
+});
+test('authenticated food publication validates public content before accessing Firestore', async () => {
+  const response = await fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: `feed-${Date.now()}@example.com`, password: 'Local-test-only-123!', returnSecureToken: true})
+  });
+  const account = await response.json(); assert(account.idToken);
+  const result = await fetch(endpoint.replace('/household', '/foodFeed'), {method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${account.idToken}`}, body: JSON.stringify({data: {action: 'publish', id: 'test', caption: '', authorName: '', recipe: null, photo: ''}})});
+  assert.equal(result.status, 400); assert.equal((await result.json()).error.status, 'INVALID_ARGUMENT');
+});

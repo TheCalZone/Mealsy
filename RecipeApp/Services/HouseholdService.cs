@@ -21,12 +21,13 @@ public static class HouseholdService
     private static readonly HttpClient client = new() { Timeout = TimeSpan.FromSeconds(40) };
     private static readonly JsonSerializerOptions json = new() { PropertyNameCaseInsensitive = true };
     public static string UserId => CrossFirebaseAuth.Current.CurrentUser?.Uid;
-    public static async Task<T> CallAsync<T>(object data)
+    public static Task<T> CallAsync<T>(object data) => CallEndpointAsync<T>(Endpoint, data);
+    public static async Task<T> CallEndpointAsync<T>(string endpoint, object data)
     {
         var user = CrossFirebaseAuth.Current.CurrentUser ?? throw new HouseholdException("UNAUTHENTICATED", "Sign in on the Account tab first. Each family member needs their own account.");
         var uid = user.Uid;
         var token = await user.GetIdTokenResultAsync(false);
-        using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint);
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
         request.Content = JsonContent.Create(new { data });
         using var response = await client.SendAsync(request);

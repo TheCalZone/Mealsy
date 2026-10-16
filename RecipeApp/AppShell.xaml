@@ -84,6 +84,7 @@
             ContentTemplate="{DataTemplate local:Homepage}"
             Icon="icon_feed.png"
             Route="Homepage" />
+        <ShellContent Title="Food feed" ContentTemplate="{DataTemplate local:FoodFeedPage}" Icon="icon_feed.png" Route="FoodFeedPage" />
         <ShellContent
             Title="Recipes"
             ContentTemplate="{DataTemplate local:RecipePage}"

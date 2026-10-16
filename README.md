@@ -99,6 +99,19 @@ Android compilation and automated list/state/store tests are verified in the
 cloud. Native layout, keyboard, clipboard and share-sheet behavior still require
 device testing; the software emulator is not used for this update.
 
+## Food community
+
+The **Food feed** tab is a community for signed-in Mealsy users: publish captions,
+food photos and recipe snapshots, like posts, comment, report content, and save shared
+recipes into your own book. A recipe's **Share to food feed** menu opens a composer;
+publishing always asks for confirmation. Private recipes and household lists stay
+private until you explicitly share a recipe copy.
+
+A desktop **Community Studio** is included for publishing and moderation. Deploy the
+`foodFeed` Firebase function, configure the studio's public Firebase web-app settings,
+and deploy Hosting using the [food feed setup guide](firebase/FEED.md). Pulling the
+Android code alone does not deploy these services.
+
 ## Household sharing
 
 Family members now use their own logins, with a private personal shopping list and

@@ -22,6 +22,7 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Share to food feed" Clicked="ShareToFeed_Clicked" Order="Secondary" />
         <ToolbarItem
             Command="{Binding EditFavouriteCommand}"
             IconImageSource="{Binding StarImageSource}"
