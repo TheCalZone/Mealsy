@@ -3,6 +3,7 @@ const {GoogleAuth} = require('google-auth-library');
 const {fail} = require('./domain');
 const {active} = require('./entitlements');
 const PACKAGE = 'com.companyname.recipeapp', PRODUCT = 'mealsy_family', BASE_PLAN = 'annual';
+const BASE_PLANS = ['annual', 'monthly'];
 const sha = value => createHash('sha256').update(value).digest('hex');
 const accountId = uid => sha(uid);
 const auth = new GoogleAuth({scopes: ['https://www.googleapis.com/auth/androidpublisher']});
@@ -17,13 +18,14 @@ async function acknowledge(token) {
 function entitlementFromPurchase(purchase, uid, now = Date.now()) {
   if (purchase.externalAccountIdentifiers?.obfuscatedExternalAccountId !== accountId(uid))
     fail('permission-denied', 'This Google Play subscription belongs to a different Mealsy account. Sign in with the account used to buy it.');
-  const lines = (purchase.lineItems || []).filter(item => item.productId === PRODUCT && item.offerDetails?.basePlanId === BASE_PLAN);
-  if (!lines.length) fail('invalid-argument', 'This is not the Mealsy Family annual subscription.');
-  const expiresAt = Math.max(...lines.map(item => Date.parse(item.expiryTime) || 0));
+  const lines = (purchase.lineItems || []).filter(item => item.productId === PRODUCT && BASE_PLANS.includes(item.offerDetails?.basePlanId));
+  if (!lines.length) fail('invalid-argument', 'This is not a supported Mealsy Family subscription.');
+  const selected = lines.reduce((a, b) => (Date.parse(b.expiryTime) || 0) > (Date.parse(a.expiryTime) || 0) ? b : a);
+  const expiresAt = Date.parse(selected.expiryTime) || 0;
   const state = purchase.subscriptionState;
   // Cancellation stops renewal but retains access through the paid expiry date.
   const entitled = ['SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_CANCELED'].includes(state) && expiresAt > now;
-  return {active: entitled, expiresAt, state, productId: PRODUCT, verifiedAt: now};
+  return {active: entitled, expiresAt, state, productId: PRODUCT, basePlanId: selected.offerDetails.basePlanId, verifiedAt: now};
 }
 function createBilling(db, readPurchase = googlePurchase, ack = acknowledge, clock = Date.now) {
   async function verify(uid, token) {
@@ -65,7 +67,7 @@ function createBilling(db, readPurchase = googlePurchase, ack = acknowledge, clo
     const family = owner === uid ? own : await refreshOwner(owner);
     return {ownPlan: active(own, clock()), familyEnabled: active(family, clock()), adFree: active(own, clock()) || active(family, clock()),
       expiresAt: Math.max(active(own, clock()) ? own.expiresAt : 0, active(family, clock()) ? family.expiresAt : 0), owner: owner === uid,
-      productId: PRODUCT, basePlanId: BASE_PLAN};
+      productId: PRODUCT, basePlanId: (active(own, clock()) ? own.basePlanId : family?.basePlanId) || null};
   }
   async function notification(token) {
     if (typeof token !== 'string' || token.length > 4096) return;

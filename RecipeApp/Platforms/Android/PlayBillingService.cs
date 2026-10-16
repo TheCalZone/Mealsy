@@ -29,26 +29,26 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
         }
         finally { connection.Release(); }
     }
-    public async Task<string> LoadPrice()
+    public async Task<string> LoadPrice(string basePlanId = MonetizationConfig.BasePlanId)
     {
         await Connect();
         var query = QueryProductDetailsParams.NewBuilder().SetProductList(new[] {
             QueryProductDetailsParams.Product.NewBuilder().SetProductId(MonetizationConfig.ProductId).SetProductType("subs").Build() }).Build();
         var response = await client.QueryProductDetailsAsync(query).WaitAsync(TimeSpan.FromSeconds(30));
         product = response.ProductDetailsList.FirstOrDefault(p => p.ProductId == MonetizationConfig.ProductId);
-        offer = product?.GetSubscriptionOfferDetails()?.FirstOrDefault(o => o.BasePlanId == MonetizationConfig.BasePlanId && o.OfferId == null);
+        offer = product?.GetSubscriptionOfferDetails()?.FirstOrDefault(o => o.BasePlanId == basePlanId && o.OfferId == null);
         var phase = offer?.PricingPhases.PricingPhaseList.LastOrDefault();
-        if (phase == null || phase.BillingPeriod != "P1Y") throw new InvalidOperationException("The annual plan is not available from Google Play yet.");
+        if (basePlanId is not (MonetizationConfig.BasePlanId or MonetizationConfig.MonthlyBasePlanId) || phase == null || phase.BillingPeriod != (basePlanId == MonetizationConfig.MonthlyBasePlanId ? "P1M" : "P1Y")) throw new InvalidOperationException("That plan is not available from Google Play yet.");
         return Price = phase.FormattedPrice;
     }
-    public async Task Buy()
+    public async Task Buy(string basePlanId = MonetizationConfig.BasePlanId)
     {
         var uid = HouseholdService.UserId ?? throw new InvalidOperationException("Sign in before subscribing.");
         if (pending != null) throw new InvalidOperationException("A purchase is already in progress.");
         pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
         try
         {
-            await LoadPrice();
+            await LoadPrice(basePlanId);
             if (uid != HouseholdService.UserId) throw new InvalidOperationException("Your account changed. Please try again.");
             var parameters = BillingFlowParams.NewBuilder().SetObfuscatedAccountId(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(uid))).ToLowerInvariant())
                 .SetProductDetailsParamsList(new[] { BillingFlowParams.ProductDetailsParams.NewBuilder().SetProductDetails(product).SetOfferToken(offer.OfferToken).Build() }).Build();

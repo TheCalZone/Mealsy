@@ -6,10 +6,12 @@ namespace RecipeApp.Views;
 
 [QueryProperty(nameof(IsManualList), nameof(IsManualList))]
 [QueryProperty(nameof(OpenPersonal), nameof(OpenPersonal))]
+[QueryProperty(nameof(OpenHouseholdId), nameof(OpenHouseholdId))]
 [QueryProperty(nameof(IngredientsJson), "ingredientsJson")]
 public partial class ShoppingListPage : ContentPage
 {
     public bool OpenPersonal { get; set; }
+    public string OpenHouseholdId { get; set; }
     public bool IsManualList { get; set; }
     public string IngredientsJson { get; set; }
     private ShoppingListViewModel Model => (ShoppingListViewModel)BindingContext;
@@ -28,10 +30,17 @@ public partial class ShoppingListPage : ContentPage
             var uid = HouseholdService.UserId;
             if (listAccount != uid || !string.IsNullOrEmpty(IngredientsJson) || OpenPersonal) SelectPersonal();
             OpenPersonal=false;
+            var requestedHousehold=OpenHouseholdId;OpenHouseholdId=null;
+            if(!string.IsNullOrEmpty(requestedHousehold))
+            {
+                var info=await HouseholdService.StatusAsync();
+                if(info.HouseholdId!=requestedHousehold||!info.FamilyEnabled)throw new InvalidOperationException("Household access ended.");
+                generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
+            }
             if (householdId == null) ListSelector.Text = uid == null ? "Device list ▾" : "Personal list ▾";
             listAccount = uid;
             // Confirm continuing membership before displaying a cached household list.
-            if (householdId != null)
+            if (householdId != null && string.IsNullOrEmpty(requestedHousehold))
             {
                 var info = await HouseholdService.StatusAsync();
                 if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();
@@ -77,7 +86,8 @@ public partial class ShoppingListPage : ContentPage
             });
             if (generation != currentGeneration || HouseholdService.UserId != uid || Model.IsEditing) return;
             var server = JsonSerializer.Serialize(response.Items);
-            var merged = ShoppingListSync.Reapply(sent, Model.CurrentJson, server);
+            var latest=Preferences.Get(key,Model.CurrentJson);
+            var merged = ShoppingListSync.Reapply(sent, latest, server);
             // Save acknowledged server state separately so offline edits survive app restarts.
             Preferences.Set(key + ".synced", server);
             if (merged.Serialize() != Model.CurrentJson) Model.AcceptRemote(merged.Serialize());
@@ -125,6 +135,7 @@ public partial class ShoppingListPage : ContentPage
             catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and the Firebase household deployment.", "OK"); }
         }
     }
+    private async void Widget_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new WidgetHelpPage());
     private async void Creator_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new ShoppingListMakerPage());
     private async void Household_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new HouseholdPage());
     private async void Sync_Clicked(object sender, EventArgs e) => await SyncAsync(true);

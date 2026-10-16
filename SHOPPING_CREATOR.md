@@ -63,9 +63,11 @@ and deletion markers; older clients don't understand them.
 - Newly generated AI recipes now store parsed names and quantities separately.
   Existing names with quantities embedded in them are kept as entered.
 
-Meal-plan slots count full preparations: a four-serving recipe used in three slots
-starts with three batches, not one batch divided by its serving count. Repeated legacy
-IDs within one slot are counted once. The creator lets you change portions afterward.
+Meal-plan shopping uses total planned servings across slots. A four-serving recipe
+used unchanged in three slots contributes twelve servings, while individual portion
+adjustments contribute their actual planned amounts. The creator opens with those
+totals and lets you review quantities afterward. Repeated legacy IDs within a slot
+are counted once.
 
 ## Validation and device checks
 

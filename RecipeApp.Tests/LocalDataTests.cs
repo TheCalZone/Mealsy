@@ -88,7 +88,7 @@ public class LocalDataTests
         var plan = await RecipeService.GetMealPlan();
         Assert.Equal(Enumerable.Range(0, 7).Select(i => (long)i), plan.Days.OrderBy(d => d.MealDayIndex).Select(d => d.MealDayIndex));
         using var connection = new SQLiteConnection(RecipeService.DatabasePath);
-        Assert.Single(connection.Table<MealPlan>().ToList());
+        Assert.Single(connection.Table<MealPlan>().ToList(),p => string.IsNullOrEmpty(p.AccountKey));
     }
 
     [Fact]

@@ -167,15 +167,16 @@ namespace RecipeApp.Services
             Staples.Add(staple);
         }
 
-        public static async Task CreateMealPlan()
+        public static async Task CreateMealPlan(string account = null)
         {
             await Init();
             await db.RunInTransactionAsync(connection =>
             {
-                var plan = connection.Table<MealPlan>().FirstOrDefault();
+                var key=account==null ? "" : "user:"+account;
+                var plan = connection.Table<MealPlan>().ToList().FirstOrDefault(p => (p.AccountKey ?? "")==key);
                 if (plan == null)
                 {
-                    plan = new MealPlan { Name = "Default 7 days" };
+                    plan = new MealPlan { Name = "Weekly plan", AccountKey=key, WeekStart=DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek) };
                     connection.Insert(plan);
                 }
                 var existing = connection.Table<MealPlanDay>().Where(d => d.MealPlanID == plan.Id).ToList();
@@ -377,14 +378,15 @@ namespace RecipeApp.Services
         }
         #endregion
 
-        public static async Task<MealPlan> GetMealPlan()
+        public static async Task<MealPlan> GetMealPlan(string account = null)
         {
             await Init();
 
             MealPlan mealPlan = null;
             try
             {
-                mealPlan = await db.Table<MealPlan>().FirstOrDefaultAsync();
+                var key=account==null ? "" : "user:"+account;
+                mealPlan = (await db.Table<MealPlan>().ToListAsync()).FirstOrDefault(p => (p.AccountKey ?? "")==key);
                 if (mealPlan != null)
                 {
                     var mealPlanDays = await db.Table<MealPlanDay>().Where(d => d.MealPlanID == mealPlan.Id).ToListAsync();
@@ -441,7 +443,9 @@ namespace RecipeApp.Services
                         mealPlanDay.DinnerRecipes.AddRange(recipes.Where(r => mealPlanDay.DinnerRecipesIDs.Contains(r.Id)));
                     }
 
-                    mealPlan.Days = mealPlanDays;
+                    if (mealPlan.WeekStart==default) mealPlan.WeekStart=DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                    foreach (var day in mealPlanDays) MealPlanning.NormalizeLegacy(day, recipes);
+                    mealPlan.Days = mealPlanDays.OrderBy(d => d.MealDayIndex).ToList();
                 }
             }
             catch (Exception ex)
@@ -451,6 +455,23 @@ namespace RecipeApp.Services
             }
 
             return mealPlan;
+        }
+
+        public static async Task SaveMealPlanDays(IEnumerable<MealPlanDay> days,long planId)
+        {
+            await Init();var copies=days.Select(d=>MealPlanning.Copy(d)).ToList();
+            await db.RunInTransactionAsync(connection=>{
+                foreach(var day in copies)
+                {
+                    var existing=connection.Table<MealPlanDay>().FirstOrDefault(d=>d.MealPlanID==planId&&d.MealDayIndex==day.MealDayIndex)??throw new InvalidOperationException("A plan day is missing.");
+                    day.Id=existing.Id;day.MealPlanID=planId;connection.Update(day);
+                }
+            });
+        }
+
+        public static async Task SaveMealPlanHeader(MealPlan plan)
+        {
+            await Init(); await db.UpdateAsync(plan);
         }
 
         private static List<T> ReadList<T>(string json)
@@ -478,6 +499,7 @@ namespace RecipeApp.Services
             if (existingDay != null)
             {
                 // If the day already exists, update its properties
+                existingDay.BreakfastPortionsJson=day.BreakfastPortionsJson; existingDay.LunchPortionsJson=day.LunchPortionsJson; existingDay.DinnerPortionsJson=day.DinnerPortionsJson;
                 existingDay.Breakfast = day.Breakfast;
                 existingDay.BreakfastRecipeId = day.BreakfastRecipeId;
                 existingDay.BreakfastNotesJson = day.BreakfastNotesJson;

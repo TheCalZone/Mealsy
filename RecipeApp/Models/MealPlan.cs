@@ -9,6 +9,8 @@ namespace RecipeApp.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
+        public string AccountKey { get; set; }
+        public DateTime WeekStart { get; set; }
         public string Name { get; set; }
 
         private List<MealPlanDay> days;

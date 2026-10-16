@@ -54,6 +54,8 @@ namespace RecipeApp.Views
             signInButton.IsEnabled = !string.IsNullOrEmpty(emailEntry.Text) && !string.IsNullOrEmpty(passwordEntry.Text);
         }
 
+        private async void Features_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new UpgradeFeaturesPage());
+
         private async void Plan_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new PlanPage());
 
         private async void Household_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new HouseholdPage());

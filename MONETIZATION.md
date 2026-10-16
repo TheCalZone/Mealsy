@@ -7,7 +7,7 @@ recipe generation with the user's own OpenAI key, and the signed-in food communi
 Banner advertisements can appear on Home and Food feed after the advertising
 privacy/age flow permits them. No interstitial or rewarded ads are included.
 
-**Mealsy Family:** **£24 per year in the UK**, automatically renewing. One subscription
+**Mealsy Family:** **£3 per month or £24 per year in the UK**, automatically renewing. One subscription
 held by the household owner unlocks household creation, invitations and shared
 shopping-list reading/editing, and removes ads for the owner and all current household
 members (up to 20 total). Invitees do not each need to buy a plan. Google Play displays
@@ -57,11 +57,13 @@ of current Play submission eligibility.
    Firebase mobile configuration, `firebase/functions/billing.js` package constant
    and the plan's manage-subscription link before building/deploying.
 2. Create a subscription with product ID **`mealsy_family`** and auto-renewing base
-   plan ID **`annual`**, billing period **one year**. Set the UK price to **GBP 24.00**,
-   configure other regions/local prices/taxes, activate the base plan, and do not
-   configure an introductory trial for this integration. The app selects the normal
-   annual base-plan offer and shows Play's formatted price, rather than hardcoding
-   an amount into the purchase request.
+   plans **`annual`** (one year, UK **GBP 24.00**) and **`monthly`** (one month,
+   UK **GBP 3.00**). Configure other regions/local prices/taxes and activate both
+   base plans. Do not configure an introductory trial for this integration. The app
+   selects the chosen normal base-plan offer and shows Play's formatted price,
+   rather than hardcoding an amount into the purchase request. Both have the same
+   Family benefits. Existing subscribers manage their subscription in Google Play;
+   the app does not initiate a second simultaneous subscription.
 3. After the target/toolchain release update, use Visual Studio Archive/Publish to
    produce a correctly signed Android App Bundle (`.aab`) for your Play app (the
    repository's current development Release configuration produces an APK). Upload
@@ -102,7 +104,7 @@ of current Play submission eligibility.
 
 The app supplies the purchase token to the authenticated `billing` callable. The
 server fetches the purchase from the Android Publisher subscriptions v2 API using
-its own service identity. It validates the package, product, annual base plan,
+its own service identity. It validates the package, product, supported annual/monthly base plan,
 subscription state, expiry and the SHA-256 obfuscated Firebase account identifier.
 The app sets that identifier in Google Play's billing flow. A token cannot be rebound
 to another Mealsy account. Active unacknowledged subscriptions are acknowledged by
@@ -168,3 +170,23 @@ Replace the configuration with your real details; do not publish invented polici
   or live ad impressions were generated in the cloud.
 
 The complete current feature inventory is in [FEATURES.md](FEATURES.md).
+
+## Monthly option and upgrade features
+
+The upgrade screen now offers £3/month and £24/year UK options. The annual option
+is £2/month equivalent billed annually; twelve monthly payments cost £36 at those
+UK prices. Google Play always supplies the actual local price before purchase.
+A separate **What's included** page lists every Family benefit and distinguishes
+free personal tools, optional OpenAI costs and personal/local meal planning.
+
+For the monthly option, activate `monthly` in Play Console, then deploy the whole
+function codebase so billing, RTDN and scheduled reconciliation all support it:
+
+```sh
+npx --prefix firebase/functions firebase deploy --project mealsy-b732b --only functions:households
+```
+
+No Play product creation, live Firebase deployment or real purchase was performed
+in the cloud workspace. The existing target-SDK/production publishing requirements
+above still apply. Test both base plans, cancellation, restore and invited-member
+ad removal with Google Play license-test accounts on the internal track.

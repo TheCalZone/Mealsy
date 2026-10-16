@@ -1,6 +1,6 @@
 # Household shopping lists
 
-Household creation, invitations and shared-list access now require an active annual
+Household creation, invitations and shared-list access now require an active monthly or annual
 subscription held by the owner; see [monetization setup](../MONETIZATION.md).
 
 Every person signs in with their **own Firebase Authentication account**. A household

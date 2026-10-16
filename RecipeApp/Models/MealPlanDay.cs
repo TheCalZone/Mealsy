@@ -36,6 +36,9 @@ namespace RecipeApp.Models
         public long Id { get; set; }
         [ForeignKey(typeof(MealPlan))]
         public long MealPlanID { get; set; }
+        public string BreakfastPortionsJson { get; set; } = "{}";
+        public string LunchPortionsJson { get; set; } = "{}";
+        public string DinnerPortionsJson { get; set; } = "{}";
         public string MealDay { get; set; }
         public long MealDayIndex { get; set; }
         public long BreakfastRecipeId { get; set; }

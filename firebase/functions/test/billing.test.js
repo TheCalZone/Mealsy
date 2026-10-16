@@ -20,10 +20,10 @@ test('only active, in-grace and cancelled-but-paid subscriptions grant access', 
   for (const state of ['SUBSCRIPTION_STATE_PENDING','SUBSCRIPTION_STATE_ON_HOLD','SUBSCRIPTION_STATE_PAUSED','SUBSCRIPTION_STATE_EXPIRED','UNKNOWN']) assert(!entitlementFromPurchase(purchase('owner', state), 'owner', now).active);
   assert(!entitlementFromPurchase(purchase('owner', 'SUBSCRIPTION_STATE_ACTIVE', now - 1), 'owner', now).active);
 });
-test('purchase must match verified obfuscated account ID, product and annual base plan', () => {
+test('purchase must match verified obfuscated account ID, product and supported base plan', () => {
   assert.throws(() => entitlementFromPurchase(purchase('other'), 'owner', now), {code: 'permission-denied'});
   const wrong = purchase(); wrong.lineItems[0].productId = 'other'; assert.throws(() => entitlementFromPurchase(wrong, 'owner', now), {code: 'invalid-argument'});
-  const monthly = purchase(); monthly.lineItems[0].offerDetails.basePlanId = 'monthly'; assert.throws(() => entitlementFromPurchase(monthly, 'owner', now), {code: 'invalid-argument'});
+  const invalid = purchase(); invalid.lineItems[0].offerDetails.basePlanId = 'weekly'; assert.throws(() => entitlementFromPurchase(invalid, 'owner', now), {code: 'invalid-argument'});
 });
 test('server verifies and acknowledges purchase, retries remain idempotent', async () => {
   const f = fixture(); const plan = await f.call('owner', {action: 'verify', token: 'purchase-token-owner'});
@@ -82,4 +82,18 @@ test('an unused invitation cannot be redeemed after the owner plan expires', asy
   f.db.docs.set('billingEntitlements/owner', {active: false, expiresAt: now - 1});
   await assert.rejects(f.household('member', {action: 'join', code}), {code: 'permission-denied'});
   assert(!f.db.docs.has('householdAccounts/member'));
+});
+
+test('monthly and annual plans grant the same verified household benefits', async () => {
+  const f=fixture(); f.records.get('purchase-token-owner').lineItems[0].offerDetails.basePlanId='monthly';
+  const owner=await f.call('owner',{action:'verify',token:'purchase-token-owner'});
+  assert.equal(owner.basePlanId,'monthly'); assert(owner.familyEnabled && owner.adFree && owner.ownPlan);
+  await f.household('owner',{action:'create',name:'Monthly family'});
+  const {code}=await f.household('owner',{action:'invite'}); await f.household('member',{action:'join',code});
+  const member=await f.call('member',{action:'status'}); assert(member.familyEnabled && member.adFree); assert.equal(member.basePlanId,'monthly');
+});
+test('monthly cancellation retains paid access and expiry removes it', () => {
+  const value=purchase('owner','SUBSCRIPTION_STATE_CANCELED'); value.lineItems[0].offerDetails.basePlanId='monthly';
+  assert(entitlementFromPurchase(value,'owner',now).active);
+  value.lineItems[0].expiryTime=new Date(now-1).toISOString(); assert(!entitlementFromPurchase(value,'owner',now).active);
 });

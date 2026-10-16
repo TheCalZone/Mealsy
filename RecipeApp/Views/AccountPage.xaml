@@ -136,9 +136,10 @@
                     TextColor="White" />
                 <Button
                     CornerRadius="5"
-                    Text="Mealsy Family · £24/year"
+                    Text="Family · £3/month or £24/year"
                     Clicked="Plan_Clicked"
                     TextColor="White" />
+                <Button CornerRadius="5" Text="See all upgrade features" Clicked="Features_Clicked" TextColor="White" />
                 <Button
                     CornerRadius="5"
                     Text="My Recipes"

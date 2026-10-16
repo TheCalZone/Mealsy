@@ -46,7 +46,7 @@ public class HouseholdPage : ContentPage
         try { plan = await PlanService.RefreshAsync(); }
         catch (Exception) { plan = PlanService.Cached ?? new PlanStatus(false, false, false, 0, true, "", ""); }
         // Membership cleanup must remain available even if Play's API is unavailable.
-        content.Add(Action(plan.FamilyEnabled ? "Mealsy Family · Manage plan" : "Unlock Mealsy Family · £24/year", async () => await Navigation.PushAsync(new PlanPage())));
+        content.Add(Action(plan.FamilyEnabled ? "Mealsy Family · Manage plan" : "Unlock Family · £3/month or £24/year", async () => await Navigation.PushAsync(new PlanPage())));
         var household = await HouseholdService.StatusAsync();
         CheckAccount();
         if (household.HouseholdId == null)
@@ -66,7 +66,7 @@ public class HouseholdPage : ContentPage
         }
         else
         {
-            if (!household.FamilyEnabled) content.Add(new Label { Text = "Family sharing is paused. The household owner needs to renew or restore their annual plan. Your household data has been kept.", TextColor = Colors.Black });
+            if (!household.FamilyEnabled) content.Add(new Label { Text = "Family sharing is paused. The household owner needs to renew or restore their Family plan. Your household data has been kept.", TextColor = Colors.Black });
             content.Add(new Label { Text = household.Name, FontSize = 24, TextColor = Color.FromArgb("#214D35"), FontAttributes = FontAttributes.Bold });
             content.Add(new Label { Text = $"{household.Members.Count} of 20 members", TextColor = Colors.Black });
             foreach (var member in household.Members)

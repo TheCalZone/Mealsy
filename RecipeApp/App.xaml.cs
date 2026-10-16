@@ -9,6 +9,7 @@ namespace RecipeApp;
 
 public partial class App : Application
 {
+    public static bool InitialAccountReady { get; private set; }
 
         public App()
         {
@@ -29,6 +30,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
+                InitialAccountReady=true;
                 await MainPage.DisplayAlert("Local data unavailable", "Your local data could not be loaded. Please restart the app.", "OK");
                 return;
             }
@@ -46,6 +48,7 @@ public partial class App : Application
                 {
                     AuthHelper.UserId = user.Uid;
                     AuthHelper.Email = user.Email;
+                    InitialAccountReady=true;
                     await LoadDataAsync();
                 }
             }
@@ -54,6 +57,7 @@ public partial class App : Application
                 // A network/secure-storage failure must not make local recipes unusable.
                 Debug.WriteLine(ex);
             }
+            finally { InitialAccountReady=true; }
         }
 
         protected override void OnResume()

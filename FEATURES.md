@@ -4,7 +4,8 @@ This inventory describes implemented code, not confirmation that every remote se
 has been deployed. Firebase, Google Play, AdMob and OpenAI require the configuration
 noted below. The active app target is Android; iOS/Windows are not active build targets.
 
-See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest UI upgrade.
+See [recipe editor details](RECIPE_EDITOR.md), [shopping creator behaviour](SHOPPING_CREATOR.md),
+and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setup and device verification.
 
 ## Free personal features
 
@@ -40,6 +41,14 @@ See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest U
 - Keep the original signed-out device list and explicitly copy it into a signed-in
   account when desired. Recipe shortcuts preserve existing item details/checkmarks.
 
+**Android home-screen widget**
+- Add a Mealsy quick-add widget from the launcher or the shopping screen's widget helper.
+- Each widget remembers its personal/device or household list selection.
+- Opens a focused item/quantity/note form. Personal saves work offline; household
+  writes verify active access online. Pending sync is retained locally.
+- Account changes require a new explicit selection; no shopping items appear on the
+  home screen. Personal use is free, household use follows Family access.
+
 **Shopping-list creator, essentials and snacks**
 - Three-step flow: choose meals, check the cupboard and extras, review the list.
 - Search/tag filters, servings per batch and repeated-batch controls.
@@ -56,10 +65,14 @@ See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest U
 - See [shopping creator behaviour and device checks](SHOPPING_CREATOR.md).
 
 **Meal planning**
-- Add/manage plan days; assign multiple recipes to breakfast, lunch and dinner.
-- Record meal notes/extras, save/reopen the plan, and clear it when needed.
-- Turn the plan's recipes into a personal shopping list.
-- Plans are personal/local; shared household meal-plan editing is not implemented.
+- Dated weekly overview, day shortcuts, progress and a reusable week-start date.
+- Search/select multiple recipes per meal, adjust planned portions, add/edit/remove
+  notes for leftovers or eating out, and save a detached day with discard protection.
+- Copy days, clear a day or the full week with confirmation, and copy the weekly plan.
+- Shopping review uses total planned portions across all meal slots.
+- Plans are local and account-specific; the previous device plan stays separate and
+  can be explicitly copied into an account. Shared household meal-plan editing is
+  not implemented.
 
 **AI recipe creator**
 - Generate a general recipe or dessert suggestion with metric measurements.
@@ -72,7 +85,7 @@ See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest U
 - Firebase email/password registration, sign-in/out and password-reset requests.
 - Profile first/last name, dietary restrictions and favourite cuisines; profile editing
   keeps the account email read-only.
-- Subscription status, restore purchases, Google Play manage/cancel link, annual
+- Subscription status, restore purchases, Google Play manage/cancel link, monthly/annual
   price lookup, advertising privacy choices and publisher privacy-policy link.
 
 ## Food community (free for signed-in users)
@@ -92,9 +105,11 @@ See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest U
   and mark reports reviewed. Moderator rights are server-issued custom claims.
 - No follows, direct messages, push notifications or recommendation algorithm yet.
 
-## Mealsy Family — £24/year in the UK
+## Mealsy Family — £3/month or £24/year in the UK
 
-- One owner subscription covers the whole household, up to 20 members.
+- Monthly and annual options unlock the same benefits; Google Play supplies local
+  prices. One owner subscription covers the whole household, up to 20 members.
+- An upgrade features page explains Family benefits, free tools and separate AI costs.
 - Create a household, invite members using random single-use codes valid for seven
   days, revoke invitations, remove members, leave or delete a household.
 - Every person uses their own login and retains their own personal list.
@@ -118,7 +133,7 @@ See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest U
 
 - Household/cloud lists/community need deployed Firebase functions and reviewed
   Firestore rules; the desktop studio also needs Firebase web configuration/Hosting.
-- Subscriptions need a real Play Console annual product, internal-track testing,
+- Subscriptions need a real Play Console product with annual/monthly base plans, internal-track testing,
   Android Publisher permissions, RTDN topic and deployed billing/reconciliation.
 - Ad revenue needs your real AdMob IDs, payment/consent setup and privacy policy.
   These are deliberately not fabricated or activated in source control.
