@@ -116,18 +116,17 @@ public class ShoppingListDocument
     {
         var result = new List<ShoppingListItem>();
         var category = "Other";
-        foreach (var raw in (text ?? "").Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
+        foreach (var raw in PastedListText.Lines(text))
         {
-            var line = raw.Trim();
+            var line = PastedListText.Clean(raw, out var collected);
             if (line.Length == 0) continue;
-            if ((line.StartsWith('[') && line.EndsWith(']')) || line.EndsWith(':'))
+            // Recognize exported category headings, but don't drop a bracket-wrapped item.
+            if ((PastedListText.IsBracketHeading(raw) && new[] { "Produce", "Pantry", "Drinks", "Meat", "Dairy", "Bakery", "Frozen" }.Contains(CategoryName(line))) ||
+                raw.Trim().Equals("[Other]", StringComparison.OrdinalIgnoreCase) || line.EndsWith(':'))
             {
-                category = CategoryName(line.StartsWith('[') ? line[1..^1] : line[..^1]);
+                category = CategoryName(line.TrimEnd(':'));
                 continue;
             }
-            var collected = line.StartsWith("[x] ", StringComparison.OrdinalIgnoreCase);
-            if (collected || line.StartsWith("[ ] ")) line = line[4..].Trim();
-            else if (line.StartsWith("- ") || line.StartsWith("• ")) line = line[2..].Trim();
             if (line.Length > 0)
             {
                 var item=new ShoppingListItem { Name=line, Category=category, InBasket=collected };

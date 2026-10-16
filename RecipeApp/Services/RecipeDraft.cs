@@ -103,19 +103,21 @@ public class RecipeDraft
     }
     public static string NormalizeTags(string text) => string.Join(",", (text ?? "").Split(new[] { ',', ';', '\n', '#' }, StringSplitOptions.RemoveEmptyEntries)
         .Select(t => t.Trim().ToLowerInvariant()).Where(t => t.Length > 0).Append("all").Distinct(StringComparer.OrdinalIgnoreCase));
-    public static List<string> ParseSteps(string text) => Regex.Split((text ?? "").Replace("\r", ""), @"\n\s*\n|\n(?=\s*\d+[.)]\s)")
+    public static List<string> ParseSteps(string text) => Regex.Split(string.Join("\n", PastedListText.Lines(text)), @"\n\s*\n|\n(?=\s*\d+[.)]\s)")
         .SelectMany(s => s.Contains('\n') ? s.Split('\n') : new[] { s })
-        .Select(s => Regex.Replace(s.Trim(), @"^(?:step\s+)?\d+[.)\:]\s*", "", RegexOptions.IgnoreCase)).Where(s => s.Length > 0).ToList();
+        .Select(s => Regex.Replace(PastedListText.Clean(s, out _), @"^(?:step\s+)?\d+[.)\:]\s*", "", RegexOptions.IgnoreCase)).Where(s => s.Length > 0).ToList();
 
     public static List<RecipeSection> ParseIngredients(string text)
     {
         var result = new List<RecipeSection>(); var section = new RecipeSection(); result.Add(section);
         var number = @"(?:\d+\s*[¼½¾⅓⅔⅛⅜⅝⅞]|\d+\s+\d+/\d+|\d+/\d+|\d+(?:[.,]\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞])";
         var pattern = @"^(?<qty>" + number + @"(?:\s*[x×]\s*" + number + @")?\s*(?:(?:tablespoons?|teaspoons?|cups?|pounds?|ounces?|tbsp|tsp|lbs?|oz|kg|mg|g|ml|litres?|liters?|l)(?=\s|$))?)\s+(?<name>.+)$";
-        foreach (var raw in (text ?? "").Replace("\r", "").Split('\n'))
+        var lines = PastedListText.Lines(text).ToList();
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
         {
-            var line = Regex.Replace(raw.Trim(), @"^(?:[-•*]\s+|\[[ xX]\]\s+)", ""); if (line.Length == 0) continue;
-            if (line.StartsWith('[') && line.EndsWith(']') || line.EndsWith(':') && line.Length < 101)
+            var raw = lines[lineIndex];
+            var line = PastedListText.Clean(raw, out _); if (line.Length == 0) continue;
+            if ((PastedListText.IsRecipeSection(raw) && lines.Skip(lineIndex + 1).Any(l => !string.IsNullOrWhiteSpace(l))) || line.EndsWith(':') && line.Length < 101)
             {
                 var name = line.Trim('[', ']', ':').Trim();
                 if (name.Length > 0) { section = new() { Name = name }; result.Add(section); } continue;
