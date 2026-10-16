@@ -4,11 +4,21 @@ This inventory describes implemented code, not confirmation that every remote se
 has been deployed. Firebase, Google Play, AdMob and OpenAI require the configuration
 noted below. The active app target is Android; iOS/Windows are not active build targets.
 
+See [recipe editor details and device checks](RECIPE_EDITOR.md) for the latest UI upgrade.
+
 ## Free personal features
 
 **Recipe book**
-- Create, view, edit and delete recipes, with a photo, method, servings, preparation
-  time, rating and tags.
+- Create, view, edit and delete recipes using one shared editor, with a photo,
+  introduction, servings, separate prep/cook times, rating and tags.
+- Preview before saving; local account-specific drafts recover after navigation.
+  Editing uses a detached copy and detects changes made to the saved recipe.
+- Reorder ingredient sections and method steps; paste ingredient lists with quantities,
+  fractions and section headings, or paste method steps.
+- Private cooking notes and a source link stay out of community snapshots and copied
+  recipe text. Photo selection resizes images and removes EXIF metadata.
+- Cooking view has temporary ingredient/step checkboxes and an optional keep-awake
+  switch. Total times appear in recipe-book and meal-planning cards.
 - Organize ingredients into sections/groups; enter quantities, categories and notes.
   Add individual ingredients or use bulk text entry.
 - Search recipes by name and filter by tags. Copy a recipe as text, use the recipe's
@@ -65,7 +75,8 @@ noted below. The active app target is Android; iOS/Windows are not active build 
   protection. Private household lists and unshared recipes never populate the feed.
 - Like/unlike, comment and remove your own content; report posts for review.
 - View shared recipes, save an independent private copy, or add their ingredients
-  to your personal shopping list.
+  to your personal shopping list. Shared snapshots retain ingredient sections,
+  key-ingredient flags, introductions and prep/cook times.
 - A desktop Community Studio supports publishing, browsing, likes, comments and
   moderator access through Firebase Hosting.
 - Trusted moderators can inspect reports, hide/restore posts, delete posts/comments

@@ -111,11 +111,9 @@ public class FeedRecipePage : ContentPage
     public FeedRecipePage(FoodPost post)
     {
         Title = post.Recipe.Title; BackgroundColor = Color.FromArgb("#F5F7F2");
-        var body = new VerticalStackLayout { Padding = 20, Spacing = 14 };
-        body.Add(FoodFeedPage.Text(post.Recipe.Title, 28, true)); body.Add(FoodFeedPage.Text("Shared by " + post.AuthorName));
-        body.Add(FoodFeedPage.Text($"Serves {post.Recipe.Servings} · {post.Recipe.PrepMinutes} minutes"));
-        foreach (var ingredient in post.Recipe.Ingredients) body.Add(FoodFeedPage.Text($"• {ingredient.Quantity} {ingredient.Name}" + (string.IsNullOrWhiteSpace(ingredient.Note) ? "" : $" — {ingredient.Note}")));
-        body.Add(FoodFeedPage.Text(post.Recipe.Method));
+        var body = new VerticalStackLayout { Spacing = 12 };
+        var reader = new RecipeReadView(post.Recipe.ToRecipe(post.Photo), privateDetails: false);
+        body.Add(reader);
         var saved = false;
         body.Add(FoodFeedPage.Button("Save to my recipes", async () => {
             if (saved) { await DisplayAlert("Already saved", "You saved a copy during this visit.", "OK"); return; }
@@ -126,6 +124,9 @@ public class FeedRecipePage : ContentPage
             ShoppingListStore.AppendIngredients(post.Recipe.ToRecipe("").Ingredients);
             await DisplayAlert("Ingredients added", "Added to your personal shopping list.", "OK");
         }));
-        Content = new ScrollView { Content = body };
+        body.Remove(reader);
+        var layout = new Grid { RowDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) } };
+        layout.Add(reader, 0, 0); layout.Add(body, 0, 1); Content = layout;
+        Disappearing += (_, _) => reader.StopCooking();
     }
 }

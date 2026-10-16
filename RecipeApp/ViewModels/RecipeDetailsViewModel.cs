@@ -162,28 +162,7 @@ namespace RecipeApp.ViewModels
 
         private async Task Copy()
         {
-            var recipeDetails = new StringBuilder();
-
-            // Format the recipe details as you want, for example:
-            recipeDetails.AppendLine($"Recipe Name: {Recipe.RecipeName}");
-            recipeDetails.AppendLine($"Ingredients:");
-
-            foreach (var ingredient in Recipe.Ingredients)
-            {
-                if (ingredient.MainIngredient)
-                {
-                    recipeDetails.AppendLine($"- {ingredient.Name}" + "- Primary");
-                }
-                else
-                {
-                    recipeDetails.AppendLine($"- {ingredient.Name}");
-                }
-            }
-
-            recipeDetails.AppendLine($"Method: {Recipe.RecipeMethod}");
-
-            // Copy the text to the clipboard
-            await Clipboard.SetTextAsync(recipeDetails.ToString());
+            await Clipboard.SetTextAsync(RecipePresentation.PlainText(Recipe));
 
             var toast = Toast.Make("Recipe copied to clipboard", ToastDuration.Short, 14);
             await toast.Show();

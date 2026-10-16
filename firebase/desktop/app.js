@@ -42,8 +42,9 @@ function render(post, moderation) {
   if (post.photo) { const image = element('img'); image.src = `data:image/${post.photo.startsWith('iVBOR') ? 'png' : 'jpeg'};base64,${post.photo}`; image.alt = 'Food shared by ' + post.authorName; card.append(image); }
   card.append(element('p', post.caption || ''));
   if (post.recipe) {
-    const details = element('details'); details.append(element('summary', post.recipe.title), element('p', `Serves ${post.recipe.servings} · ${post.recipe.prepMinutes} minutes`));
-    for (const i of post.recipe.ingredients) details.append(element('p', `• ${i.quantity} ${i.name}${i.note ? ' — ' + i.note : ''}`));
+    const details = element('details'); details.append(element('summary', post.recipe.title), element('p', post.recipe.description || ''), element('p', `Serves ${post.recipe.servings} · Prep ${post.recipe.prepMinutes} min · Cook ${post.recipe.cookMinutes || 0} min`));
+    let lastSection;
+    for (const i of post.recipe.ingredients) { if ((i.section || 'Ingredients') !== lastSection) { lastSection = i.section || 'Ingredients'; details.append(element('h4', lastSection)); } details.append(element('p', `• ${i.quantity} ${i.name}${i.note ? ' — ' + i.note : ''}`)); }
     details.append(element('p', post.recipe.method)); card.append(details);
   }
   if (!post.deleted && !post.hidden) {

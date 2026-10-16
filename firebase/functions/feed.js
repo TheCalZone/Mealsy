@@ -13,9 +13,10 @@ function id(value) {
 function recipe(value) {
   if (value == null) return null;
   if (!Array.isArray(value.ingredients) || value.ingredients.length > 100 || value.ingredients.some(i => !i || typeof i !== 'object')) fail('invalid-argument', 'Recipes support up to 100 ingredients.');
+  if (value.ingredients.some(i => i.isKey != null && typeof i.isKey !== 'boolean')) fail('invalid-argument', 'Invalid key ingredient flag.');
   const integer = n => { if (!Number.isInteger(n) || n < 0 || n > 10000) fail('invalid-argument', 'Invalid serving or preparation time.'); return n; };
-  return {title: text(value.title, 160, true), method: text(value.method, 15000), servings: integer(value.servings),
-    prepMinutes: integer(value.prepMinutes), ingredients: value.ingredients.map(i => ({name: text(i.name, 200, true), quantity: text(i.quantity, 200), category: text(i.category, 100), note: text(i.note, 500)}))};
+  return {description: text(value.description ?? "", 500), cookMinutes: integer(value.cookMinutes ?? 0), title: text(value.title, 160, true), method: text(value.method, 15000), servings: integer(value.servings),
+    prepMinutes: integer(value.prepMinutes), ingredients: value.ingredients.map(i => ({name: text(i.name, 200, true), quantity: text(i.quantity, 200), category: text(i.category, 100), note: text(i.note, 500), section: text(i.section ?? "Ingredients", 100), isKey: i.isKey == null ? true : i.isKey}))};
 }
 function photo(value) {
   if (!value) return '';

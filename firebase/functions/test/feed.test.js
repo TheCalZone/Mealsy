@@ -109,3 +109,12 @@ test('recipe snapshots and server-owned post fields ignore private/injected meta
   assert(!JSON.stringify(p.recipe).includes('private-owner')); assert(!JSON.stringify(p.recipe).includes('InBasket')); assert(!JSON.stringify(p.recipe).includes('RecipeId'));
   assert.throws(() => recipe({title: 'Bad', method: '', servings: 2, prepMinutes: 2, ingredients: [null]}), {code: 'invalid-argument'});
 });
+test('new recipe descriptions, cook time and sections survive publication; private annotations do not', async () => {
+  const f = fixture();
+  await f.call('alice', {...content, recipe: {title: 'Soup', description: 'Weeknight favourite', cookMinutes: 25, method: 'Cook.', servings: 2, prepMinutes: 10,
+    notes: 'Private note', sourceUrl: 'https://private.example.com', ingredients: [{name: 'Tomatoes', quantity: '400 g', category: 'Produce', note: 'Chopped', section: 'Soup', isKey: false}]}});
+  const shared = (await f.call('reader', {action: 'list'})).posts[0].recipe;
+  assert.equal(shared.description, 'Weeknight favourite'); assert.equal(shared.cookMinutes, 25);
+  assert.equal(shared.ingredients[0].section, 'Soup'); assert.equal(shared.ingredients[0].isKey, false);
+  assert(!JSON.stringify(shared).includes('Private note')); assert(!JSON.stringify(shared).includes('private.example'));
+});

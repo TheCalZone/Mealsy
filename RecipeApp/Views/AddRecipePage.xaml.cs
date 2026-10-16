@@ -1,35 +1,15 @@
-﻿using MvvmHelpers;
-using RecipeApp.Models;
 using RecipeApp.ViewModels;
 
-namespace RecipeApp.Views
+namespace RecipeApp.Views;
+public partial class AddRecipePage : ContentPage
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class AddRecipePage : ContentPage
+    private readonly AddRecipeViewModel model = new();
+    public AddRecipePage()
     {
-        public AddRecipePage()
-        {
-            InitializeComponent();
-        }
-
-        protected override void OnAppearing()
-        {
-            base.OnAppearing();
-            //((AddRecipeViewModel)BindingContext).ListOfIngredients= new ObservableRangeCollection<IngredientGroup> { new IngredientGroup { new Ingredient { Name = "" } } };
-        }
-
-        //void OnEntryFocused(object sender, FocusEventArgs e)
-        //{
-        //    // Scroll the ScrollView to keep the focused Entry visible
-        //    AddRecipeScrollView.ScrollToAsync((View)sender, ScrollToPosition.MakeVisible, true);
-        //}
-
-        void OnEntryCompleted(object sender, EventArgs e)
-        {
-            // Set the focus to another element (e.g., the page itself)
-            this.Unfocus();
-        }
-
-
+        InitializeComponent(); BindingContext = model; Content = new RecipeEditorView(model);
+        ToolbarItems.Add(new ToolbarItem("Preview", null, async () => await model.Preview()));
+        ToolbarItems.Add(new ToolbarItem("Save", null, async () => await model.Save()));
     }
+    protected override async void OnAppearing() { base.OnAppearing(); await model.Initialize(); }
+    protected override async void OnDisappearing() { base.OnDisappearing(); await model.SaveDraft(); }
 }

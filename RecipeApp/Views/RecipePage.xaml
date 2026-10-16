@@ -141,13 +141,13 @@
                                                     Orientation="Horizontal">
                                                     <Label
                                                         FontSize="14"
-                                                        Text="Prep Time(m): "
+                                                        Text="Total time (min): "
                                                         TextColor="White" />
                                                     <Label
                                                         FontAttributes="Bold"
                                                         FontSize="16"
                                                         LineBreakMode="NoWrap"
-                                                        Text="{Binding PrepTime}"
+                                                        Text="{Binding TotalTime}"
                                                         TextColor="White" />
                                                 </StackLayout>
                                                 <StackLayout

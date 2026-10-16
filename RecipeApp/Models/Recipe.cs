@@ -32,6 +32,16 @@ namespace RecipeApp.Models
         [FirestoreProperty("recipe_method")]
         public string RecipeMethod { get; set; }
 
+        [FirestoreProperty("description")]
+        public string Description { get; set; } = "";
+        [FirestoreProperty("cook_time")]
+        public long CookTime { get; set; }
+        [FirestoreProperty("source_url")]
+        public string SourceUrl { get; set; } = "";
+        [FirestoreProperty("notes")]
+        public string Notes { get; set; } = "";
+        [Ignore] public long TotalTime => PrepTime + CookTime;
+
         private string recipeImage;
         [FirestoreProperty("recipe_image")]
         public string RecipeImage { get => recipeImage; set => recipeImage = value; }

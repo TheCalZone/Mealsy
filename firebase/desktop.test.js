@@ -79,3 +79,16 @@ test('desktop hides moderation for normal users and clears feed on logout', asyn
 test('unconfigured desktop explains the missing Firebase web setup', async () => {
   const p = await page(false, false); await p.getByRole('status').filter({hasText: 'Desktop setup:'}).waitFor(); await p.close();
 });
+
+test('desktop renders extended recipe metadata and ingredient sections safely', async () => {
+  const p = await page();
+  await p.getByRole('heading', {name: 'Chef', exact: true}).waitFor();
+  await p.evaluate(() => { window.post.recipe = {title:'Family pasta', description:'A simple dinner', servings:4, prepMinutes:10, cookMinutes:20, method:'1. Cook.', ingredients:[{name:'Tomatoes', quantity:'400 g', section:'Sauce', note:''}]}; });
+  await p.getByRole('button', {name:'♡ Like · 0', exact:true}).click();
+  await p.getByText('Family pasta', {exact:true}).click();
+  await p.getByText('A simple dinner', {exact:true}).waitFor();
+  await p.getByText('Serves 4 · Prep 10 min · Cook 20 min', {exact:true}).waitFor();
+  await p.getByRole('heading', {name:'Sauce', exact:true}).waitFor();
+  await p.getByText('• 400 g Tomatoes', {exact:true}).waitFor();
+  await p.close();
+});

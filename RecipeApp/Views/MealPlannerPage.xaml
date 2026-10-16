@@ -124,13 +124,13 @@
                                             Orientation="Horizontal">
                                             <Label
                                                 FontSize="14"
-                                                Text="Prep Time(m): "
+                                                Text="Total time (min): "
                                                 TextColor="White" />
                                             <Label
                                                 FontAttributes="Bold"
                                                 FontSize="16"
                                                 LineBreakMode="NoWrap"
-                                                Text="{Binding SelectedBreakfast.PrepTime}"
+                                                Text="{Binding SelectedBreakfast.TotalTime}"
                                                 TextColor="White" />
                                         </StackLayout>
                                         <StackLayout
@@ -251,13 +251,13 @@
                                             Orientation="Horizontal">
                                             <Label
                                                 FontSize="14"
-                                                Text="Prep Time(m): "
+                                                Text="Total time (min): "
                                                 TextColor="White" />
                                             <Label
                                                 FontAttributes="Bold"
                                                 FontSize="16"
                                                 LineBreakMode="NoWrap"
-                                                Text="{Binding SelectedLunch.PrepTime}"
+                                                Text="{Binding SelectedLunch.TotalTime}"
                                                 TextColor="White" />
                                         </StackLayout>
                                         <StackLayout
@@ -378,13 +378,13 @@
                                             Orientation="Horizontal">
                                             <Label
                                                 FontSize="14"
-                                                Text="Prep Time(m): "
+                                                Text="Total time (min): "
                                                 TextColor="White" />
                                             <Label
                                                 FontAttributes="Bold"
                                                 FontSize="16"
                                                 LineBreakMode="NoWrap"
-                                                Text="{Binding SelectedDinner.PrepTime}"
+                                                Text="{Binding SelectedDinner.TotalTime}"
                                                 TextColor="White" />
                                         </StackLayout>
                                         <StackLayout
