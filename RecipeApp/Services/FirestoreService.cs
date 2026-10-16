@@ -15,7 +15,7 @@ namespace RecipeApp.Services
         {
             get { return CrossFirebaseAuth.Current.CurrentUser?.Uid;}
 
-            set { UserId = value;} 
+ 
         }
 
         public static async Task SetUserData(string uid, Dictionary<object,object> data)
@@ -76,6 +76,8 @@ namespace RecipeApp.Services
                 {
                     {"recipe_name", recipe.RecipeName },
                     {"recipe_method", recipe.RecipeMethod},
+                    {"recipe_image", recipe.RecipeImage ?? string.Empty},
+                    {"tags", recipe.Tags ?? string.Empty},
                     {"serving", recipe.Serving },
                     {"prep_time", recipe.PrepTime },
                     {"rating",recipe.Rating },
@@ -116,6 +118,8 @@ namespace RecipeApp.Services
                 {
                     {"recipe_name", recipe.RecipeName },
                     {"recipe_method", recipe.RecipeMethod},
+                    {"recipe_image", recipe.RecipeImage ?? string.Empty},
+                    {"tags", recipe.Tags ?? string.Empty},
                     {"serving", recipe.Serving },
                     {"prep_time", recipe.PrepTime },
                     {"rating",recipe.Rating },
@@ -150,12 +154,13 @@ namespace RecipeApp.Services
                         RecipeName = document.Data.RecipeName,
                         RecipeMethod = document.Data.RecipeMethod,
                         RecipeImage = document.Data.RecipeImage,
+                        Tags = document.Data.Tags,
                         Serving = document.Data.Serving,
                         PrepTime = document.Data.PrepTime,
                         Rating = document.Data.Rating,
-                        Ingredients = document.Data.FirebaseIngredients,
+                        Ingredients = document.Data.FirebaseIngredients ?? new List<Ingredient>(),
                         LastUpdated = document.Data.LastUpdated,
-                        FirebaseUID = document.Data.FirebaseUID,
+                        FirebaseUID = document.Data.FirebaseUID ?? UserId,
                         Id = document.Data.Id,
                     };
                     recipes.Add(recipe);
@@ -186,6 +191,8 @@ namespace RecipeApp.Services
                         Name = doc.Data.Name,
                         Tag = doc.Data.Tag,
                         Id = doc.Data.Id,
+                        FirebaseUID = doc.Data.FirebaseUID ?? UserId,
+                        LastUpdated = doc.Data.LastUpdated,
                     };
 
                     snacks.Add(snack);
@@ -225,7 +232,9 @@ namespace RecipeApp.Services
                 var updatedSnack = new Dictionary<object, object> {
                 { "name", snack.Name},
                 { "tag",snack.Tag},
-                {"lastupdated",snack.LastUpdated }
+                {"lastUpdated",snack.LastUpdated },
+                {"sqlId", snack.Id},
+                {"firebaseUID", snack.FirebaseUID ?? UserId}
                 };
 
                 await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).SetDataAsync(updatedSnack);
@@ -248,6 +257,8 @@ namespace RecipeApp.Services
                         Name = doc.Data.Name,
                         Tag = doc.Data.Tag,
                         Id = doc.Data.Id,
+                        FirebaseUID = doc.Data.FirebaseUID ?? UserId,
+                        LastUpdated = doc.Data.LastUpdated,
                     };
 
                     essentials.Add(essential);
@@ -298,7 +309,9 @@ namespace RecipeApp.Services
             {
                 { "name", staple.Name },
                 { "tag", staple.Tag },
-                { "lastupdated", staple.LastUpdated }
+                { "lastUpdated", staple.LastUpdated },
+                { "sqlId", staple.Id },
+                { "firebaseUID", staple.FirebaseUID ?? UserId }
             };
 
                 await CrossFirebaseFirestore.Current

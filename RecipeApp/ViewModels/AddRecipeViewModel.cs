@@ -293,6 +293,7 @@ namespace RecipeApp.ViewModels
                 recipe.Rating = 0;
             }
 
+            Ingredients.Clear();
             foreach (IngredientGroup group in ListOfIngredients)
             {
                 foreach (Ingredient item in group)
@@ -310,6 +311,7 @@ namespace RecipeApp.ViewModels
             recipe.Ingredients = Ingredients.ToList();
             recipe.FirebaseIngredients = Ingredients.ToList();
             recipe.RecipeMethod = RecipeMethod;
+            recipe.RecipeImage = RecipeImage;
             recipe.LastUpdated = DateTime.UtcNow;
 
             if (AuthHelper.UserId != null)
@@ -384,7 +386,7 @@ namespace RecipeApp.ViewModels
         }
         private string SuggestTagForIngredient(string ingredientName)
         {
-            var matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
+            var matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName?.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
             if (matchedIngredient != null)
             {
                 string matchedTag = matchedIngredient.Tag;
@@ -455,7 +457,7 @@ namespace RecipeApp.ViewModels
                             ingredientName = match.Value.Trim();
                         }
                         // Try to find the matched ingredient in your master list
-                        Ingredient matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
+                        Ingredient matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName?.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
                         string matchedTag = (matchedIngredient != null) ? matchedIngredient.Tag : null;
 
                         // Create an Ingredient based on the matched item

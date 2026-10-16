@@ -38,32 +38,6 @@ public static class MauiProgram
         .RegisterFirebaseServices()
                     .ConfigureMauiHandlers(handlers =>
                     {
-                        // Assuming CustomEditor is your Editor control that should handle the Enter key press
-                        EditorHandler.Mapper.AppendToMapping("HandleEnterPress", (handler, view) =>
-                        {
-                            if (view is CustomEditor customEditor)
-                            {
-#if ANDROID
-                                // Example for Android: listen for the EditorAction event
-                                handler.PlatformView.EditorAction += (sender, args) =>
-                                {
-                                    if (args.ActionId == Android.Views.InputMethods.ImeAction.Done)
-                                    {
-                                        // Execute the command bound to the CustomEditor
-                                        customEditor.EnterPressedCommand?.Execute(null);
-                                        args.Handled = true;
-                                    }
-                                };
-#elif IOS || MACCATALYST
-                        // For iOS, you might need to subclass the EditorHandler to intercept the return key
-#elif WINDOWS
-                        // Windows platform-specific implementation
-#endif
-                            }
-                        });
-                    }).
-                    ConfigureMauiHandlers(handlers =>
-                    {
                         handlers.AddHandler(typeof(CustomEditor), typeof(CustomEditorHandler));
                     });
 

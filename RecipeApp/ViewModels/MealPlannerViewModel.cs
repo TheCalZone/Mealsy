@@ -61,19 +61,19 @@ namespace RecipeApp.ViewModels
 
         private async void AddLunchNote()
         {
-            string note = await Shell.Current.DisplayPromptAsync("Add Note", "Enter a note for breakfast");
-
-            selectedDay.LunchNotes.Add(note);
+            string note = await Shell.Current.DisplayPromptAsync("Add Note", "Enter a note for lunch");
+            if (!string.IsNullOrWhiteSpace(note))
+                SelectedDay.LunchNotes.Add(note);
         }
         private async void AddDinnerNote()
         {
-            string note = await Shell.Current.DisplayPromptAsync("Add Note", "Enter a note for breakfast");
-
-            selectedDay.DinnerNotes.Add(note);
+            string note = await Shell.Current.DisplayPromptAsync("Add Note", "Enter a note for dinner");
+            if (!string.IsNullOrWhiteSpace(note))
+                SelectedDay.DinnerNotes.Add(note);
         }
         private async void AddBreakfastRecipe()
         {
-            string recipename = await Shell.Current.DisplayActionSheet("Select a Recipe", "Cancel", "Canel", Recipes.Select(r => r.RecipeName).ToArray());
+            string recipename = await Shell.Current.DisplayActionSheet("Select a Recipe", "Cancel", null, Recipes.Select(r => r.RecipeName).ToArray());
             if (!string.IsNullOrWhiteSpace(recipename))
             {
                 Recipe recipe = Recipes.Where(r => r.RecipeName == recipename).FirstOrDefault();
@@ -124,14 +124,8 @@ namespace RecipeApp.ViewModels
                 SelectedDay.BreakfastRecipeId = 0;
                 selectedDay.Breakfast = String.Empty;
             }
-            if (SelectedDay.BreakfastRecipesIDs.Count > 0)
-            {
-                SelectedDay.BreakfastIDJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.BreakfastRecipesIDs);
-            }
-            if (SelectedDay.BreakfastNotes.Count > 0)
-            {
-                SelectedDay.BreakfastNotesJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.BreakfastNotes);
-            }
+            SelectedDay.BreakfastIDJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.BreakfastRecipesIDs);
+            SelectedDay.BreakfastNotesJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.BreakfastNotes);
 
 
             if (SelectedLunch != null)
@@ -141,16 +135,11 @@ namespace RecipeApp.ViewModels
             }
             else
             {
+                SelectedDay.LunchRecipeId = 0;
                 SelectedDay.Lunch = String.Empty;
             }
-            if (SelectedDay.LunchRecipesIDs.Count > 0)
-            {
-                SelectedDay.LunchIDJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.LunchRecipesIDs);
-            }
-            if (SelectedDay.LunchNotes.Count > 0)
-            {
-                SelectedDay.LunchNotesJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.LunchNotes);
-            }
+            SelectedDay.LunchIDJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.LunchRecipesIDs);
+            SelectedDay.LunchNotesJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.LunchNotes);
 
 
             if (SelectedDinner != null)
@@ -160,16 +149,11 @@ namespace RecipeApp.ViewModels
             }
             else
             {
+                SelectedDay.DinnerRecipeId = 0;
                 SelectedDay.Dinner = String.Empty;
             }
-            if (SelectedDay.DinnerRecipesIDs.Count > 0)
-            {
-                SelectedDay.DinnerIDJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.DinnerRecipesIDs);
-            }
-            if (SelectedDay.DinnerNotes.Count > 0)
-            {
-                SelectedDay.DinnerNotesJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.DinnerNotes);
-            }
+            SelectedDay.DinnerIDJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.DinnerRecipesIDs);
+            SelectedDay.DinnerNotesJson = System.Text.Json.JsonSerializer.Serialize(SelectedDay.DinnerNotes);
 
             await RecipeService.SaveMealPlanDay(SelectedDay, MealPlan.Id, SelectedDay.MealDayIndex);
             await Shell.Current.Navigation.PopAsync();

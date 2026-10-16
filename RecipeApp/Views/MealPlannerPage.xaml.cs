@@ -19,11 +19,18 @@ namespace RecipeApp.Views
             base.OnAppearing();
 
             // Get all recipes and set the view model's Recipes property
-            var recipes = RecipeService.Recipes;
+            var recipes = await RecipeService.GetAllRecipes();
             ((MealPlannerViewModel)BindingContext).Recipes.ReplaceRange(recipes);
             var mealPlan = await RecipeService.GetMealPlan();
             ((MealPlannerViewModel)BindingContext).MealPlan = mealPlan;
-            ((MealPlannerViewModel)BindingContext).SelectedDay = mealPlan.Days[SelectedDayIndex];
+            var viewModel = (MealPlannerViewModel)BindingContext;
+            var day = mealPlan?.Days.FirstOrDefault(item => item.MealDayIndex == SelectedDayIndex);
+            if (day == null)
+                return;
+            viewModel.SelectedDay = day;
+            viewModel.SelectedBreakfast = recipes.FirstOrDefault(recipe => recipe.Id == day.BreakfastRecipeId);
+            viewModel.SelectedLunch = recipes.FirstOrDefault(recipe => recipe.Id == day.LunchRecipeId);
+            viewModel.SelectedDinner = recipes.FirstOrDefault(recipe => recipe.Id == day.DinnerRecipeId);
         }
     }
 }

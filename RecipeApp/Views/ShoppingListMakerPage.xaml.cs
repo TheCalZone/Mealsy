@@ -14,24 +14,17 @@ namespace RecipeApp.Views
         }
 
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
-            ((ShoppingListMakerViewModel)BindingContext).Recipes.Clear();
-            ((ShoppingListMakerViewModel)BindingContext).OriginalRecipes.Clear();
-
-
-            var recipes = RecipeService.Recipes;
-            if (CrossFirebaseAuth.Current.CurrentUser != null)
+            base.OnAppearing();
+            try
             {
-                ((ShoppingListMakerViewModel)BindingContext).Recipes.ReplaceRange(recipes.Where(r => r.FirebaseUID == CrossFirebaseAuth.Current.CurrentUser.Uid));
-                ((ShoppingListMakerViewModel)BindingContext).OriginalRecipes.ReplaceRange(recipes.Where(r => r.FirebaseUID == CrossFirebaseAuth.Current.CurrentUser.Uid));
+                await ((ShoppingListMakerViewModel)BindingContext).RefreshCommand.ExecuteAsync();
             }
-            else
+            catch (Exception ex)
             {
-                ((ShoppingListMakerViewModel)BindingContext).Recipes.ReplaceRange(recipes);
-                ((ShoppingListMakerViewModel)BindingContext).OriginalRecipes.ReplaceRange(recipes);
+                await DisplayAlert("Unable to load shopping items", ex.Message, "OK");
             }
-            LoadFilters();
         }
 
         private void LoadFilters()
@@ -49,7 +42,7 @@ namespace RecipeApp.Views
 
             // Update the filter list with the unique tags
             ((ShoppingListMakerViewModel)BindingContext).Filters.ReplaceRange(tags);
-            if (((ShoppingListMakerViewModel)BindingContext).Filters.Contains("all"))
+            if (!((ShoppingListMakerViewModel)BindingContext).Filters.Contains("all"))
             {
                 ((ShoppingListMakerViewModel)BindingContext).Filters.Add("all");
             }

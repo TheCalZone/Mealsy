@@ -81,7 +81,7 @@ namespace RecipeApp.Models
         //    set => SetProperty(ref ingredientGroups, value);
         //}
 
-        private List<Ingredient> ingredients;
+        private List<Ingredient> ingredients = new();
 
         [OneToMany(CascadeOperations = CascadeOperation.All)]
         public List<Ingredient> Ingredients

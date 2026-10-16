@@ -73,32 +73,27 @@ namespace RecipeApp.ViewModels
 
         public async Task ShopMealPlan()
         {
+            ingredientCounts.Clear();
             List<Ingredient> ListOfIngredients = new List<Ingredient>();
             List<Recipe> dailyRecipes = new List<Recipe>();
 
-            foreach (MealPlanDay mealPlanDay in MealPlan.Days)
+            var plannedIds = MealPlan.Days.SelectMany(day =>
+                new[] { day.BreakfastRecipeId, day.LunchRecipeId, day.DinnerRecipeId }
+                    .Concat(day.BreakfastRecipesIDs)
+                    .Concat(day.LunchRecipesIDs)
+                    .Concat(day.DinnerRecipesIDs)).Where(id => id != 0).ToList();
+            foreach (var id in plannedIds.Distinct())
             {
-                if (mealPlanDay.BreakfastRecipeId != 0 && !dailyRecipes.Any(r => r.Id == mealPlanDay.BreakfastRecipeId))
-                {
-                    dailyRecipes.Add(await RecipeService.GetRecipe(mealPlanDay.BreakfastRecipeId));
-                }
-
-                if (mealPlanDay.LunchRecipeId != 0 && !dailyRecipes.Any(r => r.Id == mealPlanDay.LunchRecipeId))
-                {
-                    dailyRecipes.Add(await RecipeService.GetRecipe(mealPlanDay.LunchRecipeId));
-                }
-
-                if (mealPlanDay.DinnerRecipeId != 0 && !dailyRecipes.Any(r => r.Id == mealPlanDay.DinnerRecipeId))
-                {
-                    dailyRecipes.Add(await RecipeService.GetRecipe(mealPlanDay.DinnerRecipeId));
-                }
+                var recipe = await RecipeService.GetRecipe(id);
+                if (recipe != null)
+                    dailyRecipes.Add(recipe);
             }
 
             foreach (Recipe recipe in dailyRecipes)
             {
                 if (recipe.Serving > 0)
                 {
-                    int timesRecipeAppears = MealPlan.Days.Count(day => day.BreakfastRecipeId == recipe.Id || day.LunchRecipeId == recipe.Id || day.DinnerRecipeId == recipe.Id);
+                    int timesRecipeAppears = plannedIds.Count(id => id == recipe.Id);
                     int timesToAdd = (int)Math.Ceiling((double)timesRecipeAppears / recipe.Serving);
 
                     foreach (Ingredient ingredient in recipe.Ingredients)
@@ -146,6 +141,7 @@ namespace RecipeApp.ViewModels
 
 
             var ingredientsJson = JsonConvert.SerializeObject(ListOfIngredients);
+            Preferences.Set("IngredientsJson", ingredientsJson);
 
             var route = $"//MealPlanOverviewPage/ShoppingListPage?ingredientsJson={HttpUtility.UrlEncode(ingredientsJson)}";
             await Shell.Current.GoToAsync(route);
