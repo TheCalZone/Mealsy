@@ -3,7 +3,7 @@ using RecipeApp.Services;
 namespace RecipeApp.Views;
 public partial class Homepage : ContentPage
 {
-    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);}
+    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
     protected override async void OnAppearing()
     {
         base.OnAppearing();var uid=AccountSession.UserId;Content=ShoppingUi.Text("Getting your kitchen ready…");

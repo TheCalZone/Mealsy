@@ -5,25 +5,25 @@
              xmlns:vm="clr-namespace:RecipeApp.ViewModels"
              x:Class="RecipeApp.Views.ShoppingListPage"
              x:Name="ShoppingPage" Title="Shopping list"
-             BackgroundColor="{AppThemeBinding Light=#F5F7F2, Dark=#111A16}">
+             BackgroundColor="{DynamicResource ThemeBackground}">
     <ContentPage.BindingContext><vm:ShoppingListViewModel /></ContentPage.BindingContext>
     <ContentPage.Resources>
         <Style x:Key="QuietButton" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E8EEE5, Dark=#27392D}" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#234832, Dark=#D7EBDD}" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource ThemeSubtle}" />
+            <Setter Property="TextColor" Value="{DynamicResource ThemeText}" />
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="HeightRequest" Value="48" />
             <Setter Property="MinimumWidthRequest" Value="48" />
             <Setter Property="Padding" Value="12,4" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="{DynamicResource ThemeFont13}" />
             <Setter Property="Margin" Value="0" />
         </Style>
         <Style x:Key="Field" TargetType="Entry">
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#193D29, Dark=#F1F6F1}" />
-            <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light=#657569, Dark=#A7B8AA}" />
+            <Setter Property="TextColor" Value="{DynamicResource ThemeText}" />
+            <Setter Property="PlaceholderColor" Value="{DynamicResource ThemeMuted}" />
             <Setter Property="BackgroundColor" Value="Transparent" />
             <Setter Property="HeightRequest" Value="48" />
-            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontSize" Value="{DynamicResource ThemeFont16}" />
         </Style>
     </ContentPage.Resources>
     <ContentPage.ToolbarItems>
@@ -37,43 +37,43 @@
     </ContentPage.ToolbarItems>
 
     <Grid Padding="16,8,16,8" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
-        <Border Padding="18,16" BackgroundColor="#214D35" StrokeThickness="0" StrokeShape="RoundRectangle 20">
+        <Border Padding="18,16" BackgroundColor="{DynamicResource ThemePrimary}" StrokeThickness="0" StrokeShape="RoundRectangle 20">
             <VerticalStackLayout Spacing="10">
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="3">
                         <Button x:Name="ListSelector" Text="Personal list ▾" Clicked="ListSelector_Clicked" BackgroundColor="Transparent" TextColor="#C3DAC8" Padding="0" HorizontalOptions="Start" HeightRequest="44" />
-                        <Label Text="{Binding ProgressText}" FontSize="22" FontAttributes="Bold" TextColor="White" />
+                        <Label Text="{Binding ProgressText}" FontSize="{DynamicResource ThemeFont22}" FontAttributes="Bold" TextColor="White" />
                     </VerticalStackLayout>
-                    <Border Grid.Column="1" Padding="10,5" StrokeThickness="0" BackgroundColor="#386347" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
-                        <Label Text="{Binding RemainingText}" FontSize="12" TextColor="White" />
+                    <Border Grid.Column="1" Padding="10,5" StrokeThickness="0" BackgroundColor="{DynamicResource ThemeAccent}" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                        <Label Text="{Binding RemainingText}" FontSize="{DynamicResource ThemeFont12}" TextColor="White" />
                     </Border>
                 </Grid>
-                <ProgressBar Progress="{Binding Progress}" ProgressColor="#E9BC62" BackgroundColor="#4C7057" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
+                <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
             </VerticalStackLayout>
         </Border>
 
         <Border Grid.Row="1" Padding="12" StrokeThickness="0" StrokeShape="RoundRectangle 18"
-                BackgroundColor="{AppThemeBinding Light=White, Dark=#1C2A21}">
+                BackgroundColor="{DynamicResource ThemeSurface}">
             <VerticalStackLayout Spacing="5">
                 <Grid ColumnDefinitions="*,68,64" ColumnSpacing="7">
                     <Entry x:Name="QuickAddEntry" Style="{StaticResource Field}" Text="{Binding QuickName}" Placeholder="What do you need?"
                            ReturnType="Done" ReturnCommand="{Binding AddItemCommand}" ClearButtonVisibility="WhileEditing" SemanticProperties.Description="New shopping item" />
                     <Entry Grid.Column="1" Style="{StaticResource Field}" Text="{Binding QuickQuantity}" Placeholder="Qty" SemanticProperties.Description="Optional quantity or unit" />
-                    <Button Grid.Column="2" Text="Add" Command="{Binding AddItemCommand}" BackgroundColor="#214D35" TextColor="White"
+                    <Button Grid.Column="2" Text="Add" Command="{Binding AddItemCommand}" BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White"
                             HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" FontAttributes="Bold" />
                 </Grid>
                 <Button Text="Category &amp; note" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" HorizontalOptions="Start" />
                 <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">
                     <Picker Title="Category" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
-                            TextColor="{AppThemeBinding Light=#193D29, Dark=#F1F6F1}" SemanticProperties.Description="Category for new items" />
+                            TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="Category for new items" />
                     <Entry Grid.Row="1" Style="{StaticResource Field}" Text="{Binding QuickNote}" Placeholder="Optional note, e.g. ripe or gluten-free" />
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <SearchBar Text="{Binding SearchText}" Placeholder="Find an item" BackgroundColor="Transparent"
-                               TextColor="{AppThemeBinding Light=#193D29, Dark=#F1F6F1}" CancelButtonColor="#3D7951" />
+                               TextColor="{DynamicResource ThemeText}" CancelButtonColor="{DynamicResource ThemeAccent}" />
                     <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
-                        <Label Text="Hide collected" FontSize="12" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#506658, Dark=#BDCCBF}" />
-                        <Switch IsToggled="{Binding HideCollected}" OnColor="#477B54" ThumbColor="{AppThemeBinding Light=White, Dark=#D2E4D5}" />
+                        <Label Text="Hide collected" FontSize="{DynamicResource ThemeFont12}" VerticalOptions="Center" TextColor="{DynamicResource ThemeText}" />
+                        <Switch IsToggled="{Binding HideCollected}" OnColor="{DynamicResource ThemeAccent}" ThumbColor="{DynamicResource ThemeOnAccent}" />
                     </HorizontalStackLayout>
                 </Grid>
             </VerticalStackLayout>
@@ -82,17 +82,17 @@
         <CollectionView Grid.Row="2" ItemsSource="{Binding Groups}" IsGrouped="True" SelectionMode="None">
             <CollectionView.EmptyView>
                 <VerticalStackLayout Padding="28,36" Spacing="10" VerticalOptions="Center" HorizontalOptions="Center">
-                    <Label Text="{Binding EmptyTitle}" FontSize="22" FontAttributes="Bold" HorizontalTextAlignment="Center"
-                           TextColor="{AppThemeBinding Light=#214D35, Dark=#D7EBDD}" />
-                    <Label Text="{Binding EmptyMessage}" FontSize="15" HorizontalTextAlignment="Center" MaximumWidthRequest="310"
-                           TextColor="{AppThemeBinding Light=#607367, Dark=#B4C4B8}" />
+                    <Label Text="{Binding EmptyTitle}" FontSize="{DynamicResource ThemeFont22}" FontAttributes="Bold" HorizontalTextAlignment="Center"
+                           TextColor="{DynamicResource ThemeText}" />
+                    <Label Text="{Binding EmptyMessage}" FontSize="{DynamicResource ThemeFont15}" HorizontalTextAlignment="Center" MaximumWidthRequest="310"
+                           TextColor="{DynamicResource ThemeText}" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
             <CollectionView.GroupHeaderTemplate>
                 <DataTemplate x:DataType="vm:ShoppingListGroup">
                     <Grid Padding="4,12,4,8" ColumnDefinitions="*,Auto">
-                        <Label Text="{Binding Title}" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#214D35, Dark=#D7EBDD}" />
-                        <Label Grid.Column="1" Text="{Binding Summary}" FontSize="12" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#687B6D, Dark=#A8BCAD}" />
+                        <Label Text="{Binding Title}" FontSize="{DynamicResource ThemeFont16}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" />
+                        <Label Grid.Column="1" Text="{Binding Summary}" FontSize="{DynamicResource ThemeFont12}" VerticalOptions="Center" TextColor="{DynamicResource ThemeText}" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.GroupHeaderTemplate>
@@ -101,20 +101,20 @@
                     <SwipeView>
                         <SwipeView.RightItems>
                             <SwipeItems Mode="Reveal">
-                                <SwipeItem Text="Edit" BackgroundColor="#3D7951" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />
+                                <SwipeItem Text="Edit" BackgroundColor="{DynamicResource ThemeAccent}" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />
                                 <SwipeItem Text="Remove" BackgroundColor="#9A4840" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveItemCommand}" CommandParameter="{Binding .}" />
                             </SwipeItems>
                         </SwipeView.RightItems>
                         <Border Margin="0,0,0,7" Padding="8,10,10,10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1C2A21}">
+                                BackgroundColor="{DynamicResource ThemeSurface}">
                             <Grid ColumnDefinitions="48,*,Auto,48" ColumnSpacing="5" MinimumHeightRequest="48">
-                                <CheckBox IsChecked="{Binding InBasket, Mode=TwoWay}" Color="#3D7951" VerticalOptions="Center"
+                                <CheckBox IsChecked="{Binding InBasket, Mode=TwoWay}" Color="{DynamicResource ThemeAccent}" VerticalOptions="Center"
                                           SemanticProperties.Description="{Binding Name, StringFormat='Collected: {0}'}" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
                                     <VerticalStackLayout.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ToggleItemCommand}" CommandParameter="{Binding .}" />
                                     </VerticalStackLayout.GestureRecognizers>
-                                    <Label Text="{Binding Name}" FontSize="17" TextColor="{AppThemeBinding Light=#193D29, Dark=#F1F6F1}" LineBreakMode="WordWrap">
+                                    <Label Text="{Binding Name}" FontSize="{DynamicResource ThemeFont17}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding InBasket}" Value="True">
                                                 <Setter Property="TextDecorations" Value="Strikethrough" />
@@ -122,14 +122,14 @@
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
-                                    <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="12" TextColor="{AppThemeBinding Light=#657569, Dark=#B4C4B8}" LineBreakMode="WordWrap" />
+                                    <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </VerticalStackLayout>
                                 <Border Grid.Column="2" IsVisible="{Binding HasQuantity}" Padding="8,4" VerticalOptions="Center" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 8" BackgroundColor="{AppThemeBinding Light=#EEF2E9, Dark=#304235}" MaximumWidthRequest="100">
-                                    <Label Text="{Binding Quantity}" FontSize="12" TextColor="{AppThemeBinding Light=#37563F, Dark=#D7EBDD}" LineBreakMode="WordWrap" />
+                                        StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource ThemeBackground}" MaximumWidthRequest="100">
+                                    <Label Text="{Binding Quantity}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </Border>
-                                <Button Grid.Column="3" Text="Edit" Padding="2,0" FontSize="12" BackgroundColor="Transparent"
-                                        TextColor="{AppThemeBinding Light=#477B54, Dark=#ACD3B5}" HeightRequest="48" Margin="0"
+                                <Button Grid.Column="3" Text="Edit" Padding="2,0" FontSize="{DynamicResource ThemeFont12}" BackgroundColor="Transparent"
+                                        TextColor="{DynamicResource ThemeText}" HeightRequest="48" Margin="0"
                                         Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />
                             </Grid>
                         </Border>
@@ -142,32 +142,32 @@
             <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="7">
                 <Button Text="Undo" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
                 <Button Grid.Column="1" Text="Redo" Command="{Binding RedoCommand}" Style="{StaticResource QuietButton}" />
-                <Button Grid.Column="2" Text="Clear done" Command="{Binding ClearCollectedCommand}" Style="{StaticResource QuietButton}" Padding="4,0" FontSize="12" />
+                <Button Grid.Column="2" Text="Clear done" Command="{Binding ClearCollectedCommand}" Style="{StaticResource QuietButton}" Padding="4,0" FontSize="{DynamicResource ThemeFont12}" />
                 <Button Grid.Column="3" Text="Share" Command="{Binding ShareCommand}" Style="{StaticResource QuietButton}" />
             </Grid>
-            <Label Text="{Binding StatusText}" FontSize="11" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#687B6D, Dark=#A8BCAD}" SemanticProperties.Description="Save status" />
+            <Label Text="{Binding StatusText}" FontSize="{DynamicResource ThemeFont11}" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="Save status" />
         </VerticalStackLayout>
 
         <Grid Grid.RowSpan="4" IsVisible="{Binding IsEditing}" BackgroundColor="#99000000" Padding="4" ZIndex="10">
             <Border Padding="20" StrokeThickness="0" StrokeShape="RoundRectangle 22" VerticalOptions="Center"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1C2A21}">
+                    BackgroundColor="{DynamicResource ThemeSurface}">
                 <ScrollView MaximumHeightRequest="500">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Edit item" FontSize="23" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#214D35, Dark=#D7EBDD}" />
-                        <Label Text="ITEM NAME" FontSize="11" TextColor="{AppThemeBinding Light=#657569, Dark=#B4C4B8}" />
+                        <Label Text="Edit item" FontSize="{DynamicResource ThemeFont23}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" />
+                        <Label Text="ITEM NAME" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
                         <Entry Text="{Binding EditName}" Style="{StaticResource Field}" Placeholder="Item name" />
-                        <Label Text="QUANTITY / UNIT" FontSize="11" TextColor="{AppThemeBinding Light=#657569, Dark=#B4C4B8}" />
+                        <Label Text="QUANTITY / UNIT" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
                         <Entry Text="{Binding EditQuantity}" Style="{StaticResource Field}" Placeholder="e.g. 2 packs or 500 g" />
-                        <Label Text="CATEGORY" FontSize="11" TextColor="{AppThemeBinding Light=#657569, Dark=#B4C4B8}" />
+                        <Label Text="CATEGORY" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
                         <Entry Text="{Binding EditCategory}" Style="{StaticResource Field}" Placeholder="e.g. Produce or Household" />
-                        <Label Text="NOTE" FontSize="11" TextColor="{AppThemeBinding Light=#657569, Dark=#B4C4B8}" />
+                        <Label Text="NOTE" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
                         <Entry Text="{Binding EditNote}" Style="{StaticResource Field}" Placeholder="Optional detail" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
                             <Button Text="Cancel" Command="{Binding CancelEditCommand}" Style="{StaticResource QuietButton}" />
                             <Button Grid.Column="1" Text="Save item" Command="{Binding SaveEditCommand}" HeightRequest="48" CornerRadius="12"
-                                    BackgroundColor="#214D35" TextColor="White" Margin="0" FontAttributes="Bold" />
+                                    BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White" Margin="0" FontAttributes="Bold" />
                         </Grid>
-                        <Button Text="Remove this item" Clicked="RemoveEditingItem_Clicked" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=#9A4840, Dark=#F2A99F}"
+                        <Button Text="Remove this item" Clicked="RemoveEditingItem_Clicked" BackgroundColor="Transparent" TextColor="{DynamicResource ThemeText}"
                                 HeightRequest="48" Margin="0" />
                     </VerticalStackLayout>
                 </ScrollView>

@@ -6,7 +6,7 @@ internal static class RecipeCardView
     public static Image Photo(string encoded,double height=170)
     {
         if(string.IsNullOrWhiteSpace(encoded)||encoded.Length>12_000_000)return null;
-        try{var bytes=Convert.FromBase64String(encoded);return new Image{Source=ImageSource.FromStream(()=>new MemoryStream(bytes)),HeightRequest=height,Aspect=Aspect.AspectFill};}catch(FormatException){return null;}
+        try{var bytes=Convert.FromBase64String(encoded);var image=new Image{Source=ImageSource.FromStream(()=>new MemoryStream(bytes)),HeightRequest=height,Aspect=Aspect.AspectFill};image.SetDynamicResource(VisualElement.IsVisibleProperty,"ThemeShowPhotos");return image;}catch(FormatException){return null;}
     }
     public static View Card(Recipe recipe,Func<Task> open)
     {

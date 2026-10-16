@@ -12,13 +12,14 @@ public class HouseholdPage : ContentPage
     public HouseholdPage()
     {
         Title = "Your household";
-        BackgroundColor = Color.FromArgb("#F5F7F2");
+        ShoppingUi.Theme(this);
         Content = new ScrollView { Content = content };
     }
     protected override async void OnAppearing() { base.OnAppearing(); await Run(Refresh); }
     private Button Action(string title, Func<Task> action)
     {
-        var button = new Button { Text = title, CornerRadius = 12, BackgroundColor = Color.FromArgb("#214D35"), TextColor = Colors.White };
+        var button = new Button { Text = title, CornerRadius = 12, TextColor = Colors.White };
+        button.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeAccent");
         button.Clicked += async (_, _) => await Run(action);
         return button;
     }
@@ -39,9 +40,9 @@ public class HouseholdPage : ContentPage
     {
         account = HouseholdService.UserId;
         content.Clear();
-        content.Add(new Label { Text = "Shop together", FontSize = 30, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#214D35") });
-        content.Add(new Label { Text = "Each person keeps a private list and their own login. Everyone in your household can add, edit, remove and collect items on the household list.", TextColor = Color.FromArgb("#354B3C") });
-        if (account == null) { content.Add(new Label { Text = "Sign in or create an account on the Account tab to get started.", TextColor = Colors.Black }); return; }
+        content.Add(ShoppingUi.Text("Shop together", 30, true));
+        content.Add(ShoppingUi.Text("Each person keeps a private list and their own login. Everyone in your household can add, edit, remove and collect items on the household list."));
+        if (account == null) { content.Add(ShoppingUi.Text("Sign in or create an account on the Account tab to get started.")); return; }
         PlanStatus plan;
         try { plan = await PlanService.RefreshAsync(); }
         catch (Exception) { plan = PlanService.Cached ?? new PlanStatus(false, false, false, 0, true, "", ""); }
@@ -51,7 +52,7 @@ public class HouseholdPage : ContentPage
         CheckAccount();
         if (household.HouseholdId == null)
         {
-            if (!plan.OwnPlan) content.Add(new Label { Text = "A subscription held by the owner is required to create a household. You can join an owner who already subscribes.", TextColor = Colors.Black });
+            if (!plan.OwnPlan) content.Add(ShoppingUi.Text("A subscription held by the owner is required to create a household. You can join an owner who already subscribes."));
             if (plan.OwnPlan) content.Add(Action("Create a household", async () => {
                 var name = await DisplayPromptAsync("Create household", "What would you like to call your household?", placeholder: "Our family", maxLength: 80);
                 if (string.IsNullOrWhiteSpace(name)) return;
@@ -66,13 +67,13 @@ public class HouseholdPage : ContentPage
         }
         else
         {
-            if (!household.FamilyEnabled) content.Add(new Label { Text = "Family sharing is paused. The household owner needs to renew or restore their Family plan. Your household data has been kept.", TextColor = Colors.Black });
-            content.Add(new Label { Text = household.Name, FontSize = 24, TextColor = Color.FromArgb("#214D35"), FontAttributes = FontAttributes.Bold });
-            content.Add(new Label { Text = $"{household.Members.Count} of 20 members", TextColor = Colors.Black });
+            if (!household.FamilyEnabled) content.Add(ShoppingUi.Text("Family sharing is paused. The household owner needs to renew or restore their Family plan. Your household data has been kept."));
+            content.Add(ShoppingUi.Text(household.Name, 24, true));
+            content.Add(ShoppingUi.Text($"{household.Members.Count} of 20 members"));
             foreach (var member in household.Members)
             {
                 var owner = member.Id == household.Owner;
-                content.Add(new Label { Text = member.Label + (owner ? " · Owner" : "") + (member.Id == account ? " · You" : ""), TextColor = Colors.Black });
+                content.Add(ShoppingUi.Text(member.Label + (owner ? " · Owner" : "") + (member.Id == account ? " · You" : "")));
                 if (household.Owner == account && !owner)
                     content.Add(Action("Remove " + member.Label, async () => {
                         if (!await DisplayAlert("Remove member?", "They will lose access to the shared list. Their personal list will be kept.", "Remove", "Cancel")) return;
@@ -94,7 +95,7 @@ public class HouseholdPage : ContentPage
                     if (!await DisplayAlert("Delete household permanently?", "This deletes the shared shopping list and removes access for every member. Everyone keeps their personal list. This cannot be undone.", "Delete household", "Cancel")) return;
                     CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "delete" }); await Refresh();
                 }));
-                content.Add(new Label { Text = "Only the owner can invite or remove members. Each invitation is single-use and lasts 7 days. Creating a new code replaces any unused code.", TextColor = Colors.Black });
+                content.Add(ShoppingUi.Text("Only the owner can invite or remove members. Each invitation is single-use and lasts 7 days. Creating a new code replaces any unused code."));
                 content.Add(Action("Revoke unused invitation", async () => {
                     CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "revoke" }); status.Text = "Unused invitation revoked.";
                 }));
@@ -104,7 +105,7 @@ public class HouseholdPage : ContentPage
                 CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "leave" }); await Refresh();
             }));
         }
-        content.Add(new Label { Text = "Switch between Personal and Household from the list selector on the shopping screen. Recipe shortcuts add to your personal list.", TextColor = Colors.Black });
+        content.Add(ShoppingUi.Text("Switch between Personal and Household from the list selector on the shopping screen. Recipe shortcuts add to your personal list."));
         content.Add(Action("Copy this device's original list to my personal list", async () => {
             if (!await DisplayAlert("Copy device list?", "The original list may have been used by other people on this device. Copy its items into your private personal list?", "Copy", "Cancel")) return;
             CheckAccount();
@@ -116,6 +117,6 @@ public class HouseholdPage : ContentPage
             foreach (var item in source.Items) if (!target.Items.Any(i => i.Id == item.Id)) target.Add(item);
             ShoppingListStore.Save(target); status.Text = "Copied to your personal list. Open it to sync.";
         }));
-        status.TextColor = Color.FromArgb("#214D35"); content.Add(status);
+        status.SetDynamicResource(Label.TextColorProperty, "ThemeText"); content.Add(status);
     }
 }

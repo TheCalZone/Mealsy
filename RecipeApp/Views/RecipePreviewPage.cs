@@ -25,7 +25,7 @@ public class RecipeReadView : ContentView
                 var info=new VerticalStackLayout{Spacing=3,Children={label}};if(!string.IsNullOrWhiteSpace(item.Note))info.Add(ShoppingUi.Text(item.Note,12));row.Add(info,1);group.Add(row);
             }body.Add(ShoppingUi.Card(group));
         }
-        body.Add(methodAnchor);var steps=RecipeDraft.ParseSteps(recipe.RecipeMethod);var done=new HashSet<int>();var progress=ShoppingUi.Text($"0 of {steps.Count} steps complete",13,true);var bar=new ProgressBar{ProgressColor=Color.FromArgb("#D0A34F")};body.Add(progress);body.Add(bar);
+        body.Add(methodAnchor);var steps=RecipeDraft.ParseSteps(recipe.RecipeMethod);var done=new HashSet<int>();var progress=ShoppingUi.Text($"0 of {steps.Count} steps complete",13,true);var bar=new ProgressBar{};bar.SetDynamicResource(ProgressBar.ProgressColorProperty,"ThemeAccent");body.Add(progress);body.Add(bar);
         for(var i=0;i<steps.Count;i++)
         {
             var index=i;var card=new VerticalStackLayout{Spacing=9};card.Add(ShoppingUi.Text($"STEP {i+1}",12,true));card.Add(ShoppingUi.Text(steps[i],17));card.Add(new HorizontalStackLayout{Children={ShoppingUi.Check(false,v=>{if(v)done.Add(index);else done.Remove(index);progress.Text=$"{done.Count} of {steps.Count} steps complete";bar.Progress=(double)done.Count/Math.Max(1,steps.Count);card.Opacity=v?.6:1;}),ShoppingUi.Text("Done",13)}});body.Add(ShoppingUi.Card(card));
@@ -34,11 +34,13 @@ public class RecipeReadView : ContentView
         if(privateDetails&&Uri.TryCreate(recipe.SourceUrl,UriKind.Absolute,out var url)&&url.Scheme is "http" or "https"&&string.IsNullOrEmpty(url.UserInfo))body.Add(ShoppingUi.Button("Open original source",async()=>await Launcher.Default.OpenAsync(url),true));Content=scroll;
     }
     private void Release(){if(holding){DeviceDisplay.Current.KeepScreenOn=previousKeepAwake;holding=false;}}
+    public void StartCooking(){cooking.IsToggled=AppSettings.Current.KeepAwake;}
     public void StopCooking(){Release();cooking.IsToggled=false;}
 }
 public class RecipePreviewPage : ContentPage
 {
     private readonly RecipeReadView read;
     public RecipePreviewPage(RecipeDraft draft){Title="Preview · not saved";ShoppingUi.Theme(this);var recipe=RecipePresentation.Preview(draft);Content=read=new(recipe);ToolbarItems.Add(new ToolbarItem("Copy",null,async()=>{try{await Clipboard.Default.SetTextAsync(RecipePresentation.PlainText(RecipeBrowser.ForServings(recipe,read.CurrentServings)));}catch(Exception){await DisplayAlert("Copy unavailable","Try copying again.","OK");}}));}
+    protected override void OnAppearing(){base.OnAppearing();read.StartCooking();}
     protected override void OnDisappearing(){read.StopCooking();base.OnDisappearing();}
 }

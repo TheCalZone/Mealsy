@@ -6,8 +6,8 @@ namespace RecipeApp.Views;
 
 public class FeedComposerPage : ContentPage
 {
-    private readonly Entry name = new() { Placeholder = "Public display name", MaxLength = 60, TextColor = Colors.Black };
-    private readonly Editor caption = new() { Placeholder = "What have you been cooking?", MaxLength = 2000, HeightRequest = 140, TextColor = Colors.Black, BackgroundColor = Colors.White };
+    private readonly Entry name = new() { Placeholder = "Public display name", MaxLength = 60 };
+    private readonly Editor caption = new() { Placeholder = "What have you been cooking?", MaxLength = 2000, HeightRequest = 140 };
     private readonly Label attachment = FoodFeedPage.Text("No recipe attached");
     private readonly Label photoStatus = FoodFeedPage.Text("No photo attached");
     private readonly string account;
@@ -18,7 +18,7 @@ public class FeedComposerPage : ContentPage
     private string DraftKey => "Feed.draft." + account;
     public FeedComposerPage(Recipe source = null)
     {
-        Title = "Share a meal"; BackgroundColor = Color.FromArgb("#F5F7F2"); account = HouseholdService.UserId;
+        Title = "Share a meal"; ShoppingUi.Theme(this); account = HouseholdService.UserId;
         name.Text = Preferences.Get(FoodFeedService.AuthorKey, "");
         var body = new VerticalStackLayout { Padding = 20, Spacing = 14, Children = {
             FoodFeedPage.Text("Something worth sharing", 27, true),
@@ -27,8 +27,8 @@ public class FeedComposerPage : ContentPage
                 CheckAccount();
                 var recipes = RecipeService.Recipes.ToList();
                 if (recipes.Count == 0) { await DisplayAlert("No recipes yet", "Create a recipe in your recipe book first.", "OK"); return; }
-                var picker = new Picker { Title = "Choose recipe", ItemsSource = recipes, ItemDisplayBinding = new Binding(nameof(Recipe.RecipeName)), TextColor = Colors.Black };
-                var chooser = new ContentPage { Title = "Choose a recipe", BackgroundColor = Colors.White };
+                var picker = new Picker { Title = "Choose recipe", ItemsSource = recipes, ItemDisplayBinding = new Binding(nameof(Recipe.RecipeName)) };
+                var chooser = new ContentPage { Title = "Choose a recipe" };
                 chooser.Content = new VerticalStackLayout { Padding = 20, Children = { picker, FoodFeedPage.Button("Attach selected recipe", async () => {
                     if (picker.SelectedItem is not Recipe selected) return;
                     CheckAccount(); await Attach(selected); await Navigation.PopAsync();

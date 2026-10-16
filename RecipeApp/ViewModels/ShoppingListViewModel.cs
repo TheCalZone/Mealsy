@@ -96,6 +96,8 @@ public class ShoppingListViewModel : CustomViewModelBase
 
     public void Load(bool manual, string incomingJson)
     {
+        HideCollected = AppSettings.Current.HideCollected;
+        ShowDetails = AppSettings.Current.ShoppingDetails;
         if (loadedKey != StorageKey) { loaded = false; document = new(); IsEditing = false; loadedKey = StorageKey; }
         var legacy = IsShared ? "" : Preferences.Get(ShoppingListStore.LegacyKey, "");
         var stored = Preferences.Get(StorageKey, "");

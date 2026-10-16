@@ -36,7 +36,7 @@ public partial class RecipeDetailsPage : ContentPage
             var footer=new Grid{Padding=new Thickness(16,8),ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};
             footer.Add(ShoppingUi.Button("Shop ingredients",()=>Run(()=>AppNavigation.Open(new ShoppingListMakerPage(new[]{new RecipeShoppingChoice(Recipe){Selected=true,Servings=read.CurrentServings.ToString()}})))),0);
             footer.Add(ShoppingUi.Button("Edit recipe",()=>Run(()=>AppNavigation.Open(new EditRecipePage{RecipeId=Recipe.Id.ToString()})),true),1);
-            var layout=new Grid{RowDefinitions=new(){new(GridLength.Star),new(GridLength.Auto)}};layout.Add(read,0,0);layout.Add(footer,0,1);Content=layout;
+            var layout=new Grid{RowDefinitions=new(){new(GridLength.Star),new(GridLength.Auto)}};layout.Add(read,0,0);layout.Add(footer,0,1);Content=layout;read.StartCooking();
         }
         catch(Exception){Content=ShoppingUi.Text("This recipe couldn't be opened. Go back and try again.");}
     }

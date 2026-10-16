@@ -10,16 +10,16 @@ internal static class ShoppingUi
     public static Button Button(string text, Func<Task> action, bool quiet=false)
     {
         var button=new Button { Text=text, HeightRequest=48, MinimumWidthRequest=44, CornerRadius=12, FontSize=14, Padding=new Thickness(12,4) };
-        button.SetAppThemeColor(Microsoft.Maui.Controls.Button.BackgroundColorProperty, Color.FromArgb(quiet ? "#E8EEE5" : "#214D35"), Color.FromArgb(quiet ? "#2E4333" : "#386347"));
-        button.SetAppThemeColor(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? Color.FromArgb("#214D35") : Colors.White, Color.FromArgb("#E5EEE6"));
+        button.SetDynamicResource(Microsoft.Maui.Controls.Button.BackgroundColorProperty, quiet ? "ThemeSubtle" : "ThemeAccent");
+        button.SetDynamicResource(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? "ThemeText" : "ThemeOnAccent");
         button.Clicked += async (_, _) => { button.IsEnabled=false; try { await action(); } catch (Exception e) { await Shell.Current.DisplayAlert("Shopping list", e is InvalidOperationException ? e.Message : "That action couldn't finish. Your saved list has been kept. Please try again.", "OK"); } finally { button.IsEnabled=true; } };
         return button;
     }
     public static Entry Entry(string text, string hint, Action<string> changed, int max=200, bool numeric=false)
     {
         var field=new Entry { Text=text, Placeholder=hint, MaxLength=max, FontSize=16, HeightRequest=48, Keyboard=numeric ? Keyboard.Numeric : Keyboard.Default };
-        field.SetAppThemeColor(InputView.TextColorProperty, Color.FromArgb("#193D29"), Color.FromArgb("#EFF5EF"));
-        field.SetAppThemeColor(InputView.PlaceholderColorProperty, Color.FromArgb("#657569"), Color.FromArgb("#A4B6A8"));
+        field.SetDynamicResource(InputView.TextColorProperty, "ThemeText");
+        field.SetDynamicResource(InputView.PlaceholderColorProperty, "ThemeMuted");
         field.TextChanged += (_, e) => changed(e.NewTextValue); return field;
     }
     public static CheckBox Check(bool selected, Action<bool> changed)
@@ -28,7 +28,7 @@ internal static class ShoppingUi
     }
     public static void Theme(ContentPage page)
     {
-        page.Padding=0; page.SetAppThemeColor(VisualElement.BackgroundColorProperty, Color.FromArgb("#F5F7F2"), Color.FromArgb("#111A16"));
+        page.Padding=0; page.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeBackground");
     }
 }
 
@@ -48,7 +48,7 @@ public class ShoppingExtraEditorPage : ContentPage
         body.Add(ShoppingUi.Text("Usual shopping quantity · optional",12,true)); body.Add(ShoppingUi.Entry(item.Quantity,"e.g. 1 jar or 200 g",s => item.Quantity=s));
         body.Add(ShoppingUi.Text("Shopping category",12,true));
         var categories=new List<string> {"Produce","Dairy","Meat","Pantry","Bakery","Frozen","Drinks","Other"}; if (!categories.Contains(item.Category)) categories.Add(item.Category);
-        var picker=new Picker { ItemsSource=categories, SelectedItem=item.Category, HeightRequest=48 }; picker.SetAppThemeColor(Picker.TextColorProperty, Color.FromArgb("#193D29"), Color.FromArgb("#EFF5EF"));
+        var picker=new Picker { ItemsSource=categories, SelectedItem=item.Category, HeightRequest=48 }; picker.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
         picker.SelectedIndexChanged += (_, _) => item.Category=picker.SelectedItem?.ToString() ?? "Other"; body.Add(picker);
         body.Add(ShoppingUi.Text("Note · optional",12,true)); body.Add(ShoppingUi.Entry(item.Note,"Brand, cupboard location, or a reminder",s => item.Note=s,500));
         body.Add(ShoppingUi.Button("Save to my " + (item.IsSnack ? "snacks" : "essentials"), async () => {

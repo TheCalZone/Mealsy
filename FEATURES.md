@@ -155,3 +155,9 @@ for the latest sign-in, dashboard and recipe-screen upgrade.
 
 Setup guides: [Android and app](README.md), [households](firebase/README.md),
 [food community](firebase/FEED.md), [monetization](MONETIZATION.md).
+
+### Themes and device settings
+
+Open **Settings** from the Home or Account toolbar, including in device mode. Choose Forest, Ocean, Berry, Terracotta or Slate; follow the system display mode or force light/dark. Colours update immediately across navigation, shopping, recipe, planner, household and community screens. Larger reading text and optional recipe photos help tailor readability.
+
+Set shopping defaults for hiding collected items and expanding quick-add details, choose the recipe book's default order, and enable keeping the screen awake when opening recipes. Cooking screens release their screen-awake setting when closed. Preferences save automatically on this device and survive restart; they are not synced to other household members. Resetting preferences restores appearance and defaults without touching recipes, lists, drafts, accounts or meal plans. Native Android widgets retain their separate system styling and list selection.

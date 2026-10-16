@@ -66,7 +66,7 @@ public partial class ShoppingListMakerPage : ContentPage
         var tags=new List<string> {"All"}; tags.AddRange(model.Recipes.SelectMany(r => (r.Recipe.Tags ?? "").Split(',',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries)).Where(t => !t.Equals("all",StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).Order());
         if (!tags.Contains(recipeTag)) recipeTag="All";
         var picker=new Picker { Title="Recipe tags",ItemsSource=tags,SelectedItem=recipeTag,HeightRequest=48 };
-        picker.SetAppThemeColor(Picker.TextColorProperty,Color.FromArgb("#193D29"),Color.FromArgb("#EFF5EF"));
+        picker.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
         var list=new CollectionView { SelectionMode=SelectionMode.None, ItemTemplate=new DataTemplate(() => new RecipeChoiceRow()), EmptyView=ShoppingUi.Text("No matching recipes. Add a recipe or continue to shop from your checklists.",15) };
         void Filter() => list.ItemsSource=model.Recipes.Where(r => (r.Recipe.RecipeName ?? "").Contains(recipeSearch,StringComparison.OrdinalIgnoreCase) && (recipeTag=="All" || (r.Recipe.Tags ?? "").Split(',',StringSplitOptions.TrimEntries).Contains(recipeTag,StringComparer.OrdinalIgnoreCase))).ToList();
         search.TextChanged += (_,e) => { recipeSearch=e.NewTextValue ?? ""; Filter(); };

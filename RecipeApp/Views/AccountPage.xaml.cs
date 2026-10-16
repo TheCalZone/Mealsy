@@ -3,7 +3,7 @@ namespace RecipeApp.Views;
 public partial class AccountPage : ContentPage
 {
     private string account;
-    public AccountPage(){InitializeComponent();Title="Your account";ShoppingUi.Theme(this);}
+    public AccountPage(){InitializeComponent();Title="Your account";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
     protected override async void OnAppearing()
     {
         base.OnAppearing();account=AccountSession.UserId;Render();if(account==null)return;

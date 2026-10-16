@@ -8,8 +8,8 @@ public class FeedCommentsPage : ContentPage
     private readonly string postId, account;
     private readonly bool moderator;
     private readonly VerticalStackLayout comments = new() { Spacing = 12 };
-    private readonly Entry message = new() { Placeholder = "Add a kind comment…", MaxLength = 1000, TextColor = Colors.Black };
-    private readonly Entry name = new() { Placeholder = "Public display name", MaxLength = 60, TextColor = Colors.Black };
+    private readonly Entry message = new() { Placeholder = "Add a kind comment…", MaxLength = 1000 };
+    private readonly Entry name = new() { Placeholder = "Public display name", MaxLength = 60 };
     private readonly Label status = FoodFeedPage.Text("");
     private FeedCursor cursor;
     private readonly Button more;
@@ -18,7 +18,7 @@ public class FeedCommentsPage : ContentPage
     public FeedCommentsPage(string postId, bool moderator)
     {
         this.postId = postId; this.moderator = moderator; account = HouseholdService.UserId;
-        Title = "Around the table"; BackgroundColor = Color.FromArgb("#F5F7F2"); name.Text = Preferences.Get(FoodFeedService.AuthorKey, "");
+        Title = "Around the table"; ShoppingUi.Theme(this); name.Text = Preferences.Get(FoodFeedService.AuthorKey, "");
         more = FoodFeedPage.Button("Older comments", () => Load(false));
         Content = new ScrollView { Content = new VerticalStackLayout { Padding = 20, Spacing = 12, Children = {
             FoodFeedPage.Text("Join the conversation", 26, true), name, message,

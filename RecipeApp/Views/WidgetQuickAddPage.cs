@@ -18,7 +18,7 @@ public class WidgetQuickAddPage : ContentPage
         var saved=WidgetShoppingStore.Target(id);targets.Add(new(account,null,account==null ? "Device list" : "My personal list"));
         if(saved?.BelongsTo(account)==true&&saved.HouseholdId!=null)targets.Add(saved);
         picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=saved==null?0:saved.BelongsTo(account)?targets.FindIndex(t=>t.HouseholdId==saved.HouseholdId):-1;
-        picker.SetAppThemeColor(Picker.TextColorProperty,Color.FromArgb("#193D29"),Color.FromArgb("#EFF5EF"));
+        picker.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
         if(saved!=null&&!saved.BelongsTo(account))status.Text="This widget was configured for another account. Explicitly choose a list for your current account.";
         var body=new VerticalStackLayout {Padding=20,Spacing=14,Children={ShoppingUi.Text("Add it before you forget",27,true),picker,
             ShoppingUi.Button("Find my household list",()=>Run(async()=>{Check();var household=await HouseholdService.StatusAsync();Check();if(household.HouseholdId==null)throw new InvalidOperationException("Create or join a household first.");if(!household.FamilyEnabled)throw new InvalidOperationException("Your household needs an active Family plan.");targets.RemoveAll(t=>t.HouseholdId!=null);targets.Add(new(account,household.HouseholdId,household.Name+" · household"));picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=targets.Count-1;}),true),

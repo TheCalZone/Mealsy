@@ -8,6 +8,7 @@ public partial class AppShell : Shell
         InitializeComponent();
         // Tab roots are declared only in XAML. Registering them again creates ambiguous routes.
         var pages=new Dictionary<string,Type>{
+            [nameof(SettingsPage)]=typeof(SettingsPage),
             [nameof(LoginPage)]=typeof(LoginPage),
             [nameof(SignupPage)]=typeof(SignupPage),
             [nameof(AddRecipePage)]=typeof(AddRecipePage),

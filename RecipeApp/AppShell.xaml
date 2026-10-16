@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:RecipeApp.Views"
     xmlns:local1="clr-namespace:RecipeApp.Controls"
     Title="AppShell"
-    BackgroundColor="White"
+    BackgroundColor="{DynamicResource ThemeBackground}"
     Shell.FlyoutBehavior="Disabled">
 
     <!--
@@ -20,12 +20,12 @@
             <Color x:Key="PrimaryColor">#214D35</Color>
             <Color x:Key="AccentColor">#386347</Color>
             <Style x:Key="BaseStyle" TargetType="Element">
-                <Setter Property="Shell.BackgroundColor" Value="{StaticResource PrimaryColor}" />
+                <Setter Property="Shell.BackgroundColor" Value="{DynamicResource ThemePrimary}" />
                 <Setter Property="Shell.ForegroundColor" Value="White" />
                 <Setter Property="Shell.TitleColor" Value="White" />
                 <Setter Property="Shell.DisabledColor" Value="#B4FFFFFF" />
                 <Setter Property="Shell.UnselectedColor" Value="#C3D4C3" />
-                <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource PrimaryColor}" />
+                <Setter Property="Shell.TabBarBackgroundColor" Value="{DynamicResource ThemePrimary}" />
                 <Setter Property="Shell.TabBarForegroundColor" Value="White" />
                 <Setter Property="Shell.TabBarUnselectedColor" Value="#C3D4C3" />
                 <Setter Property="Shell.TabBarTitleColor" Value="White" />
@@ -33,22 +33,23 @@
             <Style BasedOn="{StaticResource BaseStyle}" TargetType="TabBar" />
             <Style BasedOn="{StaticResource BaseStyle}" TargetType="FlyoutItem" />
             <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{DynamicResource ThemeText}" />
                 <Setter Property="FontFamily" Value="OpenSansRegular" />
                 <Setter Property="FontSize" Value="16" />
             </Style>
             <Style TargetType="NavigationPage">
-                <Setter Property="BarBackgroundColor" Value="{StaticResource PrimaryColor}" />
+                <Setter Property="BarBackgroundColor" Value="{DynamicResource ThemePrimary}" />
                 <Setter Property="BarTextColor" Value="White" />
             </Style>
             <Style TargetType="ContentPage">
-                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="BackgroundColor" Value="{DynamicResource ThemeBackground}" />
                 <Setter Property="Padding" Value="10" />
             </Style>
             <Style TargetType="Image">
                 <Setter Property="Aspect" Value="AspectFill" />
             </Style>
             <Style TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{StaticResource AccentColor}" />
+                <Setter Property="BackgroundColor" Value="{DynamicResource ThemeAccent}" />
                 <Setter Property="TextColor" Value="White" />
                 <Setter Property="FontSize" Value="15" />
                 <Setter Property="HeightRequest" Value="48" />
@@ -57,7 +58,7 @@
                 <Setter Property="FontAttributes" Value="Bold" />
             </Style>
             <Style TargetType="Switch">
-                <Setter Property="OnColor" Value="#FF6347" />
+                <Setter Property="OnColor" Value="{DynamicResource ThemeAccent}" />
                 <Setter Property="ThumbColor" Value="LightGray" />
             </Style>
 

@@ -27,7 +27,7 @@ public partial class MealPlanOverviewPage : ContentPage
         var body=new VerticalStackLayout {Padding=16,Spacing=16};body.Add(ShoppingUi.Text("A week worth looking forward to",28,true));
         var filled=plan.Days.Sum(d=>Enumerable.Range(0,3).Count(s=>MealPlanning.Ids(d,s).Count>0||MealPlanning.Notes(d,s).Count>0));
         body.Add(ShoppingUi.Text($"{filled} of 21 meals planned · Personal plan",14));body.Add(new ProgressBar {Progress=filled/21d,ProgressColor=Color.FromArgb("#D0A34F")});
-        body.Add(ShoppingUi.Text("Week starts",12,true));var start=new DatePicker {Date=plan.WeekStart.Date,Format="ddd d MMM yyyy"};start.SetAppThemeColor(DatePicker.TextColorProperty,Color.FromArgb("#193D29"),Color.FromArgb("#EFF5EF"));
+        body.Add(ShoppingUi.Text("Week starts",12,true));var start=new DatePicker {Date=plan.WeekStart.Date,Format="ddd d MMM yyyy"};start.SetDynamicResource(DatePicker.TextColorProperty, "ThemeText");
         start.DateSelected+=async(_,e)=>await Run(async()=>{Check();plan.WeekStart=e.NewDate.Date;await RecipeService.SaveMealPlanHeader(plan);Render();});body.Add(start);
         body.Add(ShoppingUi.Text("Changing the week date keeps your meals, so you can reuse the plan. Choose a day to edit meals and portions.",13));
         var scroll=new ScrollView {Content=body};var anchors=new Dictionary<long,View>();var strip=new HorizontalStackLayout {Spacing=8};

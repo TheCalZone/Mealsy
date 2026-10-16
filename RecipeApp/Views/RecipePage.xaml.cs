@@ -7,7 +7,7 @@ public partial class RecipePage : ContentPage
     public RecipePage(){InitializeComponent();Title="Your recipes";ShoppingUi.Theme(this);}
     protected override async void OnAppearing()
     {
-        base.OnAppearing();var uid=AccountSession.UserId;Content=ShoppingUi.Text("Opening your recipe book…");
+        base.OnAppearing();sort=AppSettings.Current.RecipeSort;var uid=AccountSession.UserId;Content=ShoppingUi.Text("Opening your recipe book…");
         try{await RecipeService.GetRecipesForLocal();AccountSession.Check(uid);if(account!=uid){search="";tag="All";favourites=false;}account=uid;all=RecipeBrowser.Visible(RecipeService.Recipes,uid).ToList();Render();}
         catch(Exception){Content=ShoppingUi.Button("Couldn't open recipes · Retry",async()=>{await RecipeService.GetRecipesForLocal();account=AccountSession.UserId;all=RecipeBrowser.Visible(RecipeService.Recipes,account).ToList();Render();});}
     }
@@ -18,7 +18,7 @@ public partial class RecipePage : ContentPage
         var find=new SearchBar{Placeholder="Search names, descriptions or tags",Text=search};find.TextChanged+=(_,e)=>{search=e.NewTextValue??"";Filter();};header.Add(find);
         var filters=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=10};var tags=new List<string>{"All"};tags.AddRange(all.SelectMany(RecipeBrowser.Tags).Distinct(StringComparer.OrdinalIgnoreCase).Order());if(!tags.Contains(tag))tag="All";
         var tagPicker=new Picker{Title="Tags",ItemsSource=tags,SelectedItem=tag,HeightRequest=48};var sortPicker=new Picker{Title="Sort",ItemsSource=new[]{"Recent","Name","Quickest","Top rated"},SelectedItem=sort,HeightRequest=48};
-        foreach(var picker in new[]{tagPicker,sortPicker})picker.SetAppThemeColor(Picker.TextColorProperty,Color.FromArgb("#193D29"),Color.FromArgb("#EFF5EF"));tagPicker.SelectedIndexChanged+=(_,_)=>{tag=tagPicker.SelectedItem?.ToString()??"All";Filter();};sortPicker.SelectedIndexChanged+=(_,_)=>{sort=sortPicker.SelectedItem?.ToString()??"Recent";Filter();};filters.Add(tagPicker,0);filters.Add(sortPicker,1);header.Add(filters);
+        foreach(var picker in new[]{tagPicker,sortPicker})picker.SetDynamicResource(Picker.TextColorProperty, "ThemeText");tagPicker.SelectedIndexChanged+=(_,_)=>{tag=tagPicker.SelectedItem?.ToString()??"All";Filter();};sortPicker.SelectedIndexChanged+=(_,_)=>{sort=sortPicker.SelectedItem?.ToString()??"Recent";Filter();};filters.Add(tagPicker,0);filters.Add(sortPicker,1);header.Add(filters);
         header.Add(new HorizontalStackLayout{Children={ShoppingUi.Check(favourites,v=>{favourites=v;Filter();}),ShoppingUi.Text("Favourites only",14)}});count=ShoppingUi.Text("",12);header.Add(count);
         list=new CollectionView{SelectionMode=SelectionMode.None,Header=header,ItemTemplate=new DataTemplate(()=>{
             var holder=new ContentView{Padding=new Thickness(16,0,16,16)};holder.BindingContextChanged+=(_,_)=>{holder.Content=holder.BindingContext is Recipe recipe?RecipeCardView.Card(recipe,async()=>{AccountSession.Check(account);await AppNavigation.Recipe(recipe.Id);}):null;};return holder;

@@ -19,7 +19,8 @@ public class RecipeEditorView : ContentView
         var title = Text("", 28, true); title.SetBinding(Label.TextProperty, nameof(model.Heading)); intro.Add(title);
         intro.Add(Text("Capture the details once. Cook it your way.", 15));
         var summary = Text("", 13); summary.SetBinding(Label.TextProperty, nameof(model.Summary)); intro.Add(summary);
-        var progress = new ProgressBar { ProgressColor = Color.FromArgb("#D0A34F"), BackgroundColor = Color.FromArgb("#DBE6D8"), HeightRequest = 6 };
+        var progress = new ProgressBar { BackgroundColor = Color.FromArgb("#DBE6D8"), HeightRequest = 6 };
+        progress.SetDynamicResource(ProgressBar.ProgressColorProperty,"ThemeAccent");
         progress.SetBinding(ProgressBar.ProgressProperty, nameof(model.Progress)); intro.Add(progress); body.Add(intro);
         var basics = new VerticalStackLayout { Spacing = 8 };
         basics.Add(Text("01  THE BASICS", 12, true));
@@ -80,17 +81,18 @@ public class RecipeEditorView : ContentView
     internal static Label Text(string value, int size = 15, bool bold = false)
     {
         var label = new Label { Text = value, FontSize = size, FontAttributes = bold ? FontAttributes.Bold : FontAttributes.None };
-        label.SetAppThemeColor(Label.TextColorProperty, Color.FromArgb("#214D35"), Color.FromArgb("#E5EEE6")); return label;
+        label.SetDynamicResource(Label.FontSizeProperty, "ThemeFont" + size);
+        label.SetDynamicResource(Label.TextColorProperty, "ThemeText"); return label;
     }
     internal static Border Card(View content) {
         var card = new Border { Padding = 16, StrokeThickness = 0, StrokeShape = new RoundRectangle { CornerRadius = 18 }, Content = content };
-        card.SetAppThemeColor(Border.BackgroundColorProperty, Colors.White, Color.FromArgb("#1C2A21")); return card;
+        card.SetDynamicResource(Border.BackgroundColorProperty, "ThemeSurface"); return card;
     }
     private Button Button(string name, Func<Task> action, bool quiet = false)
     {
         var button = new Button { Text = name, HeightRequest = 46, MinimumWidthRequest = 44, CornerRadius = 12, Padding = new Thickness(12, 4), FontSize = 14 };
-        button.SetAppThemeColor(Microsoft.Maui.Controls.Button.BackgroundColorProperty, Color.FromArgb(quiet ? "#E8EEE5" : "#214D35"), Color.FromArgb(quiet ? "#2E4333" : "#386347"));
-        button.SetAppThemeColor(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? Color.FromArgb("#214D35") : Colors.White, Color.FromArgb("#E5EEE6"));
+        button.SetDynamicResource(Microsoft.Maui.Controls.Button.BackgroundColorProperty, quiet ? "ThemeSubtle" : "ThemeAccent");
+        button.SetDynamicResource(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? "ThemeText" : "ThemeOnAccent");
         button.Clicked += async (_, _) => {
             button.IsEnabled = false;
             try { await action(); model.Changed(); }
@@ -102,9 +104,9 @@ public class RecipeEditorView : ContentView
     {
         InputView input = multiline ? new Editor { AutoSize = EditorAutoSizeOption.TextChanges, MinimumHeightRequest = 96 } : new Entry { HeightRequest = 48, ClearButtonVisibility = ClearButtonVisibility.WhileEditing };
         input.Placeholder = hint; input.MaxLength = max; input.FontSize = 16;
-        input.SetAppThemeColor(InputView.TextColorProperty, Color.FromArgb("#193D29"), Color.FromArgb("#EFF5EF"));
-        input.SetAppThemeColor(InputView.PlaceholderColorProperty, Color.FromArgb("#657569"), Color.FromArgb("#A4B6A8"));
-        input.SetAppThemeColor(BackgroundColorProperty, Color.FromArgb("#F5F7F2"), Color.FromArgb("#142018"));
+        input.SetDynamicResource(InputView.TextColorProperty, "ThemeText");
+        input.SetDynamicResource(InputView.PlaceholderColorProperty, "ThemeMuted");
+        input.SetDynamicResource(BackgroundColorProperty, "ThemeBackground");
         if (numeric) input.Keyboard = Keyboard.Numeric;
         if (context != null) input.BindingContext = context;
         input.SetBinding(InputView.TextProperty, new Binding(path, BindingMode.TwoWay)); input.TextChanged += (_, _) => model.Changed();
@@ -132,7 +134,7 @@ public class RecipeEditorView : ContentView
                 first.Add(Field(nameof(item.Name), "Ingredient", "e.g. smoked paprika", 200, context: item), 1); row.Add(first);
                 var advanced = new VerticalStackLayout { Spacing = 7, IsVisible = false };
                 var category = new Picker { Title = "Shopping category", ItemsSource = new[] { "Produce", "Dairy", "Meat", "Pantry", "Bakery", "Frozen", "Drinks", "Other" }, HeightRequest = 48 };
-                category.SetAppThemeColor(Picker.TextColorProperty, Color.FromArgb("#193D29"), Color.FromArgb("#EFF5EF"));
+                category.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
                 category.SelectedItem = ShoppingListDocument.CategoryName(item.Tag);
                 if (category.SelectedIndex < 0) category.SelectedItem = "Other";
                 category.SelectedIndexChanged += (_, _) => { item.Tag = category.SelectedItem?.ToString() ?? "Other"; model.Changed(); }; advanced.Add(category);

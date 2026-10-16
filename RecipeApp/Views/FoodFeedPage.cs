@@ -15,7 +15,7 @@ public class FoodFeedPage : ContentPage
     private int count;
     public FoodFeedPage()
     {
-        Title = "Food feed"; BackgroundColor = Color.FromArgb("#F5F7F2");
+        Title = "Food feed"; ShoppingUi.Theme(this);
         more = Button("Load more", () => Load(false));
         var layout = new VerticalStackLayout { Padding = 16, Spacing = 14, Children = {
             Text("The Mealsy table", 30, true), Text("Recipes, kitchen wins and inspiration from the community.", 15),
@@ -33,10 +33,11 @@ public class FoodFeedPage : ContentPage
         ToolbarItems.Add(new ToolbarItem("Refresh", null, async () => await Load(true)));
     }
     protected override async void OnAppearing() { base.OnAppearing(); await Load(true); }
-    internal static Label Text(string value, int size = 15, bool bold = false) => new() { Text = value, FontSize = size, TextColor = Color.FromArgb("#214D35"), FontAttributes = bold ? FontAttributes.Bold : FontAttributes.None };
+    internal static Label Text(string value, int size = 15, bool bold = false) => ShoppingUi.Text(value, size, bold);
     internal static Button Button(string title, Func<Task> action)
     {
-        var button = new Button { Text = title, HeightRequest = 46, CornerRadius = 12, BackgroundColor = Color.FromArgb("#214D35"), TextColor = Colors.White };
+        var button = new Button { Text = title, HeightRequest = 46, CornerRadius = 12, TextColor = Colors.White };
+        button.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeAccent");
         button.Clicked += async (_, _) => {
             button.IsEnabled = false;
             try { await action(); }
@@ -73,8 +74,8 @@ public class FoodFeedPage : ContentPage
         body.Add(Text(DateTimeOffset.FromUnixTimeMilliseconds(post.CreatedAt).ToLocalTime().ToString("g"), 12));
         if (!string.IsNullOrEmpty(post.Photo))
         {
-            var bytes = Convert.FromBase64String(post.Photo);
-            body.Add(new Image { Source = ImageSource.FromStream(() => new MemoryStream(bytes)), HeightRequest = 220, Aspect = Aspect.AspectFill });
+            var photo = RecipeCardView.Photo(post.Photo, 220);
+            if (photo != null) body.Add(photo);
         }
         if (!string.IsNullOrEmpty(post.Caption)) body.Add(Text(post.Caption));
         if (post.Recipe != null) body.Add(Button("View recipe · " + post.Recipe.Title, async () => await Navigation.PushAsync(new FeedRecipePage(post))));
@@ -100,7 +101,7 @@ public class FoodFeedPage : ContentPage
                 EnsureAccount(); await FoodFeedService.Call<object>(new { action = choice == "Delete post" ? "delete" : "moderate", postId = post.Id, hidden = true }); await Load(true);
             }
         }));
-        return new Border { Padding = 16, StrokeThickness = 0, BackgroundColor = Colors.White, StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 18 }, Content = body };
+        return ShoppingUi.Card(body);
     }
     private static string LikeText(FoodPost post) => $"{(post.Liked ? "♥ Liked" : "♡ Like")} · {post.LikeCount}";
     private void EnsureAccount() { if (account != HouseholdService.UserId) throw new HouseholdException("UNAUTHENTICATED", "Your account changed. Refresh the feed."); }
@@ -110,7 +111,7 @@ public class FeedRecipePage : ContentPage
 {
     public FeedRecipePage(FoodPost post)
     {
-        Title = post.Recipe.Title; BackgroundColor = Color.FromArgb("#F5F7F2");
+        Title = post.Recipe.Title; ShoppingUi.Theme(this);
         var body = new VerticalStackLayout { Spacing = 12 };
         var reader = new RecipeReadView(post.Recipe.ToRecipe(post.Photo), privateDetails: false);
         body.Add(reader);
@@ -126,6 +127,7 @@ public class FeedRecipePage : ContentPage
         body.Remove(reader);
         var layout = new Grid { RowDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) } };
         layout.Add(reader, 0, 0); layout.Add(body, 0, 1); Content = layout;
+        Appearing += (_, _) => reader.StartCooking();
         Disappearing += (_, _) => reader.StopCooking();
     }
 }
