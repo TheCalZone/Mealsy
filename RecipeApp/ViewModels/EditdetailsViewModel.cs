@@ -1,4 +1,4 @@
-﻿using Firebase.Auth;
+using Firebase.Auth;
 using MvvmHelpers.Commands;
 using Plugin.Firebase.Auth;
 using RecipeApp.Models;
@@ -36,36 +36,56 @@ namespace RecipeApp.ViewModels
         public async void InitializeAsync()
         {
             User = CrossFirebaseAuth.Current.CurrentUser;
-            CurrentAppUser = await FirestoreService.GetUserAsync(User.Uid);
+            if (User == null) return;
+            try
+            {
+            CurrentAppUser = await FirestoreService.GetUserAsync(User.Uid) ?? new AppUser { Email = User.Email };
             Email = CurrentAppUser.Email;
             FirstName = CurrentAppUser.FirstName;
             LastName = CurrentAppUser.LastName;
             DietRestrictions = CurrentAppUser.DietRestrictions;
             FavouriteCuisines = CurrentAppUser.FavouriteCuisines;
+            }
+            catch (Exception)
+            {
+                await Shell.Current.DisplayAlert("Profile unavailable", "Could not load your profile. Please try again when online.", "OK");
+            }
         }
 
         private async Task SaveChanges()
         {
-            var email = Email;
-            var firstname = FirstName;
-            var lastname = LastName;
-            var dietRestrictions = DietRestrictions;
-            var favouritecuisine = FavouriteCuisines;
+            if (IsBusy) return;
+            IsBusy = true;
+            try
+            {
+                var email = Email;
+                var firstname = FirstName;
+                var lastname = LastName;
+                var dietRestrictions = DietRestrictions;
+                var favouritecuisine = FavouriteCuisines;
 
-            var userdata = new Dictionary<object, object>
-                {
-                    { "email", email },
-                    {"firstname", firstname },
-                    {"lastname", lastname },
-                    {"dietRestrict", dietRestrictions },
-                    {"favouriteCuisine", favouritecuisine },
-                };
+                var userdata = new Dictionary<object, object>
+                    {
+                        { "email", email },
+                        {"first_name", firstname },
+                        {"last_name", lastname },
+                        {"diet_restrictions", dietRestrictions },
+                        {"favourite_cuisines", favouritecuisine },
+                    };
 
 
-            await CrossFirebaseAuth.Current.CurrentUser.UpdateProfileAsync(firstname + " " + lastname);
-            ////Add user to firestore with info
-            await FirestoreService.SetUserData(CrossFirebaseAuth.Current.CurrentUser.Uid, userdata);
-            await Shell.Current.Navigation.PopAsync();
+                await CrossFirebaseAuth.Current.CurrentUser.UpdateProfileAsync(firstname + " " + lastname);
+                ////Add user to firestore with info
+                await FirestoreService.SetUserData(CrossFirebaseAuth.Current.CurrentUser.Uid, userdata);
+                await Shell.Current.Navigation.PopAsync();
+
+
+            }
+            catch (Exception)
+            {
+                await Shell.Current.DisplayAlert("Save failed", "Your changes could not be saved. Please check your connection and try again.", "OK");
+            }
+            finally { IsBusy = false; }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿
+
 using CommunityToolkit.Maui.Alerts;
 using MvvmHelpers;
 using MvvmHelpers.Commands;
@@ -183,7 +183,7 @@ namespace RecipeApp.ViewModels
             //    }
             //    ListOfIngredients.Add(group);
             //}
-            
+
 
             AddGroupCommand = new MvvmHelpers.Commands.Command(AddGroup);
             RemoveGroupCommand = new MvvmHelpers.Commands.Command<IngredientGroup>(RemoveGroup);
@@ -259,68 +259,83 @@ namespace RecipeApp.ViewModels
 
         async Task Save()
         {
-            if (string.IsNullOrWhiteSpace(RecipeName))
+            if (IsBusy) return;
+            IsBusy = true;
+            try
             {
-                await Shell.Current.DisplayAlert("Error", "Please enter a recipe name.", "OK");
-                return;
-            }
-            var recipe = new Recipe { RecipeName = RecipeName, RecipeMethod = RecipeMethod };
-
-            if (int.TryParse(ServingText, out int servingInt))
-            {
-                recipe.Serving = servingInt;
-            }
-            else
-            {
-                recipe.Serving = 0;
-            }
-
-            if (int.TryParse(PrepText, out int prepInt))
-            {
-                recipe.PrepTime = prepInt;
-            }
-            else
-            {
-                recipe.PrepTime = 0;
-            }
-
-            if (int.TryParse(RatingText, out int ratingInt))
-            {
-                recipe.Rating = ratingInt;
-            }
-            else
-            {
-                recipe.Rating = 0;
-            }
-
-            foreach (IngredientGroup group in ListOfIngredients)
-            {
-                foreach (Ingredient item in group)
+                if (string.IsNullOrWhiteSpace(RecipeName))
                 {
-                    if (!string.IsNullOrWhiteSpace(item.Name))
+                    await Shell.Current.DisplayAlert("Error", "Please enter a recipe name.", "OK");
+                    return;
+                }
+                var recipe = new Recipe { RecipeName = RecipeName, RecipeMethod = RecipeMethod };
+
+                if (int.TryParse(ServingText, out int servingInt))
+                {
+                    recipe.Serving = servingInt;
+                }
+                else
+                {
+                    recipe.Serving = 0;
+                }
+
+                if (int.TryParse(PrepText, out int prepInt))
+                {
+                    recipe.PrepTime = prepInt;
+                }
+                else
+                {
+                    recipe.PrepTime = 0;
+                }
+
+                if (int.TryParse(RatingText, out int ratingInt))
+                {
+                    recipe.Rating = ratingInt;
+                }
+                else
+                {
+                    recipe.Rating = 0;
+                }
+
+                Ingredients.Clear();
+                foreach (IngredientGroup group in ListOfIngredients)
+                {
+                    foreach (Ingredient item in group)
                     {
-                        item.IngredientSection = group.Key;
-                        Ingredients.Add(item);
+                        if (!string.IsNullOrWhiteSpace(item.Name))
+                        {
+                            item.IngredientSection = group.Key;
+                            Ingredients.Add(item);
+                        }
                     }
                 }
+
+
+                recipe.Tags = TagsText + ",all";
+                recipe.RecipeImage = RecipeImage;
+                recipe.Ingredients = Ingredients.ToList();
+                recipe.FirebaseIngredients = Ingredients.ToList();
+                recipe.RecipeMethod = RecipeMethod;
+                recipe.LastUpdated = DateTime.UtcNow;
+
+                if (AuthHelper.UserId != null)
+                {
+                    recipe.FirebaseUID = AuthHelper.UserId;
+                }
+
+                await RecipeService.AddRecipe(recipe);
+                var firebaserecipe = await RecipeService.GetRecipe(recipe.Id);
+                try { await FirestoreService.AddRecipe(firebaserecipe); }
+                catch (Exception) { await Shell.Current.DisplayAlert("Saved locally", "Cloud sync failed. Your recipe is saved on this device.", "OK"); }
+                await Shell.Current.GoToAsync("..");
+
+
             }
-
-
-            recipe.Tags = TagsText + ",all";
-            recipe.Ingredients = Ingredients.ToList();
-            recipe.FirebaseIngredients = Ingredients.ToList();
-            recipe.RecipeMethod = RecipeMethod;
-            recipe.LastUpdated = DateTime.UtcNow;
-
-            if (AuthHelper.UserId != null)
+            catch (Exception)
             {
-                recipe.FirebaseUID = AuthHelper.UserId;
+                await Shell.Current.DisplayAlert("Save failed", "Your changes could not be saved. Please check your connection and try again.", "OK");
             }
-
-            await RecipeService.AddRecipe(recipe);
-            var firebaserecipe = await RecipeService.GetRecipe(recipe.Id);
-            await FirestoreService.AddRecipe(firebaserecipe);
-            await Shell.Current.GoToAsync("..");
+            finally { IsBusy = false; }
         }
 
         private async Task UploadImage()
@@ -343,7 +358,7 @@ namespace RecipeApp.ViewModels
 
                 // Save the byte array to the recipe object
                 RecipeImage = Convert.ToBase64String(bytes);
-            
+
             }
             else
             {
@@ -384,6 +399,7 @@ namespace RecipeApp.ViewModels
         }
         private string SuggestTagForIngredient(string ingredientName)
         {
+            if (string.IsNullOrWhiteSpace(ingredientName)) return string.Empty;
             var matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
             if (matchedIngredient != null)
             {
@@ -492,10 +508,10 @@ namespace RecipeApp.ViewModels
             ListOfIngredients.Add(newGroup);
         }
 
-        private void RemoveGroup(IngredientGroup group)
+        private async void RemoveGroup(IngredientGroup group)
         {
-            var confirm = Application.Current.MainPage.DisplayAlert("Delete", "Are you sure you want to delete " + group.Key, "Yes", "No");
-            if (confirm.Result)
+            var confirm = await Application.Current.MainPage.DisplayAlert("Delete", "Are you sure you want to delete " + group.Key, "Yes", "No");
+            if (confirm)
             { ListOfIngredients.Remove(group); }
         }
 
@@ -505,7 +521,7 @@ namespace RecipeApp.ViewModels
             if (confirm)
             {
                 var group = ListOfIngredients.FirstOrDefault(g => g.Key == ingredient.IngredientSection);
-                group.Remove(ingredient);
+                group?.Remove(ingredient);
             }
             return;
         }

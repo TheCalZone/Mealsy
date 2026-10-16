@@ -1,4 +1,4 @@
-﻿using RecipeApp.Models;
+using RecipeApp.Models;
 using Plugin.Firebase.Firestore;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -15,7 +15,7 @@ namespace RecipeApp.Services
         {
             get { return CrossFirebaseAuth.Current.CurrentUser?.Uid;}
 
-            set { UserId = value;} 
+
         }
 
         public static async Task SetUserData(string uid, Dictionary<object,object> data)
@@ -64,7 +64,7 @@ namespace RecipeApp.Services
                 }
             }
 
-            return null;
+            return new();
 
         }
 
@@ -76,6 +76,8 @@ namespace RecipeApp.Services
                 {
                     {"recipe_name", recipe.RecipeName },
                     {"recipe_method", recipe.RecipeMethod},
+                    {"recipe_image", recipe.RecipeImage},
+                    {"tags", recipe.Tags},
                     {"serving", recipe.Serving },
                     {"prep_time", recipe.PrepTime },
                     {"rating",recipe.Rating },
@@ -116,6 +118,8 @@ namespace RecipeApp.Services
                 {
                     {"recipe_name", recipe.RecipeName },
                     {"recipe_method", recipe.RecipeMethod},
+                    {"recipe_image", recipe.RecipeImage},
+                    {"tags", recipe.Tags},
                     {"serving", recipe.Serving },
                     {"prep_time", recipe.PrepTime },
                     {"rating",recipe.Rating },
@@ -147,13 +151,15 @@ namespace RecipeApp.Services
 
                     var recipe = new Recipe()
                     {
+                        FirestoreID = document.Data.FirestoreID,
+                        Tags = document.Data.Tags,
                         RecipeName = document.Data.RecipeName,
                         RecipeMethod = document.Data.RecipeMethod,
                         RecipeImage = document.Data.RecipeImage,
                         Serving = document.Data.Serving,
                         PrepTime = document.Data.PrepTime,
                         Rating = document.Data.Rating,
-                        Ingredients = document.Data.FirebaseIngredients,
+                        Ingredients = document.Data.FirebaseIngredients ?? new(),
                         LastUpdated = document.Data.LastUpdated,
                         FirebaseUID = document.Data.FirebaseUID,
                         Id = document.Data.Id,
@@ -164,7 +170,7 @@ namespace RecipeApp.Services
                 return recipes;
 
             }
-            return null;
+            return new();
         }
 
 
@@ -183,6 +189,7 @@ namespace RecipeApp.Services
                 {
                     var snack = new Snack
                     {
+                        FirebaseUID = doc.Data.FirebaseUID, LastUpdated = doc.Data.LastUpdated,
                         Name = doc.Data.Name,
                         Tag = doc.Data.Tag,
                         Id = doc.Data.Id,
@@ -197,7 +204,7 @@ namespace RecipeApp.Services
             {
                 var toast = Toast.Make("Unable to retrieve snacks, please sign in first.", ToastDuration.Short, 14);
                 await toast.Show();
-                return null;
+                return new();
             }
 
         }
@@ -225,7 +232,9 @@ namespace RecipeApp.Services
                 var updatedSnack = new Dictionary<object, object> {
                 { "name", snack.Name},
                 { "tag",snack.Tag},
-                {"lastupdated",snack.LastUpdated }
+                {"lastUpdated",snack.LastUpdated },
+                {"sqlId",snack.Id},
+                {"firebaseUID",UserId}
                 };
 
                 await CrossFirebaseFirestore.Current.GetCollection("users").GetDocument(UserId).GetCollection("snacks").GetDocument(snack.Name).SetDataAsync(updatedSnack);
@@ -245,6 +254,7 @@ namespace RecipeApp.Services
                 {
                     var essential = new Staple
                     {
+                        FirebaseUID = doc.Data.FirebaseUID, LastUpdated = doc.Data.LastUpdated,
                         Name = doc.Data.Name,
                         Tag = doc.Data.Tag,
                         Id = doc.Data.Id,
@@ -261,7 +271,7 @@ namespace RecipeApp.Services
                     await toast.Show();
                 }
 
-                return null;
+                return new();
         }
 
         public static async Task AddStaple(Staple staple)
@@ -298,7 +308,9 @@ namespace RecipeApp.Services
             {
                 { "name", staple.Name },
                 { "tag", staple.Tag },
-                { "lastupdated", staple.LastUpdated }
+                { "lastUpdated", staple.LastUpdated },
+                { "sqlId", staple.Id },
+                { "firebaseUID", UserId }
             };
 
                 await CrossFirebaseFirestore.Current

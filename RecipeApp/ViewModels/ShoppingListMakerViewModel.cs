@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Alerts;
 using Microsoft.Maui.Controls.PlatformConfiguration;
 using MvvmHelpers;
 using MvvmHelpers.Commands;
@@ -154,6 +154,7 @@ namespace RecipeApp.ViewModels
                 ShowSnacks = !ShowSnacks;
                 if (Snacks.Count == 0)
                 {
+                    await RecipeService.GetSnacksForLocal();
                     GetSnacks();
                 }
                 SnackColour = ShowSnacks ? Color.FromArgb("#36C977") : Color.FromArgb("#FF6347");
@@ -164,6 +165,7 @@ namespace RecipeApp.ViewModels
                 ShowStaples = !ShowStaples;
                 if (Staples.Count == 0)
                 {
+                    await RecipeService.GetStaplesForLocal();
                     GetStaples();
                 }
                 StapleColour = ShowStaples ? Color.FromArgb("#36C977") : Color.FromArgb("#FF6347");
@@ -207,8 +209,8 @@ namespace RecipeApp.ViewModels
             var shoppingListDictionary = new Dictionary<string, List<string>>();
 
             var allIngredients = Recipes.Where(r => r.IsSelected).SelectMany(r => r.Ingredients.Where(r => r.MainIngredient))
-                .Concat(Snacks.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag.Replace(" ", "") }))
-                .Concat(Staples.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag.Replace(" ", "") }));
+                .Concat(Snacks.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag?.Replace(" ", "") ?? string.Empty }))
+                .Concat(Staples.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag?.Replace(" ", "") ?? string.Empty }));
 
             // Add these extra items to your allIngredients list
             //allIngredients = allIngredients.Concat(extraItems.Select(item => new Ingredient { Name = item })).ToList();
@@ -219,6 +221,7 @@ namespace RecipeApp.ViewModels
                 {
                     if (!await Application.Current.MainPage.DisplayAlert($"Do you have {ingredient.Name}?", "", "Yes", "No"))
                     {
+                        ingredient.Tag ??= string.Empty;
                         if (!shoppingListDictionary.ContainsKey(ingredient.Tag))
                         {
                             shoppingListDictionary.Add(ingredient.Tag, new List<string>());
@@ -303,8 +306,8 @@ namespace RecipeApp.ViewModels
                                                  .ToList();
 
             var allIngredients = Recipes.Where(r => r.IsSelected).SelectMany(r => r.Ingredients.Where(r => r.MainIngredient))
-                .Concat(Snacks.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag.Replace(" ", "") }))
-                .Concat(Staples.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag.Replace(" ", "") }));
+                .Concat(Snacks.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag?.Replace(" ", "") ?? string.Empty }))
+                .Concat(Staples.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag?.Replace(" ", "") ?? string.Empty }));
 
             var ingredientsWithNotes = allIngredients
                 .OrderBy(i => i.Tag?.Replace(" ", "") ?? ".")
@@ -346,7 +349,7 @@ namespace RecipeApp.ViewModels
                         Count = g.Count()
                     })
                     .OrderBy(item => item.Name) // Or any other ordering you prefer
-                    .Select(item => item.Count() > 1 ? $"{item.Name} x{item.Count()}" : item.Name)
+                    .Select(item => item.Count > 1 ? $"{item.Name} x{item.Count}" : item.Name)
                     .ToList();
 
                 // Convert the consolidated list back to the string format expected for storage
@@ -356,7 +359,7 @@ namespace RecipeApp.ViewModels
                 // Step 4: Save the updated list to preferences
                 Preferences.Set("ShoppingListText", updatedListText);
 
-                var route = $"//ShoppingListMakerPage/ShoppingListsManualList={IsManualList}";
+                var route = $"//ShoppingListPage?IsManualList={IsManualList}";
                 await Shell.Current.GoToAsync(route);
             }
             else
@@ -452,7 +455,7 @@ namespace RecipeApp.ViewModels
         async Task DeleteStaple(Staple staple)
         {
             await RecipeService.DeleteStaple(staple);
-            await RecipeService.DeleteStaple(staple);
+            await FirestoreService.DeleteStaple(staple);
             Staples.Clear();
             var staples = RecipeService.Staples;
             Staples.AddRange(staples);

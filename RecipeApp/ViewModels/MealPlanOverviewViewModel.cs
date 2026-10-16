@@ -1,4 +1,4 @@
-﻿using MvvmHelpers;
+using MvvmHelpers;
 using MvvmHelpers.Commands;
 using Newtonsoft.Json;
 using RecipeApp.Models;
@@ -76,29 +76,22 @@ namespace RecipeApp.ViewModels
             List<Ingredient> ListOfIngredients = new List<Ingredient>();
             List<Recipe> dailyRecipes = new List<Recipe>();
 
-            foreach (MealPlanDay mealPlanDay in MealPlan.Days)
+            ingredientCounts.Clear();
+            var occurrences = MealPlan.Days.SelectMany(day =>
+                day.BreakfastRecipesIDs.Concat(day.LunchRecipesIDs).Concat(day.DinnerRecipesIDs)
+                    .Concat(new[] { day.BreakfastRecipeId, day.LunchRecipeId, day.DinnerRecipeId }.Where(id => id != 0))
+                    .Distinct()).GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
+            foreach (var id in occurrences.Keys)
             {
-                if (mealPlanDay.BreakfastRecipeId != 0 && !dailyRecipes.Any(r => r.Id == mealPlanDay.BreakfastRecipeId))
-                {
-                    dailyRecipes.Add(await RecipeService.GetRecipe(mealPlanDay.BreakfastRecipeId));
-                }
-
-                if (mealPlanDay.LunchRecipeId != 0 && !dailyRecipes.Any(r => r.Id == mealPlanDay.LunchRecipeId))
-                {
-                    dailyRecipes.Add(await RecipeService.GetRecipe(mealPlanDay.LunchRecipeId));
-                }
-
-                if (mealPlanDay.DinnerRecipeId != 0 && !dailyRecipes.Any(r => r.Id == mealPlanDay.DinnerRecipeId))
-                {
-                    dailyRecipes.Add(await RecipeService.GetRecipe(mealPlanDay.DinnerRecipeId));
-                }
+                var recipe = await RecipeService.GetRecipe(id);
+                if (recipe != null) dailyRecipes.Add(recipe);
             }
 
             foreach (Recipe recipe in dailyRecipes)
             {
                 if (recipe.Serving > 0)
                 {
-                    int timesRecipeAppears = MealPlan.Days.Count(day => day.BreakfastRecipeId == recipe.Id || day.LunchRecipeId == recipe.Id || day.DinnerRecipeId == recipe.Id);
+                    int timesRecipeAppears = occurrences[recipe.Id];
                     int timesToAdd = (int)Math.Ceiling((double)timesRecipeAppears / recipe.Serving);
 
                     foreach (Ingredient ingredient in recipe.Ingredients)

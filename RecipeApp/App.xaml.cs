@@ -1,4 +1,4 @@
-﻿using Plugin.Firebase.Auth;
+using Plugin.Firebase.Auth;
 using RecipeApp.Helpers;
 using RecipeApp.Interfaces;
 using RecipeApp.Models;
@@ -18,32 +18,41 @@ public partial class App : Application
 
         protected override async void OnStart()
         {
-        // Check if email and password exist in secure storage
-            string email = await SecureStorage.GetAsync("email");
-            string password = await SecureStorage.GetAsync("password");
-
-            await RecipeService.GetRecipesForLocal();
-        await RecipeService.GetSnacksForLocal();
-        await RecipeService.GetStaplesForLocal();
-
-        if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
-        {
+            base.OnStart();
             try
             {
-                // Authenticate the user using the stored email and password
-                var authResult = await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(email, password);
-                // Set user info in AuthHelper
-                AuthHelper.UserId = authResult.Uid;
-                AuthHelper.Email = authResult.Email;
-                LoadDataAsync();
+                await RecipeService.GetRecipesForLocal();
+                await RecipeService.GetSnacksForLocal();
+                await RecipeService.GetStaplesForLocal();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
-                // Handle errors (e.g., invalid email/password)
+                Debug.WriteLine(ex);
+                await MainPage.DisplayAlert("Local data unavailable", "Your local data could not be loaded. Please restart the app.", "OK");
+                return;
             }
-            
-        }
+            try
+            {
+                var user = CrossFirebaseAuth.Current.CurrentUser;
+                if (user == null)
+                {
+                    var email = await SecureStorage.GetAsync("email");
+                    var password = await SecureStorage.GetAsync("password");
+                    if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
+                        user = await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(email, password);
+                }
+                if (user != null)
+                {
+                    AuthHelper.UserId = user.Uid;
+                    AuthHelper.Email = user.Email;
+                    await LoadDataAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // A network/secure-storage failure must not make local recipes unusable.
+                Debug.WriteLine(ex);
+            }
         }
 
         protected override void OnResume()
@@ -51,32 +60,32 @@ public partial class App : Application
 
         }
 
-    private async void LoadDataAsync()
+    private async Task LoadDataAsync()
     {
         try
         {
 
             var recipes = await FirestoreService.GetAllRecipesAsync();
-            var sqlRecipes = RecipeService.Recipes;
+            var sqlRecipes = RecipeService.Recipes.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
 
             await UpdateLocalData(recipes.ToList(), sqlRecipes.ToList(), recipe => RecipeService.UpdateRecipeAndIngredientsAsync(recipe, recipe.Ingredients), recipe => RecipeService.AddRecipe(recipe), recipe => FirestoreService.AddRecipe(recipe));
 
             // Fetch snacks
             var snacks = await FirestoreService.GetAllSnacks();
-            var sqlSnacks = RecipeService.Snacks;
+            var sqlSnacks = RecipeService.Snacks.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
 
             await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.AddSnack(snack.Name), snack => FirestoreService.AddSnack(snack));
 
             // Fetch staples
             var staples = await FirestoreService.GetAllEssentials();
-            var sqlStaples = RecipeService.Staples;
+            var sqlStaples = RecipeService.Staples.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
 
             await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.AddStaple(staple.Name), staple => FirestoreService.AddStaple(staple));
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
-            throw;
+            // Keep the local data available when remote sync fails.
         }
     }
     private async Task UpdateLocalData<T>(List<T> firestoreList, List<T> sqlList, Func<T, Task> updateFunc, Func<T, Task> addSqlFunc, Func<T, Task> addFirebaseFunc) where T : IIdentifiable

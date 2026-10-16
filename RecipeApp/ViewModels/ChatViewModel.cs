@@ -1,124 +1,88 @@
-﻿using MvvmHelpers;
-using Plugin.Firebase.Auth;
+using MvvmHelpers;
 using RecipeApp.Helpers;
 using RecipeApp.Models;
 using RecipeApp.Services;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
 
-namespace RecipeApp.ViewModels
+namespace RecipeApp.ViewModels;
+
+public class ChatViewModel : BaseViewModel
 {
-    public class ChatViewModel : BaseViewModel
+    private string result;
+    private string apiKey;
+    private Recipe displayRecipe;
+    public string Result { get => result; set => SetProperty(ref result, value); }
+    public string ApiKey { get => apiKey; set => SetProperty(ref apiKey, value); }
+    public Recipe DisplayRecipe { get => displayRecipe; set => SetProperty(ref displayRecipe, value); }
+    public ICommand AskDessertRecipeCommand { get; }
+    public ICommand AskRecipeCommand { get; }
+    public ICommand SaveRecipeCommand { get; }
+    public ICommand SaveApiKeyCommand { get; }
+
+    public ChatViewModel()
     {
-        private string result;
-
-        private AppUser appUser;
-        public AppUser CurrentAppUser { get => appUser; set => SetProperty(ref appUser, value); }
-
-        public Recipe DisplayRecipe { get => displayRecipe; set => SetProperty(ref displayRecipe, value); }
-
-        public string Result { get => result; set => SetProperty(ref result, value); }
-
-        private OpenAIApiService openAIApiService;
-        private Recipe displayRecipe;
-
-        public ICommand AskDessertRecipeCommand { get; }
-
-        public ICommand AskRecipeCommand { get; }
-
-        public ICommand SaveRecipeCommand { get; }
-
-        public ChatViewModel()
+        AskDessertRecipeCommand = new Command(async () => await AskRecipeAsync("dessert recipe"));
+        AskRecipeCommand = new Command(async () => await AskRecipeAsync("recipe"));
+        SaveRecipeCommand = new Command(async () => await SaveRecipeAsync());
+        SaveApiKeyCommand = new Command(async () =>
         {
-            openAIApiService = new OpenAIApiService();
-            AskDessertRecipeCommand = new Command(AskDessertRecipe);
-            AskRecipeCommand = new Command(AskRecipe);
-            SaveRecipeCommand = new Command(SaveRecipe);
-            LoadUserDataAsync();
-        }
-
-        private async void AskDessertRecipe()
-        {
-            IsBusy = true;
-            LoadUserDataAsync();
-
-           Result = await openAIApiService.AskGpt($"I'm {CurrentAppUser.DietRestrictions} and I love {CurrentAppUser.FavouriteCuisines} Can you show me a dessert recipe with metric measurements? In the format of: Recipe Name: Ingredients: Method:");
-
-            Regex recipeNameRegex = new Regex(@"Recipe Name:(.*?)Ingredients:", RegexOptions.Singleline);
-            string recipeName = recipeNameRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex ingredientsRegex = new Regex(@"Ingredients:(.*?)Method:", RegexOptions.Singleline);
-            string ingredients = ingredientsRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex methodRegex = new Regex(@"Method:(.*)", RegexOptions.Singleline);
-            string method = methodRegex.Match(Result).Groups[1].Value.Trim();
-
-
-            string[] ingredientsArray = ingredients.Split('\n');
-
-            List<Ingredient> ingredientsList = new List<Ingredient>();
-            foreach (string ingredient in ingredientsArray)
+            try
             {
-                ingredientsList.Add(new Ingredient { Name = ingredient.Trim() });
+                if (string.IsNullOrWhiteSpace(ApiKey)) return;
+                await SecureStorage.SetAsync("OpenAIApiKey", ApiKey.Trim());
+                ApiKey = string.Empty;
+                await Shell.Current.DisplayAlert("API key saved", "Your key is stored securely on this device.", "OK");
             }
-
-            DisplayRecipe = new Recipe { RecipeName = recipeName, Ingredients = ingredientsList, RecipeMethod = method };
-
-            IsBusy = false;
-        }
-
-        private async void AskRecipe()
-        {
-            IsBusy = true;
-
-            LoadUserDataAsync();
-
-            Result = await openAIApiService.AskGpt($"I'm {CurrentAppUser.DietRestrictions} and I love {CurrentAppUser.FavouriteCuisines} Can you show me a recipe with metric measurements? In the format of: Recipe Name: Ingredients: Method:");
-
-            Regex recipeNameRegex = new Regex(@"Recipe Name:(.*?)Ingredients:", RegexOptions.Singleline);
-            string recipeName = recipeNameRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex ingredientsRegex = new Regex(@"Ingredients:(.*?)Method:", RegexOptions.Singleline);
-            string ingredients = ingredientsRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex methodRegex = new Regex(@"Method:(.*)", RegexOptions.Singleline);
-            string method = methodRegex.Match(Result).Groups[1].Value.Trim();
-
-            string[] ingredientsArray = ingredients.Split('\n');
-
-            List<Ingredient> ingredientsList = new List<Ingredient>();
-            foreach (string ingredient in ingredientsArray)
+            catch (Exception)
             {
-                ingredientsList.Add(new Ingredient { Name = ingredient.Trim() });
+                await Shell.Current.DisplayAlert("Key not saved", "Secure storage is unavailable. Please try again.", "OK");
             }
-
-            DisplayRecipe = new Recipe { RecipeName = recipeName, Ingredients = ingredientsList, RecipeMethod = method };
-
-            IsBusy = false;
-        }
-
-        public async void LoadUserDataAsync()
-        {
-            CurrentAppUser = await FirestoreService.GetUserAsync(CrossFirebaseAuth.Current.CurrentUser.Uid);
-        }
-
-        public void SaveRecipe()
-        {
-            SaveRecipeToFireStore();
-            SaveRecipeToLocalDatabase();
-        }
-
-        public async void SaveRecipeToFireStore()
-        {
-            await FirestoreService.AddRecipe(DisplayRecipe);
-        }
-
-        public async void SaveRecipeToLocalDatabase()
-        {
-            await RecipeService.AddRecipe(DisplayRecipe);
-        }
-
-        // add other commands here...
+        });
     }
 
+    private async Task AskRecipeAsync(string kind)
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        try
+        {
+            var user = string.IsNullOrEmpty(AuthHelper.UserId) ? null : await FirestoreService.GetUserAsync(AuthHelper.UserId);
+            Result = await new OpenAIApiService().AskGpt($"Suggest a {kind} with metric measurements. Dietary restrictions: {user?.DietRestrictions}. Favourite cuisines: {user?.FavouriteCuisines}. Use exactly these headings: Recipe Name: Ingredients: Method:");
+            var match = Regex.Match(Result, @"Recipe Name:\s*(.*?)\s*Ingredients:\s*(.*?)\s*Method:\s*(.+)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (!match.Success) throw new InvalidOperationException("The response was not a complete recipe. Please try again.");
+            DisplayRecipe = new Recipe
+            {
+                RecipeName = match.Groups[1].Value.Trim(), RecipeMethod = match.Groups[3].Value.Trim(),
+                Ingredients = match.Groups[2].Value.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => new Ingredient { Name = line.Trim(), MainIngredient = true }).ToList(),
+                Tags = "all", FirebaseUID = AuthHelper.UserId
+            };
+        }
+        catch (Exception ex)
+        {
+            DisplayRecipe = null;
+            await Shell.Current.DisplayAlert("Recipe unavailable", ex is InvalidOperationException ? ex.Message : "Could not generate a recipe. Check your connection and API key.", "OK");
+        }
+        finally { IsBusy = false; }
+    }
+
+    private async Task SaveRecipeAsync()
+    {
+        if (IsBusy || DisplayRecipe == null) return;
+        IsBusy = true;
+        try
+        {
+            await RecipeService.AddRecipe(DisplayRecipe);
+            try { await FirestoreService.AddRecipe(DisplayRecipe); }
+            catch (Exception) { await Shell.Current.DisplayAlert("Saved locally", "Cloud sync failed. Your recipe is available on this device.", "OK"); }
+            DisplayRecipe = null;
+            await Shell.Current.DisplayAlert("Recipe saved", "Your recipe is in the recipe book.", "OK");
+        }
+        catch (Exception)
+        {
+            await Shell.Current.DisplayAlert("Save failed", "The recipe could not be saved. Please try again.", "OK");
+        }
+        finally { IsBusy = false; }
+    }
 }

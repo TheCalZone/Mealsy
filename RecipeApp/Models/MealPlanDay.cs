@@ -34,6 +34,7 @@ namespace RecipeApp.Models
 
         [PrimaryKey, AutoIncrement]
         public long Id { get; set; }
+        [ForeignKey(typeof(MealPlan))]
         public long MealPlanID { get; set; }
         public string MealDay { get; set; }
         public long MealDayIndex { get; set; }

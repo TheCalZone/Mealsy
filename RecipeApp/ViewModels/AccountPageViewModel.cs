@@ -1,4 +1,4 @@
-﻿using RecipeApp.Helpers;
+using RecipeApp.Helpers;
 using RecipeApp.Views;
 using Firebase.Auth;
 using Plugin.Firebase.Auth;
@@ -95,7 +95,7 @@ namespace RecipeApp.ViewModels
 
                 RecipeService.AsignFireBaseUIDToRecipes();
                 GetUserInfo();
-                LoadDataAsync();
+                await LoadDataAsync();
             }
             catch (Plugin.Firebase.Core.Exceptions.FirebaseAuthException ex)
             {
@@ -139,72 +139,88 @@ namespace RecipeApp.ViewModels
                 }
                 await Shell.Current.DisplayAlert("Authentication Failed", errorMessage, "OK");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle other unexpected errors
                 await Shell.Current.DisplayAlert("Error", "An unexpected error occurred. Please try again later.", "OK");
             }
         }
 
-        private void SignOut(object obj)
+        private async void SignOut(object obj)
         {
             try
             {
-                // Sign out the user from Firebase
-                CrossFirebaseAuth.Current.SignOutAsync();
-
-                SecureStorage.Remove("email"); // Remove the email from SecureStorage
-                SecureStorage.Remove("password"); // Remove the password from SecureStorage
-
+                await CrossFirebaseAuth.Current.SignOutAsync();
+                SecureStorage.Remove("email");
+                SecureStorage.Remove("password");
+                AuthHelper.Reset();
+                User = null;
+                CurrentAppUser = null;
+                PasswordEntryText = string.Empty;
                 IsAuthenticated = false;
             }
             catch (Exception)
             {
-
-                throw;
+                await Shell.Current.DisplayAlert("Sign out failed", "Could not sign out. Please try again.", "OK");
             }
         }
 
         private async void ResetPassword()
         {
-            await CrossFirebaseAuth.Current.SendPasswordResetEmailAsync(EmailEntryText);
+            if (string.IsNullOrWhiteSpace(EmailEntryText))
+            {
+                await Shell.Current.DisplayAlert("Email required", "Enter your email address first.", "OK");
+                return;
+            }
+            try
+            {
+                await CrossFirebaseAuth.Current.SendPasswordResetEmailAsync(EmailEntryText.Trim());
+                await Shell.Current.DisplayAlert("Password reset", "Check your email for password reset instructions.", "OK");
+            }
+            catch (Exception)
+            {
+                await Shell.Current.DisplayAlert("Reset failed", "Could not request a password reset. Check the address and your connection.", "OK");
+            }
         }
 
         public async void GetUserInfo()
         {
-            User = CrossFirebaseAuth.Current.CurrentUser;
-
-            if (User != null)
+            try
             {
-                CurrentAppUser = await FirestoreService.GetUserAsync(User.Uid);
+                User = CrossFirebaseAuth.Current.CurrentUser;
+                IsAuthenticated = User != null;
+                CurrentAppUser = User == null ? null : await FirestoreService.GetUserAsync(User.Uid);
+            }
+            catch (Exception)
+            {
+                CurrentAppUser = User == null ? null : new AppUser { Email = User.Email };
             }
         }
 
-        private async void LoadDataAsync()
+        private async Task LoadDataAsync()
         {
             try
             {
                 var recipes = await FirestoreService.GetAllRecipesAsync();
-                var sqlRecipes = RecipeService.Recipes;
+                var sqlRecipes = RecipeService.Recipes.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
 
                 await UpdateLocalData(recipes.ToList(), sqlRecipes.ToList(), recipe => RecipeService.UpdateRecipeAndIngredientsAsync(recipe, recipe.Ingredients), recipe => RecipeService.AddRecipe(recipe), recipe => FirestoreService.AddRecipe(recipe));
 
                 // Fetch snacks
                 var snacks = await FirestoreService.GetAllSnacks();
-                var sqlSnacks = RecipeService.Snacks;
+                var sqlSnacks = RecipeService.Snacks.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
 
                 await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.AddSnack(snack.Name), snack => FirestoreService.AddSnack(snack));
 
                 // Fetch staples
                 var staples = await FirestoreService.GetAllEssentials();
-                var sqlStaples = RecipeService.Staples;
+                var sqlStaples = RecipeService.Staples.Where(r => r.FirebaseUID == AuthHelper.UserId || string.IsNullOrEmpty(r.FirebaseUID)).ToList();
 
                 await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.AddStaple(staple.Name), staple => FirestoreService.AddStaple(staple));
             }
             catch (Exception)
             {
-
-                throw;
+                await Shell.Current.DisplayAlert("Sync unavailable", "You are signed in, but cloud data could not be synchronized. Local data is still available.", "OK");
             }
         }
         private async Task UpdateLocalData<T>(List<T> firestoreList, List<T> sqlList, Func<T, Task> updateFunc, Func<T, Task> addSqlFunc, Func<T, Task> addFirebaseFunc) where T : IIdentifiable

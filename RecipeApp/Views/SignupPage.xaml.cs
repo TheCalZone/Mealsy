@@ -1,4 +1,4 @@
-﻿using Firebase.Auth;
+using Firebase.Auth;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Xaml;
 using Plugin.Firebase.Auth;
@@ -28,7 +28,14 @@ namespace RecipeApp.Views
                 var email = emailEntry.Text;
                 var password = passwordEntry.Text;
 
-                await CrossFirebaseAuth.Current.CreateUserAsync(email, password);
+                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                {
+                    await DisplayAlert("Registration", "Enter an email address and password.", "OK");
+                    return;
+                }
+                var user = await CrossFirebaseAuth.Current.CreateUserAsync(email.Trim(), password);
+                AuthHelper.UserId = user.Uid;
+                AuthHelper.Email = user.Email;
 
                 var firstname = firstnameEntry.Text;
                 var lastname = lastnameEntry.Text;

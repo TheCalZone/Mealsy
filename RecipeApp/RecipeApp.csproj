@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0-ios</TargetFrameworks>
+		<TargetFrameworks>net8.0-android</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>RecipeApp</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -30,20 +30,13 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android|AnyCPU'">
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <AndroidKeyStore>True</AndroidKeyStore>
-	  <AndroidSigningStorePass>IL90tj75!</AndroidSigningStorePass>
-	  <AndroidSigningKeyAlias>cal</AndroidSigningKeyAlias>
-	  <AndroidSigningKeyPass>IL90tj75!</AndroidSigningKeyPass>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<EnableLongPaths>true</EnableLongPaths>
-		<BaseIntermediateOutputPath>obj\Debug\</BaseIntermediateOutputPath>
-		<BaseOutputPath>obj</BaseOutputPath>
 		<GenerateDocumentationFile>False</GenerateDocumentationFile>
 		<ProduceReferenceAssembly>True</ProduceReferenceAssembly>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-		<AndroidSigningKeyStore>Cal.keystore</AndroidSigningKeyStore>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-ios|AnyCPU'">
@@ -62,10 +55,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
-	  <AndroidKeyStore>True</AndroidKeyStore>
-	  <AndroidSigningStorePass>IL90tj75!</AndroidSigningStorePass>
-	  <AndroidSigningKeyAlias>cal</AndroidSigningKeyAlias>
-	  <AndroidSigningKeyPass>IL90tj75!</AndroidSigningKeyPass>
+	  <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
 	</PropertyGroup>
 
 
@@ -94,8 +84,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0-preview.1.9973" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0-preview.1.9973" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 		<PackageReference Include="Plugin.Firebase" Version="2.0.12" />
 		<PackageReference Include="Xamarin.Firebase.iOS.Core" Version="8.10.0.3" />
 	</ItemGroup>
@@ -154,30 +144,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <COMReference Include="MSXML2">
-	    <WrapperTool>tlbimp</WrapperTool>
-	    <VersionMinor>0</VersionMinor>
-	    <VersionMajor>6</VersionMajor>
-	    <Guid>f5078f18-c551-11d3-89b9-0000f81fe221</Guid>
-	    <Lcid>0</Lcid>
-	    <Isolated>false</Isolated>
-	    <EmbedInteropTypes>true</EmbedInteropTypes>
-	  </COMReference>
-	  <COMReference Include="WSManAutomation">
-	    <WrapperTool>tlbimp</WrapperTool>
-	    <VersionMinor>0</VersionMinor>
-	    <VersionMajor>1</VersionMajor>
-	    <Guid>f010be25-296d-4036-980f-5a0669a17577</Guid>
-	    <Lcid>0</Lcid>
-	    <Isolated>false</Isolated>
-	    <EmbedInteropTypes>true</EmbedInteropTypes>
-	  </COMReference>
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="7.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0-preview.1.24080.9" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
 		<PackageReference Include="OpenAI" Version="1.10.0" />
 		<PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
@@ -197,12 +166,6 @@
 	
 	<ItemGroup>
 		<BundleResource Include="GoogleService-Info.plist" />
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Content Include="credentials.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
 	</ItemGroup>
 
 	<ItemGroup>

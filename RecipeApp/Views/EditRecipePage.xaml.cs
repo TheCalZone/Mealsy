@@ -1,4 +1,4 @@
-﻿using RecipeApp.Services;
+using RecipeApp.Services;
 using RecipeApp.ViewModels;
 
 namespace RecipeApp.Views
@@ -18,9 +18,15 @@ namespace RecipeApp.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            int.TryParse(RecipeId, out var result);
+            if (!long.TryParse(RecipeId, out var result)) return;
 
             var recipe = await RecipeService.GetRecipe(result);
+            if (recipe == null)
+            {
+                await DisplayAlert("Recipe unavailable", "This recipe no longer exists.", "OK");
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
             BindingContext = new EditRecipeViewModel(recipe);
         }
     }

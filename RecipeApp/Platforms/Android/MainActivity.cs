@@ -1,4 +1,4 @@
-﻿
+
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
@@ -13,20 +13,10 @@ namespace RecipeApp;
 public class MainActivity : MauiAppCompatActivity
 {
     protected override void OnCreate(Bundle savedInstanceState)
-    {
-        try
         {
-            base.OnCreate(savedInstanceState);
-            System.Diagnostics.Debug.WriteLine("Initializing Firebase...");
-            FirebaseApp.InitializeApp(this);
-            System.Diagnostics.Debug.WriteLine("Firebase initialized successfully.");
-            AppCompatDelegate.DefaultNightMode = AppCompatDelegate.ModeNightNo;
+        AppCompatDelegate.DefaultNightMode = AppCompatDelegate.ModeNightNo;
+        base.OnCreate(savedInstanceState);
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error initializing Firebase: {ex.Message}");
-        }
-    }
 
 
 }

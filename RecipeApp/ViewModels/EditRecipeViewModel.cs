@@ -1,4 +1,4 @@
-﻿using MvvmHelpers.Commands;
+using MvvmHelpers.Commands;
 using RecipeApp.Interfaces;
 using RecipeApp.Models;
 using RecipeApp.Services;
@@ -62,7 +62,7 @@ namespace RecipeApp.ViewModels
         public EditRecipeViewModel(Recipe recipe)
         {
             Recipe = recipe;
-            RecipeImage = ImageSource.FromStream(()=> new MemoryStream(Convert.FromBase64String(recipe.RecipeImage)));
+            RecipeImage = new RecipeApp.Converter.Base64ToImageSourceConverter().Convert(recipe.RecipeImage, typeof(ImageSource), null, System.Globalization.CultureInfo.InvariantCulture) as ImageSource;
             UploadImageCommand = new AsyncCommand(UploadImage);
             ClearImageCommand = new MvvmHelpers.Commands.Command(ClearImage);
             Ingredients = new ObservableCollection<Ingredient>(Recipe.Ingredients);
@@ -113,6 +113,7 @@ namespace RecipeApp.ViewModels
 
         private string SuggestTagForIngredient(string ingredientName)
         {
+            if (string.IsNullOrWhiteSpace(ingredientName)) return string.Empty;
             var matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
             if (matchedIngredient != null)
             {
@@ -125,7 +126,8 @@ namespace RecipeApp.ViewModels
 
         private void ClearImage()
         {
-            RecipeImage = string.Empty;
+            RecipeImage = null;
+            Recipe.RecipeImage = null;
         }
 
         async Task DeleteIngredient(Ingredient ingredient)
@@ -133,7 +135,6 @@ namespace RecipeApp.ViewModels
             bool confirm = await Application.Current.MainPage.DisplayAlert("Delete", "Are you sure you want to delete " + ingredient.Name, "Yes", "No");
             if (confirm)
             {
-                await RecipeService.RemoveIngredientAsync(ingredient.Id);
                 // Check that the Ingredients collection and Recipe object are not null before updating them
                 if (Ingredients != null && Recipe != null)
                 {
@@ -146,20 +147,40 @@ namespace RecipeApp.ViewModels
 
         private void AddIngredient()
         {
-            Ingredients.Add(new Ingredient { });
+            var ingredient = new Ingredient();
+            ingredient.OnNameChanged += Ingredient_OnNameChanged;
+            Ingredients.Add(ingredient);
         }
 
         private async Task SaveRecipe()
         {
-            // Update the recipe and its ingredients in the database
-            await RecipeService.UpdateRecipeAndIngredientsAsync(Recipe, Ingredients.ToList());
-            await FirestoreService.UpdateRecipe(Recipe);
-
-            if (Shell.Current.Navigation != null)
+            if (IsBusy) return;
+            IsBusy = true;
+            try
             {
-                await Shell.Current.Navigation.PopAsync();
-            }
+                if (string.IsNullOrWhiteSpace(Recipe.RecipeName))
+                {
+                    await Shell.Current.DisplayAlert("Recipe name required", "Please enter a recipe name.", "OK");
+                    return;
+                }
+                // Update the recipe and its ingredients in the database
+                await RecipeService.UpdateRecipeAndIngredientsAsync(Recipe, Ingredients.Where(i => !string.IsNullOrWhiteSpace(i.Name)).ToList());
+                try { await FirestoreService.UpdateRecipe(Recipe); }
+                catch (Exception) { await Shell.Current.DisplayAlert("Saved locally", "Cloud sync failed. Your changes are saved on this device.", "OK"); }
 
+                if (Shell.Current.Navigation != null)
+                {
+                    await Shell.Current.Navigation.PopAsync();
+                }
+
+
+
+            }
+            catch (Exception)
+            {
+                await Shell.Current.DisplayAlert("Save failed", "Your changes could not be saved. Please check your connection and try again.", "OK");
+            }
+            finally { IsBusy = false; }
         }
 
         private async Task UploadImage()
@@ -170,7 +191,7 @@ namespace RecipeApp.ViewModels
             if (result != null)
             {
                 // Get the stream of the selected photo
-                var stream = await result.OpenReadAsync();
+                using var stream = await result.OpenReadAsync();
 
                 // Read the stream into a byte array
                 byte[] bytes;
@@ -183,11 +204,6 @@ namespace RecipeApp.ViewModels
                 // Save the byte array to the recipe object
                 Recipe.RecipeImage = Convert.ToBase64String(bytes);
                 RecipeImage = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(Recipe.RecipeImage)));
-                await RecipeService.UpdateRecipeAndIngredientsAsync(Recipe, Recipe.Ingredients);
-            }
-            else
-            {
-                Recipe.RecipeImage = string.Empty;
             }
         }
     }

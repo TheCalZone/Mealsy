@@ -1,4 +1,4 @@
-﻿using MvvmHelpers;
+using MvvmHelpers;
 using Newtonsoft.Json;
 using RecipeApp.Models;
 using RecipeApp.Services;
@@ -9,7 +9,7 @@ namespace RecipeApp.Views
 {
     [QueryProperty(nameof(IsManualList), nameof(IsManualList))]
     [QueryProperty(nameof(ShoppingList), nameof(ShoppingList))]
-    [QueryProperty(nameof(IngredientsJson), nameof(IngredientsJson))]
+    [QueryProperty(nameof(IngredientsJson), "ingredientsJson")]
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class ShoppingListPage : ContentPage
     {
@@ -48,47 +48,28 @@ namespace RecipeApp.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            var model = (ShoppingListViewModel)BindingContext;
+            model.IsManualList = IsManualList;
             if (IsManualList)
             {
-                ((ShoppingListViewModel)BindingContext).ShoppingListText = Preferences.Get("ShoppingListText", string.Empty);
-                ((ShoppingListViewModel)BindingContext).ProcessPastedListCommand.Execute(null);
-                ((ShoppingListViewModel)BindingContext).IsManualList = true;
+                model.ShoppingListText = Preferences.Get("ShoppingListText", string.Empty);
+                model.ProcessPastedListCommand.Execute(null);
+                model.CheckedText = "0/" + model.PlainIngredients.Count;
+                return;
             }
-            else
-            {
-
-                IngredientsJson = Preferences.Get("IngredientsJson", string.Empty);
-
-                if (!string.IsNullOrEmpty(IngredientsJson))
-                {
-                    ListOfIngredients = JsonConvert.DeserializeObject<List<Ingredient>>(HttpUtility.UrlDecode(IngredientsJson));
-
-                    var groupedIngredients = ListOfIngredients
-                        .GroupBy(i => i.Tag)
-                        .OrderBy(g => g.Key)
-                        .Select(g => new IngredientGroup(g.Key, g.ToList()))
-                        .ToList();
-
-                    CollectionIngredients = new ObservableRangeCollection<IngredientGroup>(ListOfIngredients
-                        .GroupBy(i => i.Tag?.ToLower() ?? string.Empty)
-                        .OrderBy(g => g.Key)
-                        .Select(g => new IngredientGroup(g.Key, g.ToList()))
-                        .ToList());
-                }
-                else
-                {
-                    ListOfIngredients = new List<Ingredient>();
-                }
-
-
-
-                ((ShoppingListViewModel)BindingContext).PlainIngredients = ListOfIngredients;
-                ((ShoppingListViewModel)BindingContext).ListOfIngredients.AddRange(CollectionIngredients);
-
-            }
-            
-            ((ShoppingListViewModel)BindingContext).CheckedText = "0" + "/" + ListOfIngredients.Count;
-
+            var incoming = IngredientsJson;
+            IngredientsJson = null;
+            var json = string.IsNullOrEmpty(incoming)
+                ? Preferences.Get("IngredientsJson", string.Empty) : HttpUtility.UrlDecode(incoming);
+            try { ListOfIngredients = string.IsNullOrWhiteSpace(json) ? new() : JsonConvert.DeserializeObject<List<Ingredient>>(json) ?? new(); }
+            catch (JsonException) { ListOfIngredients = new(); }
+            Preferences.Set("IngredientsJson", JsonConvert.SerializeObject(ListOfIngredients));
+            CollectionIngredients = new ObservableRangeCollection<IngredientGroup>(ListOfIngredients
+                .GroupBy(i => i.Tag?.ToLowerInvariant() ?? string.Empty).OrderBy(g => g.Key)
+                .Select(g => new IngredientGroup(g.Key, g.ToList())));
+            model.PlainIngredients = ListOfIngredients;
+            model.ListOfIngredients = CollectionIngredients;
+            model.CheckedText = ListOfIngredients.Count(i => i.InBasket) + "/" + ListOfIngredients.Count;
         }
 
         //private async Task RemoveRecipeIngredients()
