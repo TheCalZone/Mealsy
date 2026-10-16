@@ -143,6 +143,7 @@ namespace RecipeApp.Services
             await Init();
             if (recipeToAdd.Id != 0 && await db.FindAsync<Recipe>(recipeToAdd.Id) != null) return;
             recipeToAdd.Ingredients ??= new();
+            recipeToAdd.CloudKey ??= Guid.NewGuid().ToString("N");
             if (recipeToAdd.LastUpdated == default) recipeToAdd.LastUpdated = DateTimeOffset.UtcNow;
             await db.InsertWithChildrenAsync(recipeToAdd);
             if (!Recipes.Any(r => r.Id == recipeToAdd.Id)) Recipes.Add(recipeToAdd);
@@ -187,11 +188,11 @@ namespace RecipeApp.Services
             });
         }
 
-        public static async Task UpdateRecipeAndIngredientsAsync(Recipe recipe, List<Ingredient> ingredients)
+        public static async Task UpdateRecipeAndIngredientsAsync(Recipe recipe, List<Ingredient> ingredients, bool preserveTimestamp = false)
         {
             ArgumentNullException.ThrowIfNull(recipe);
             await Init();
-            recipe.LastUpdated = DateTimeOffset.UtcNow;
+            if(!preserveTimestamp) recipe.LastUpdated = DateTimeOffset.UtcNow;
             var updatedIngredients = ingredients ?? new List<Ingredient>();
             await db.RunInTransactionAsync(connection =>
             {
@@ -214,6 +215,7 @@ namespace RecipeApp.Services
 
         public static async Task UpdateRecipeFavouriteState(Recipe recipe)
         {
+            recipe.LastUpdated=DateTimeOffset.UtcNow;
             await Init();
             await db.CreateTableAsync<Recipe>();
 
@@ -283,6 +285,35 @@ namespace RecipeApp.Services
             return await db.GetAllWithChildrenAsync<Recipe>();
         }
 
+
+        public static async Task<int> CopyDeviceRecipes(string account)
+        {
+            if(string.IsNullOrWhiteSpace(account))throw new InvalidOperationException("Sign in before copying device recipes.");
+            await GetRecipesForLocal();var sources=Recipes.Where(r=>string.IsNullOrEmpty(r.FirebaseUID)).ToList();var count=0;
+            foreach(var source in sources)
+            {
+                var key="device-import-"+Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(source.CloudKey??source.Id.ToString()))).ToLowerInvariant();
+                if(Recipes.Any(r=>r.FirebaseUID==account&&r.CloudKey==key))continue;
+                var copy=RecipeDraft.Copy(source);copy.Id=0;copy.CloudKey=key;copy.FirebaseUID=account;copy.LastUpdated=DateTimeOffset.UtcNow;
+                foreach(var item in copy.Ingredients){item.Id=0;item.RecipeId=0;}await AddRecipe(copy);count++;
+            }
+            return count;
+        }
+
+        public static async Task MergeCloudRecipes(string account,IEnumerable<Recipe> incoming)
+        {
+            await GetRecipesForLocal();
+            foreach(var remote in incoming)
+            {
+                var key=remote.CloudKey??remote.FirestoreID??remote.Id.ToString();
+                var local=Recipes.FirstOrDefault(r=>r.FirebaseUID==account&&(r.CloudKey??r.Id.ToString())==key);
+                if(remote.IsDeleted){if(local!=null)await RemoveRecipe(local.Id);continue;}
+                if(local!=null&&local.LastUpdated>remote.LastUpdated)continue;
+                var copy=RecipeDraft.Copy(remote);copy.Id=local?.Id??0;copy.FirebaseUID=account;copy.CloudKey=key;
+                foreach(var item in copy.Ingredients){item.Id=0;item.RecipeId=copy.Id;}
+                if(local==null)await AddRecipe(copy);else await UpdateRecipeAndIngredientsAsync(copy,copy.Ingredients,true);
+            }
+        }
 
         public static async Task MergeShoppingLibrary(string account, IEnumerable<Snack> snacks, IEnumerable<Staple> staples)
         {

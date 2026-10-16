@@ -20,7 +20,7 @@ public static class HouseholdService
     public const string Endpoint = "https://us-central1-mealsy-b732b.cloudfunctions.net/household";
     private static readonly HttpClient client = new() { Timeout = TimeSpan.FromSeconds(40) };
     private static readonly JsonSerializerOptions json = new() { PropertyNameCaseInsensitive = true };
-    public static string UserId => CrossFirebaseAuth.Current.CurrentUser?.Uid;
+    public static string UserId => AccountSession.UserId;
     public static Task<T> CallAsync<T>(object data) => CallEndpointAsync<T>(Endpoint, data);
     public static async Task<T> CallEndpointAsync<T>(string endpoint, object data)
     {

@@ -10,6 +10,7 @@ public class RecipeEditorViewModel : ObservableObject
     public RecipeDraft Draft { get; private set; } = new();
     public event Action StructureChanged;
     private readonly string account = HouseholdService.UserId;
+    public string EditorAccount => account;
     private CancellationTokenSource debounce;
     private readonly SemaphoreSlim saveGate = new(1, 1);
     private bool ready, completed, busy;
@@ -103,7 +104,7 @@ public class RecipeEditorViewModel : ObservableObject
                 try { if (Draft.Recipe.Id == 0) await FirestoreService.AddRecipe(recipe); else await FirestoreService.UpdateRecipe(recipe); }
                 catch (Exception) { await Shell.Current.DisplayAlert("Saved on this device", "Cloud sync couldn't finish. Your recipe is safely saved locally.", "OK"); }
             }
-            await Shell.Current.GoToAsync("..");
+            await AppNavigation.Back();
         });
     }
     public async Task Discard()
@@ -113,7 +114,7 @@ public class RecipeEditorViewModel : ObservableObject
         await Run(async () => {
             debounce?.Cancel(); await saveGate.WaitAsync();
             try { await RecipeDraftStore.Clear(account, Draft.Recipe.Id); completed = true; } finally { saveGate.Release(); }
-            await Shell.Current.GoToAsync("..");
+            await AppNavigation.Back();
         });
     }
     public async Task ChoosePhoto()

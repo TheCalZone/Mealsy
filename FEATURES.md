@@ -7,6 +7,9 @@ noted below. The active app target is Android; iOS/Windows are not active build 
 See [recipe editor details](RECIPE_EDITOR.md), [shopping creator behaviour](SHOPPING_CREATOR.md),
 and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setup and device verification.
 
+See [account/navigation changes and Firebase recovery](FIREBASE_RECOVERY_AND_NAVIGATION.md)
+for the latest sign-in, dashboard and recipe-screen upgrade.
+
 ## Free personal features
 
 **Recipe book**
@@ -22,7 +25,9 @@ and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setu
   switch. Total times appear in recipe-book and meal-planning cards.
 - Organize ingredients into sections/groups; enter quantities, categories and notes.
   Add individual ingredients or use bulk text entry.
-- Search recipes by name and filter by tags. Copy a recipe as text, use the recipe's
+- Search names/descriptions/tags, filter exact tags/favourites and sort by recent,
+  name, rating or time. Preview serving quantities, track cooking-step progress,
+  jump to ingredients/method, and shop the selected portions. Copy as text, use the recipe's
   favourite/star control, and send ingredients to the personal shopping list.
 - Store recipes locally using SQLite. Signed-in accounts can synchronize recipes,
   photos/tags and essentials/snacks with the configured Firebase backend.
@@ -82,7 +87,10 @@ and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setu
   is separate from the £24/year plan and is not included as a paid AI allowance.
 
 **Account**
-- Firebase email/password registration, sign-in/out and password-reset requests.
+- Redesigned email/password registration/sign-in, password visibility/confirmation,
+  neutral password-reset responses, native Firebase session persistence and sign-out.
+- Account-specific profile cache, pending profile writes, sync status/retry and explicit
+  non-duplicating copies of device recipes into a signed-in account.
 - Profile first/last name, dietary restrictions and favourite cuisines; profile editing
   keeps the account email read-only.
 - Subscription status, restore purchases, Google Play manage/cancel link, monthly/annual

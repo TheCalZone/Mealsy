@@ -17,23 +17,23 @@
 
     <Shell.Resources>
         <ResourceDictionary>
-            <Color x:Key="PrimaryColor">#FFA500</Color>
-            <Color x:Key="AccentColor">#FF6347</Color>
+            <Color x:Key="PrimaryColor">#214D35</Color>
+            <Color x:Key="AccentColor">#386347</Color>
             <Style x:Key="BaseStyle" TargetType="Element">
                 <Setter Property="Shell.BackgroundColor" Value="{StaticResource PrimaryColor}" />
                 <Setter Property="Shell.ForegroundColor" Value="White" />
                 <Setter Property="Shell.TitleColor" Value="White" />
                 <Setter Property="Shell.DisabledColor" Value="#B4FFFFFF" />
-                <Setter Property="Shell.UnselectedColor" Value="#95FFFFFF" />
+                <Setter Property="Shell.UnselectedColor" Value="#C3D4C3" />
                 <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource PrimaryColor}" />
                 <Setter Property="Shell.TabBarForegroundColor" Value="White" />
-                <Setter Property="Shell.TabBarUnselectedColor" Value="#95FFFFFF" />
+                <Setter Property="Shell.TabBarUnselectedColor" Value="#C3D4C3" />
                 <Setter Property="Shell.TabBarTitleColor" Value="White" />
             </Style>
             <Style BasedOn="{StaticResource BaseStyle}" TargetType="TabBar" />
             <Style BasedOn="{StaticResource BaseStyle}" TargetType="FlyoutItem" />
             <Style TargetType="Label">
-                <Setter Property="FontFamily" Value="Montserrat" />
+                <Setter Property="FontFamily" Value="OpenSansRegular" />
                 <Setter Property="FontSize" Value="16" />
             </Style>
             <Style TargetType="NavigationPage">
@@ -51,8 +51,8 @@
                 <Setter Property="BackgroundColor" Value="{StaticResource AccentColor}" />
                 <Setter Property="TextColor" Value="White" />
                 <Setter Property="FontSize" Value="15" />
-                <Setter Property="HeightRequest" Value="30" />
-                <Setter Property="Padding" Value="10,5" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Padding" Value="12,8" />
                 <Setter Property="Margin" Value="0,0,0,5" />
                 <Setter Property="FontAttributes" Value="Bold" />
             </Style>
@@ -80,30 +80,23 @@
 
     <TabBar>
         <ShellContent
-            Title="Homepage"
+            Title="Home"
             ContentTemplate="{DataTemplate local:Homepage}"
             Icon="icon_feed.png"
             Route="Homepage" />
-        <ShellContent Title="Food feed" ContentTemplate="{DataTemplate local:FoodFeedPage}" Icon="icon_feed.png" Route="FoodFeedPage" />
         <ShellContent
             Title="Recipes"
             ContentTemplate="{DataTemplate local:RecipePage}"
             Icon="icon_menu.png"
             Route="RecipePage" />
         <ShellContent
-            Title="Shopping List"
+            Title="Shopping"
             ContentTemplate="{DataTemplate local:ShoppingListPage}"
             Icon="add_to_shopping.png"
             Route="ShoppingListPage" />
+        <!--<ShellContent Title="Shopping" Icon="icon_list.png" Route="ShoppingListPage" ContentTemplate="{DataTemplate local:ShoppingListPage}" />-->
         <ShellContent
-            Title="List Creator"
-            ContentTemplate="{DataTemplate local:ShoppingListMakerPage}"
-            Icon="icon_list.png"
-            Route="ShoppingListMakerPage">
-        </ShellContent>
-        <!--<ShellContent Title="Shopping List" Icon="icon_list.png" Route="ShoppingListPage" ContentTemplate="{DataTemplate local:ShoppingListPage}" />-->
-        <ShellContent
-            Title="Meal Planner"
+            Title="Meals"
             ContentTemplate="{DataTemplate local:MealPlanOverviewPage}"
             Icon="restaurant.png"
             Route="MealPlanOverviewPage" />

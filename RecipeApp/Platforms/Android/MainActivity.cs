@@ -14,7 +14,6 @@ public class MainActivity : MauiAppCompatActivity
 {
     protected override void OnCreate(Bundle savedInstanceState)
         {
-        AppCompatDelegate.DefaultNightMode = AppCompatDelegate.ModeNightNo;
         base.OnCreate(savedInstanceState);
         Platforms.Android.WidgetNavigation.FromIntent(Intent);
         }

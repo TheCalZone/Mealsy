@@ -16,11 +16,11 @@ public partial class EditRecipePage : ContentPage
     }
     protected override async void OnAppearing()
     {
-        base.OnAppearing(); if (loaded) return;
+        base.OnAppearing(); if(model.EditorAccount!=AccountSession.UserId){Content=ShoppingUi.Text("Reopen the editor for your current account.");return;} if (loaded) return;
         try
         {
             var recipe = long.TryParse(RecipeId, out var id) ? await RecipeService.GetRecipe(id) : null;
-            if (recipe == null) { await DisplayAlert("Recipe unavailable", "This recipe no longer exists.", "OK"); await Shell.Current.GoToAsync(".."); return; }
+            if (recipe == null || !AccountSession.Owns(recipe.FirebaseUID)) { await DisplayAlert("Recipe unavailable", "This recipe no longer exists.", "OK"); await AppNavigation.Back(); return; }
             loaded = true; await model.Initialize(recipe);
         }
         catch (Exception) { await DisplayAlert("Recipe unavailable", "The recipe couldn't be opened. Please return to the recipe book and try again.", "OK"); }

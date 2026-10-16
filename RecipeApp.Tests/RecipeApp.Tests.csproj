@@ -18,6 +18,10 @@
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../RecipeApp/Services/AccountInput.cs" Link="AccountInput.cs" />
+    <Compile Include="../RecipeApp/Services/RecipeBrowser.cs" Link="RecipeBrowser.cs" />
+    <Compile Include="../RecipeApp/Services/NavigationCatalog.cs" Link="NavigationCatalog.cs" />
+    <None Include="../RecipeApp/AppShell.xaml" Link="Navigation/AppShell.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../RecipeApp/Services/RecipeDraft.cs" Link="RecipeDraft.cs" />
     <Compile Include="../RecipeApp/Services/RecipeDraftStore.cs" Link="RecipeDraftStore.cs" />
     <Compile Include="../RecipeApp/Services/RecipePresentation.cs" Link="RecipePresentation.cs" />

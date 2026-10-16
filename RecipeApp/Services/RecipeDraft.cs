@@ -46,7 +46,7 @@ public class RecipeDraft
         draft.Recipe.Tags = string.Join(", ", (source.Tags ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Where(t => !t.Equals("all", StringComparison.OrdinalIgnoreCase)));
         return draft;
     }
-    public static Recipe Copy(Recipe r) => new() { Id = r.Id, FirestoreID = r.FirestoreID, FirebaseUID = r.FirebaseUID, LastUpdated = r.LastUpdated,
+    public static Recipe Copy(Recipe r) => new() { Id = r.Id, CloudKey=r.CloudKey, IsDeleted=r.IsDeleted, FirestoreID = r.FirestoreID, FirebaseUID = r.FirebaseUID, LastUpdated = r.LastUpdated,
         RecipeName = r.RecipeName, RecipeMethod = r.RecipeMethod, RecipeImage = r.RecipeImage, Description = r.Description,
         CookTime = r.CookTime, SourceUrl = r.SourceUrl, Notes = r.Notes, Serving = r.Serving, PrepTime = r.PrepTime, Rating = r.Rating, Tags = r.Tags,
         Ingredients = (r.Ingredients ?? new()).Select(CopyIngredient).ToList() };

@@ -70,8 +70,15 @@ public static class MauiProgram
 #elif ANDROID
             events.AddAndroid(android => android.OnCreate((activity, _) => 
             {
-                CrossFirebase.Initialize(activity);
-                CrossFirebaseCrashlytics.Current.SetCrashlyticsCollectionEnabled(true);
+                try
+                {
+                    CrossFirebase.Initialize(activity);
+                    CrossFirebaseCrashlytics.Current.SetCrashlyticsCollectionEnabled(true);
+                }
+                catch (Exception)
+                {
+                    System.Diagnostics.Debug.WriteLine("Firebase initialization unavailable; local tools remain available.");
+                }
             }));
 #endif
         });

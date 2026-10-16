@@ -117,11 +117,11 @@ public class FeedRecipePage : ContentPage
         var saved = false;
         body.Add(FoodFeedPage.Button("Save to my recipes", async () => {
             if (saved) { await DisplayAlert("Already saved", "You saved a copy during this visit.", "OK"); return; }
-            await RecipeService.AddRecipe(post.Recipe.ToRecipe(post.Photo)); saved = true;
+            var copy=post.Recipe.ToRecipe(post.Photo);copy.FirebaseUID=HouseholdService.UserId;await RecipeService.AddRecipe(copy); saved = true;
             await DisplayAlert("Recipe saved", "A private copy is now in your recipe book. Editing it won't change the shared post.", "OK");
         }));
         body.Add(FoodFeedPage.Button("Add ingredients to my shopping list", async () => {
-            await Navigation.PushAsync(new ShoppingListMakerPage(new[] { new RecipeShoppingChoice(post.Recipe.ToRecipe("")) { Selected=true } }));
+            await Navigation.PushAsync(new ShoppingListMakerPage(new[] { new RecipeShoppingChoice(post.Recipe.ToRecipe("")) { Selected=true,Servings=reader.CurrentServings.ToString() } }));
         }));
         body.Remove(reader);
         var layout = new Grid { RowDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) } };

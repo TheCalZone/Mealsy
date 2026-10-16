@@ -26,6 +26,8 @@ namespace RecipeApp.Models
         [Ignore]
         [FirestoreDocumentId]
         public string FirestoreID { get; set; }
+        [FirestoreProperty("cloud_key")] public string CloudKey { get; set; }
+        [Ignore, FirestoreProperty("deleted")] public bool IsDeleted { get; set; }
         private string recipeName;
         [FirestoreProperty("recipe_name")]
         public string RecipeName { get => recipeName; set => SetProperty(ref recipeName, value); }
