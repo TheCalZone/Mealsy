@@ -13,6 +13,7 @@ public partial class App : Application
         public App()
         {
         InitializeComponent();
+        ShoppingListStore.AccountId = () => CrossFirebaseAuth.Current.CurrentUser?.Uid;
         MainPage = new AppShell();
         }
 

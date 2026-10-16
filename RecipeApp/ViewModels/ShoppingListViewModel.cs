@@ -15,8 +15,19 @@ public class ShoppingListGroup : ObservableRangeCollection<ShoppingListItem>
 
 public class ShoppingListViewModel : CustomViewModelBase
 {
-    private const string StorageKey = ShoppingListStore.StateKey;
-    private const string ExportKey = ShoppingListStore.ExportKey;
+    private string StorageKey => sharedKey ?? ShoppingListStore.StateKey;
+    private string sharedKey;
+    private string loadedKey;
+    public string CurrentJson => document.Serialize();
+    public bool IsShared => sharedKey != null;
+    public void SelectList(string key)
+    {
+        sharedKey = key; loaded = false; loadedKey = null; IsEditing = false; document = new();
+        QuickName = QuickQuantity = QuickNote = EditName = EditQuantity = EditCategory = EditNote = "";
+        SearchText = ""; ShowDetails = false;
+    }
+    public void AcceptRemote(string json) { document = ShoppingListDocument.Deserialize(json); ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist(); }
+    private string ExportKey => ShoppingListStore.ExportKey;
     private ShoppingListDocument document = new();
     private readonly List<ShoppingListItem> subscriptions = new();
     private bool loaded, batching;
@@ -85,7 +96,8 @@ public class ShoppingListViewModel : CustomViewModelBase
 
     public void Load(bool manual, string incomingJson)
     {
-        var legacy = Preferences.Get("ShoppingListText", "");
+        if (loadedKey != StorageKey) { loaded = false; document = new(); IsEditing = false; loadedKey = StorageKey; }
+        var legacy = IsShared ? "" : Preferences.Get(ShoppingListStore.LegacyKey, "");
         var stored = Preferences.Get(StorageKey, "");
         if (!loaded)
         {
@@ -109,14 +121,14 @@ public class ShoppingListViewModel : CustomViewModelBase
             HideCollected = false;
             Changed("New recipe list ready · Undo available");
         }
-        else if (legacy != Preferences.Get(ExportKey, "") || (Total == 0 && !string.IsNullOrWhiteSpace(legacy)))
+        else if (!IsShared && (legacy != Preferences.Get(ExportKey, "") || (Total == 0 && !string.IsNullOrWhiteSpace(legacy))))
         {
             document.MergeLegacyText(legacy);
             Changed("List updated");
         }
-        else if (Total == 0 && !manual && string.IsNullOrWhiteSpace(Preferences.Get(StorageKey, "")))
+        else if (!IsShared && Total == 0 && !manual && string.IsNullOrWhiteSpace(Preferences.Get(StorageKey, "")))
         {
-            var oldIngredients = Preferences.Get("IngredientsJson", "");
+            var oldIngredients = Preferences.Get(ShoppingListStore.IngredientsKey, "");
             if (!string.IsNullOrWhiteSpace(oldIngredients)) ImportIngredients(oldIngredients);
             Changed();
         }
@@ -198,10 +210,11 @@ public class ShoppingListViewModel : CustomViewModelBase
     }
     public void Persist(string message = "Saved on this device")
     {
-        if (!loaded) return;
+        if (!loaded || loadedKey != StorageKey) return;
         try
         {
-            ShoppingListStore.Save(document);
+            if (IsShared) Preferences.Set(StorageKey, document.Serialize());
+            else ShoppingListStore.Save(document);
             StatusText = message;
         }
         catch (Exception) { StatusText = "Couldn't save changes. Keep this screen open and try again."; }

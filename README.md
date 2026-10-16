@@ -83,7 +83,7 @@ The menu's **Paste list** appends clipboard lines without replacing the current
 list; `[Category]` headings, bullet points, and `[x]` checkboxes are recognized.
 **Share** lets you send or copy either the full list or only the items still needed.
 Recipe shortcuts append ingredients without resetting existing items. Creating a
-new list from the recipe selector or meal planner replaces the active list and can
+new list from the recipe selector or meal planner replaces the personal list and can
 be undone immediately. Older text-based lists migrate when opened.
 
 On your device, check the following after pulling this update:
@@ -98,6 +98,18 @@ On your device, check the following after pulling this update:
 Android compilation and automated list/state/store tests are verified in the
 cloud. Native layout, keyboard, clipboard and share-sheet behavior still require
 device testing; the software emulator is not used for this update.
+
+## Household sharing
+
+Family members now use their own logins, with a private personal shopping list and
+one shared household list. Use **Account → Your household** to create/join a
+household, invite family, or manage members. The selector at the top of the
+shopping screen switches lists. Signed-in lists sync while that screen is open;
+device saves keep offline changes for retry.
+
+**A one-time Firebase Functions and Firestore rules deployment is required.**
+Pulling the Android code alone does not activate household sharing. Follow the
+[Firebase setup, invitation and testing guide](firebase/README.md).
 
 ## Validation in the cloud environment
 

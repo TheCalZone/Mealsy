@@ -5,7 +5,28 @@ using Xunit;
 
 public class ShoppingListStoreTests
 {
-    public ShoppingListStoreTests() => Preferences.Clear();
+    public ShoppingListStoreTests() { Preferences.Clear(); ShoppingListStore.AccountId = () => null; }
+
+    [Fact]
+    public void PersonalListsAndShortcutsAreIsolatedAcrossAccountsAndGuest()
+    {
+        string account = null;
+        ShoppingListStore.AccountId = () => account;
+        try
+        {
+            ShoppingListStore.AppendIngredients(new[] { new Ingredient { Name = "Device item" } });
+            account = "parent";
+            ShoppingListStore.AppendIngredients(new[] { new Ingredient { Name = "Parents private item" } });
+            account = "child";
+            ShoppingListStore.AppendIngredients(new[] { new Ingredient { Name = "Childs private item" } });
+            Assert.Equal("Childs private item", Assert.Single(ShoppingListDocument.Deserialize(Preferences.Get(ShoppingListStore.StateKey, "")).Items).Name);
+            account = "parent";
+            Assert.Equal("Parents private item", Assert.Single(ShoppingListDocument.Deserialize(Preferences.Get(ShoppingListStore.StateKey, "")).Items).Name);
+            account = null;
+            Assert.Equal("Device item", Assert.Single(ShoppingListDocument.Deserialize(Preferences.Get(ShoppingListStore.StateKey, "")).Items).Name);
+        }
+        finally { ShoppingListStore.AccountId = () => null; }
+    }
 
     [Fact]
     public void RecipeShortcutsPreserveExistingCollectedItemsAndTheirDetails()

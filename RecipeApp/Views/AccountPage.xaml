@@ -63,6 +63,7 @@
         </StackLayout>
 
         <StackLayout Padding="20" IsVisible="{Binding IsAuthenticated}">
+            <Button Text="Your household" Clicked="Household_Clicked" />
             <Frame
                 Padding="10"
                 CornerRadius="10"

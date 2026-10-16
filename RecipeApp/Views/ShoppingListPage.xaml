@@ -27,6 +27,9 @@
         </Style>
     </ContentPage.Resources>
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Household" Clicked="Household_Clicked" />
+        <ToolbarItem Text="Sync now" Clicked="Sync_Clicked" Order="Secondary" />
+        <ToolbarItem Text="Resolve sync conflict" Clicked="Resolve_Clicked" Order="Secondary" />
         <ToolbarItem Text="Paste list" Command="{Binding PasteCommand}" Order="Secondary" />
         <ToolbarItem Text="Clear list" Command="{Binding ClearListCommand}" Order="Secondary" />
     </ContentPage.ToolbarItems>
@@ -36,7 +39,7 @@
             <VerticalStackLayout Spacing="10">
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="3">
-                        <Label Text="YOUR SHOP" FontSize="11" CharacterSpacing="2" TextColor="#C3DAC8" />
+                        <Button x:Name="ListSelector" Text="Personal list ▾" Clicked="ListSelector_Clicked" BackgroundColor="Transparent" TextColor="#C3DAC8" Padding="0" HorizontalOptions="Start" HeightRequest="44" />
                         <Label Text="{Binding ProgressText}" FontSize="22" FontAttributes="Bold" TextColor="White" />
                     </VerticalStackLayout>
                     <Border Grid.Column="1" Padding="10,5" StrokeThickness="0" BackgroundColor="#386347" StrokeShape="RoundRectangle 10" VerticalOptions="Center">

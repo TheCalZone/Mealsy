@@ -279,7 +279,7 @@ namespace RecipeApp.ViewModels
                     }));
 
                     var ingredientsJson = JsonConvert.SerializeObject(ListOfIngredients);
-                    Preferences.Set("IngredientsJson", ingredientsJson);
+                    Preferences.Set(ShoppingListStore.IngredientsKey, ingredientsJson);
 
                     var route = $"//ShoppingListMakerPage/ShoppingListPage?ingredientsJson={Uri.EscapeDataString(ingredientsJson)}";
                     await Shell.Current.GoToAsync(route);

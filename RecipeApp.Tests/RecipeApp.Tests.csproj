@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="../RecipeApp/Services/RecipeService.cs" Link="RecipeService.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />
     <Compile Include="../RecipeApp/Models/ShoppingListItem.cs" Link="ShoppingListItem.cs" />
     <Compile Include="../RecipeApp/Interfaces/IIdentifiable.cs" Link="IIdentifiable.cs" />

@@ -1,0 +1,5 @@
+{
+  "functions": [{"source": "firebase/functions", "codebase": "households", "runtime": "nodejs22"}],
+  "firestore": {"rules": "firebase/firestore.rules"},
+  "emulators": {"auth": {"port": 9099}, "firestore": {"port": 8080}, "functions": {"port": 5001}, "ui": {"enabled": false}, "singleProjectMode": true}
+}
