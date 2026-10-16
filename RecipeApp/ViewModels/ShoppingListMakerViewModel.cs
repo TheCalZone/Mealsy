@@ -241,7 +241,7 @@ namespace RecipeApp.ViewModels
                 var ingredientsJson = JsonConvert.SerializeObject(allIngredients);
 
 
-                var route = $"//ShoppingListMakerPage/ShoppingListPage?ShoppingList={HttpUtility.UrlEncode(shoppingListText)}&ingredientsJson={HttpUtility.UrlEncode(ingredientsJson)}";
+                var route = $"//ShoppingListMakerPage/ShoppingListPage?ShoppingList={HttpUtility.UrlEncode(shoppingListText)}&ingredientsJson={Uri.EscapeDataString(ingredientsJson)}";
                 await Shell.Current.GoToAsync(route);
             }
             else
@@ -281,7 +281,7 @@ namespace RecipeApp.ViewModels
                     var ingredientsJson = JsonConvert.SerializeObject(ListOfIngredients);
                     Preferences.Set("IngredientsJson", ingredientsJson);
 
-                    var route = $"//ShoppingListMakerPage/ShoppingListPage";
+                    var route = $"//ShoppingListMakerPage/ShoppingListPage?ingredientsJson={Uri.EscapeDataString(ingredientsJson)}";
                     await Shell.Current.GoToAsync(route);
                 }
                 else
@@ -296,78 +296,23 @@ namespace RecipeApp.ViewModels
 
         public async Task BlankShopping()
         {
-            IsManualList = true;
-
-            // Step 1: Retrieve the previous shopping list and parse it
-            var previousListText = Preferences.Get("ShoppingListText", string.Empty);
-            // Assume previous list is stored in a simple format; adjust if it's more complex
-            var previousItems = previousListText.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                                                 .Select(line => new Ingredient { Name = line }) // Simplified; adjust based on actual format
-                                                 .ToList();
-
-            var allIngredients = Recipes.Where(r => r.IsSelected).SelectMany(r => r.Ingredients.Where(r => r.MainIngredient))
-                .Concat(Snacks.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag?.Replace(" ", "") ?? string.Empty }))
-                .Concat(Staples.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag?.Replace(" ", "") ?? string.Empty }));
-
-            var ingredientsWithNotes = allIngredients
-                .OrderBy(i => i.Tag?.Replace(" ", "") ?? ".")
-                .ThenBy(i => i.Name)
-                .ToList();
-
-            // Step 2: Merge the previous list with the new list
-
-            if (ingredientsWithNotes.Count > 0)
+            var selected = Recipes.Where(r => r.IsSelected).SelectMany(r => r.Ingredients.Where(i => i.MainIngredient))
+                .Concat(Snacks.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag }))
+                .Concat(Staples.Where(s => s.IsSelected).Select(s => new Ingredient { Name = s.Name, Tag = s.Tag })).ToList();
+            if (selected.Count == 0)
             {
-                ListOfIngredients = ingredientsWithNotes;
-
-                // Group ingredients by tag, then by name, and count duplicates
-                var groupedIngredients = ingredientsWithNotes
-                    .GroupBy(i => i.Tag?.Replace(" ", "") ?? ".")
-                    .OrderBy(g => g.Key)
-                    .Select(g => new
-                    {
-                        Tag = g.Key,
-                        Ingredients = g.GroupBy(i => i.Name)
-                                       .Select(ig => new
-                                       {
-                                           Name = ig.Key,
-                                           Count = ig.Count(),
-                                           Note = ig.Select(i => i.Note).FirstOrDefault(n => !string.IsNullOrEmpty(n)) // Optionally aggregate notes
-                                       })
-                    })
-                    .ToList();
-
-                // Step 2: Merge previous and new ingredients
-                var combinedIngredients = previousItems.Concat(ListOfIngredients).ToList();
-
-                // Step 3: Apply duplicate consolidation to combined list
-                // Adjust the grouping logic if your Ingredient model or storage format is more complex
-                var consolidatedList = combinedIngredients.GroupBy(i => i.Name)
-                    .Select(g => new
-                    {
-                        Name = g.Key,
-                        Count = g.Count()
-                    })
-                    .OrderBy(item => item.Name) // Or any other ordering you prefer
-                    .Select(item => item.Count > 1 ? $"{item.Name} x{item.Count}" : item.Name)
-                    .ToList();
-
-                // Convert the consolidated list back to the string format expected for storage
-                var updatedListText = string.Join("\n", consolidatedList);
-
-                // Append the new list to any existing shopping list and save
-                // Step 4: Save the updated list to preferences
-                Preferences.Set("ShoppingListText", updatedListText);
-
-                var route = $"//ShoppingListPage?IsManualList={IsManualList}";
-                await Shell.Current.GoToAsync(route);
-            }
-            else
-            {
-                //Show a toast notification
                 await Toast.Make("No ingredients selected").Show();
+                return;
             }
-
+            try
+            {
+                ShoppingListStore.AppendIngredients(selected);
+                await Shell.Current.GoToAsync("//ShoppingListPage?IsManualList=True");
+            }
+            catch (Exception)
+            {
+                await Shell.Current.DisplayAlert("List not updated", "The saved list could not be updated. Your previous list has been kept.", "OK");
+            }
         }
 
 

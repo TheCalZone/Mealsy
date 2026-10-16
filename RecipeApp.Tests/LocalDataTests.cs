@@ -19,7 +19,7 @@ public class LocalDataTests
         await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => RecipeService.GetAllRecipes()));
         var recipe = NewRecipe("first use");
         await RecipeService.AddRecipe(recipe);
-        var loaded = Assert.Single((await RecipeService.GetAllRecipes()).Where(r => r.Id == recipe.Id));
+        var loaded = Assert.Single(await RecipeService.GetAllRecipes(), r => r.Id == recipe.Id);
         Assert.Equal("onion", Assert.Single(loaded.Ingredients).Name);
     }
 

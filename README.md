@@ -66,6 +66,39 @@ local data before uninstalling an app to resolve a signature mismatch.
 5. Configure your own AI key, generate a recipe, and save it. Check that it appears
    in the local recipe book. Test invalid-key/network failures without losing the UI.
 
+## Shopping list
+
+The shopping screen now has a progress summary, quick-add fields, optional
+quantities and notes, category groups, search, and a **Hide collected** switch.
+Tap the checkbox or item name to collect an item. Collected names are crossed out.
+Use **Edit** for the item's name, quantity, category and note; swipe left for
+Edit/Remove actions. Removal is also available inside the editor.
+
+Changes save automatically on this device, including collected states. **Undo**
+and **Redo** cover the last 30 changes while the screen is open. **Clear done**
+removes collected items even when search is active; clearing the entire list asks
+for confirmation. Search and hiding items never change the saved list.
+
+The menu's **Paste list** appends clipboard lines without replacing the current
+list; `[Category]` headings, bullet points, and `[x]` checkboxes are recognized.
+**Share** lets you send or copy either the full list or only the items still needed.
+Recipe shortcuts append ingredients without resetting existing items. Creating a
+new list from the recipe selector or meal planner replaces the active list and can
+be undone immediately. Older text-based lists migrate when opened.
+
+On your device, check the following after pulling this update:
+
+- Add an item with a quantity/note, collect it, restart, and confirm all details remain.
+- Try search and Hide collected, then undo a removal and Clear done.
+- Edit a category and verify regrouping. Cancel an edit and confirm it changes nothing.
+- Add ingredients from a recipe while a partly collected list exists.
+- Generate a fresh recipe list, undo it, then redo it.
+- Paste a multiline list, copy/share the remaining items, and test light/dark mode.
+
+Android compilation and automated list/state/store tests are verified in the
+cloud. Native layout, keyboard, clipboard and share-sheet behavior still require
+device testing; the software emulator is not used for this update.
+
 ## Validation in the cloud environment
 
 The Android Debug build and APK signature verification passed. The standalone

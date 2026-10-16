@@ -9,3 +9,12 @@ internal static class FileSystem
         return path;
     }
 }
+
+// Device preferences are replaced with an in-memory dictionary for store integration tests.
+internal static class Preferences
+{
+    private static readonly Dictionary<string, string> values = new();
+    public static string Get(string key, string fallback) => values.TryGetValue(key, out var value) ? value : fallback;
+    public static void Set(string key, string value) => values[key] = value;
+    public static void Clear() => values.Clear();
+}

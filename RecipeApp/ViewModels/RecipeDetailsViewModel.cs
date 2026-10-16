@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using MvvmHelpers.Commands;
 using RecipeApp.Models;
@@ -143,30 +143,15 @@ namespace RecipeApp.ViewModels
         }
         private async void AddRecipeToManualShoppingList()
         {
-            // Check if the recipe is already added to the list
-            if (Recipe.IsAddedToList)
+            try
             {
-                var toast = Toast.Make("Recipe already added to shopping list", ToastDuration.Short, 14);
-                await toast.Show();
-                return; // exit the method
+                ShoppingListStore.AppendIngredients(Recipe.Ingredients);
+                await Toast.Make("Recipe added to shopping list", ToastDuration.Short, 14).Show();
             }
-
-            var shoppinglist = Preferences.Get("ShoppingListText", "");
-
-            // Convert recipe ingredients to a formatted string
-            var ingredientsString = string.Join("\n", Recipe.Ingredients.Select(i => i.Name));
-
-            // Append the new ingredients
-            var updatedList = shoppinglist + "\n" + ingredientsString;
-
-            // Save the updated list
-            Preferences.Set("ShoppingListText", updatedList);
-
-            // Mark the recipe as added to the list
-            Recipe.IsAddedToList = true;
-
-            var toastSuccess = Toast.Make("Recipe added to shopping list", ToastDuration.Short, 14);
-            await toastSuccess.Show();
+            catch (Exception)
+            {
+                await Shell.Current.DisplayAlert("Recipe not added", "The saved shopping list could not be updated. Your previous list has been kept.", "OK");
+            }
         }
 
         private async Task EditRecipe()

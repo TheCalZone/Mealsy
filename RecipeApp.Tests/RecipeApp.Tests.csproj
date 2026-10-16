@@ -14,10 +14,14 @@
     <PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
     <PackageReference Include="SQLiteNetExtensions.Async" Version="2.1.0" />
+    <PackageReference Include="SQLiteNetExtensions" Version="2.1.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../RecipeApp/Services/RecipeService.cs" Link="RecipeService.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />
+    <Compile Include="../RecipeApp/Models/ShoppingListItem.cs" Link="ShoppingListItem.cs" />
     <Compile Include="../RecipeApp/Interfaces/IIdentifiable.cs" Link="IIdentifiable.cs" />
     <Compile Include="../RecipeApp/Models/Recipe.cs;../RecipeApp/Models/Ingredient.cs;../RecipeApp/Models/Snack.cs;../RecipeApp/Models/Staple.cs;../RecipeApp/Models/MealPlan.cs;../RecipeApp/Models/MealPlanDay.cs;../RecipeApp/Models/ShoppingList.cs" Link="Models/%(Filename)%(Extension)" />
   </ItemGroup>

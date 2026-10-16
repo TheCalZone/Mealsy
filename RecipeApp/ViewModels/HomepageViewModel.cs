@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Alerts;
 using MvvmHelpers;
 using MvvmHelpers.Commands;
 using RecipeApp.Helpers;
@@ -67,150 +67,17 @@ namespace RecipeApp.ViewModels
 
         private async void QuickAddToShoppingList()
         {
-            var newIngName = await Application.Current.MainPage.DisplayPromptAsync("Add to Shopping List", "Enter the name of the item you want to add to your shopping list", "Add", "Cancel");
-            var shoppingList = Preferences.Get("ShoppingListText", "");
-            if (!string.IsNullOrEmpty(newIngName))
+            var name = await Shell.Current.DisplayPromptAsync("Quick add", "What do you need?", "Add", "Cancel");
+            if (string.IsNullOrWhiteSpace(name)) return;
+            try
             {
-                var shoppingListItems = new ObservableRangeCollection<IngredientGroup>();
-                string currentTag = "";
-                var lines = shoppingList.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("[") && line.EndsWith("]"))
-                    {
-                        currentTag = line.Trim('[', ']');
-                        if (!shoppingListItems.Any(group => group.Key == currentTag))
-                        {
-                            shoppingListItems.Add(new IngredientGroup(currentTag, new List<Ingredient>()));
-                        }
-                    }
-                    else
-                    {
-                        var currentGroup = shoppingListItems.FirstOrDefault(group => group.Key == currentTag);
-                        if (currentGroup != null)
-                        {
-                            currentGroup.Add(new Ingredient { Name = line });
-                        }
-                    }
-                }
-
-                Ingredient matchedIngredient = null;
-                string matchedTag = null;
-
-                if (Recipes.Count > 0)
-                {
-                    // Search for a match in Recipes
-                    foreach (var recipe in Recipes)
-                    {
-                        if (recipe.Ingredients != null)
-                        {
-                            matchedIngredient = recipe.Ingredients.FirstOrDefault(ing => ing?.Name?.IndexOf(newIngName, StringComparison.OrdinalIgnoreCase) >= 0);
-                            if (matchedIngredient != null)
-                            {
-                                matchedTag = matchedIngredient.Tag;
-                                if (matchedTag != null)
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Search for a match in Snacks
-                if (matchedIngredient == null)
-                {
-                    if (Snacks.Count > 0)
-                    {
-                        foreach (var snack in Snacks)
-                        {
-                            Snack matchedSnack = Snacks.FirstOrDefault(ing => ing.Name.IndexOf(newIngName, StringComparison.OrdinalIgnoreCase) >= 0);
-                            if (matchedSnack != null)
-                            {
-                                matchedIngredient = new Ingredient { Name = matchedSnack.Name, Tag = matchedSnack.Tag };
-                                if (matchedSnack != null)
-                                {
-                                    matchedTag = matchedSnack.Tag;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                }
-
-                // Search for a match in Staples
-                if (matchedIngredient == null)
-                {
-                    if (Staples.Count > 0)
-                    {
-                        foreach (var staple in Staples)
-                        {
-                            Staple matchedStaple = Staples.FirstOrDefault(ing => ing.Name.IndexOf(newIngName, StringComparison.OrdinalIgnoreCase) >= 0);
-                            if (matchedStaple != null)
-                            {
-                                matchedIngredient = new Ingredient { Name = matchedStaple.Name, Tag = matchedStaple.Tag };
-                                if (matchedStaple != null)
-                                {
-                                    matchedTag = matchedStaple.Tag;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                }
-
-                if (matchedIngredient == null)
-                {
-                    matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => newIngName.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
-                    if (matchedIngredient != null)
-                    {
-                        matchedTag = matchedIngredient.Tag;
-                    }
-                }
-
-                // Create an Ingredient based on the matched item
-                Ingredient ingredient;
-                if (matchedIngredient != null)
-                {
-                    ingredient = new Ingredient { Name = newIngName, Tag = matchedTag };
-                }
-                else
-                {
-                    ingredient = new Ingredient { Name = newIngName };
-                }
-
-                // Adding the ingredient to the list
-                var targetGroup = shoppingListItems.FirstOrDefault(group => group.Key == (ingredient.Tag ?? "Other"));
-                if (targetGroup == null)
-                {
-                    targetGroup = new IngredientGroup(ingredient.Tag ?? "Other", new List<Ingredient> { ingredient });
-                    shoppingListItems.Add(targetGroup);
-                }
-                else if (targetGroup.All(ing => !ing.Name.Equals(ingredient.Name, StringComparison.OrdinalIgnoreCase)))
-                {
-                    targetGroup.Add(ingredient);
-                }
-
-                // Building the new shopping list string
-                var updatedShoppingListText = string.Join("\n", shoppingListItems.OrderBy(g => g.Key).Select(g =>
-                {
-                    var sectionTitle = $"[{g.Key}]";
-                    var sectionItems = string.Join("\n", g.Select(i => i.Name));
-                    return $"{sectionTitle}\n{sectionItems}\n";
-                }));
-
-                await Toast.Make($"{newIngName} added to shopping list").Show();
-
-                // Saving the new shopping list to preferences
-                Preferences.Set("ShoppingListText", updatedShoppingListText);
-
+                var match = RecipeService.MasterIngredientList.FirstOrDefault(i => name.Contains(i.Name, StringComparison.OrdinalIgnoreCase));
+                ShoppingListStore.AppendIngredients(new[] { new Ingredient { Name = name.Trim(), Tag = match?.Tag } });
+                await Toast.Make("Added to your shopping list").Show();
             }
-            else
+            catch (Exception)
             {
-                return;
+                await Shell.Current.DisplayAlert("Item not added", "The saved list could not be updated. Please open your shopping list and try again.", "OK");
             }
         }
 

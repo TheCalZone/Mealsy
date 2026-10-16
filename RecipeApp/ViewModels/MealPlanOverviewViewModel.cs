@@ -140,7 +140,7 @@ namespace RecipeApp.ViewModels
 
             var ingredientsJson = JsonConvert.SerializeObject(ListOfIngredients);
 
-            var route = $"//MealPlanOverviewPage/ShoppingListPage?ingredientsJson={HttpUtility.UrlEncode(ingredientsJson)}";
+            var route = $"//MealPlanOverviewPage/ShoppingListPage?ingredientsJson={Uri.EscapeDataString(ingredientsJson)}";
             await Shell.Current.GoToAsync(route);
         }
 
