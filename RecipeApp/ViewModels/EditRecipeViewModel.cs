@@ -62,7 +62,18 @@ namespace RecipeApp.ViewModels
         public EditRecipeViewModel(Recipe recipe)
         {
             Recipe = recipe;
-            RecipeImage = ImageSource.FromStream(()=> new MemoryStream(Convert.FromBase64String(recipe.RecipeImage)));
+            if (!string.IsNullOrWhiteSpace(recipe.RecipeImage))
+            {
+                try
+                {
+                    var bytes = Convert.FromBase64String(recipe.RecipeImage);
+                    RecipeImage = ImageSource.FromStream(() => new MemoryStream(bytes));
+                }
+                catch (FormatException)
+                {
+                    RecipeImage = null;
+                }
+            }
             UploadImageCommand = new AsyncCommand(UploadImage);
             ClearImageCommand = new MvvmHelpers.Commands.Command(ClearImage);
             Ingredients = new ObservableCollection<Ingredient>(Recipe.Ingredients);
@@ -113,7 +124,7 @@ namespace RecipeApp.ViewModels
 
         private string SuggestTagForIngredient(string ingredientName)
         {
-            var matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
+            var matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ingredientName?.IndexOf(ing.Name, StringComparison.OrdinalIgnoreCase) >= 0);
             if (matchedIngredient != null)
             {
                 string matchedTag = matchedIngredient.Tag;
@@ -125,7 +136,8 @@ namespace RecipeApp.ViewModels
 
         private void ClearImage()
         {
-            RecipeImage = string.Empty;
+            Recipe.RecipeImage = string.Empty;
+            RecipeImage = null;
         }
 
         async Task DeleteIngredient(Ingredient ingredient)
@@ -151,6 +163,8 @@ namespace RecipeApp.ViewModels
 
         private async Task SaveRecipe()
         {
+            Recipe.Ingredients = Ingredients.ToList();
+            Recipe.LastUpdated = DateTimeOffset.UtcNow;
             // Update the recipe and its ingredients in the database
             await RecipeService.UpdateRecipeAndIngredientsAsync(Recipe, Ingredients.ToList());
             await FirestoreService.UpdateRecipe(Recipe);
@@ -183,12 +197,9 @@ namespace RecipeApp.ViewModels
                 // Save the byte array to the recipe object
                 Recipe.RecipeImage = Convert.ToBase64String(bytes);
                 RecipeImage = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(Recipe.RecipeImage)));
-                await RecipeService.UpdateRecipeAndIngredientsAsync(Recipe, Recipe.Ingredients);
+
             }
-            else
-            {
-                Recipe.RecipeImage = string.Empty;
-            }
+
         }
     }
 }

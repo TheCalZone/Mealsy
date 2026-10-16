@@ -2,7 +2,7 @@
 using Plugin.Firebase.Firestore;
 using SQLite;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations.Schema;
+using SQLiteNetExtensions.Attributes;
 using System.Runtime.CompilerServices;
 
 namespace RecipeApp.Models
@@ -63,7 +63,7 @@ namespace RecipeApp.Models
 
 
 
-        [ForeignKey("RecipeId")]
+        [ForeignKey(typeof(Recipe))]
         [FirestoreProperty("recipe_id")]
         public long RecipeId { get; set; }
 

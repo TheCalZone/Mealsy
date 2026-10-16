@@ -270,10 +270,9 @@ namespace RecipeApp.ViewModels
 
                 await UpdateLocalData(Staples.ToList(), SqlStaples.ToList(), RecipeService.UpdateStaple);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                System.Diagnostics.Debug.WriteLine($"Cloud refresh failed: {ex.Message}");
             }
         }
 
@@ -290,7 +289,7 @@ namespace RecipeApp.ViewModels
                 {
                     // Now you have both the Firestore item and the corresponding SQL item
                     // You can compare their LastUpdated property or perform any other comparison you need
-                    if (item.LastUpdated > sqlItem.LastUpdated)
+                    if (item.FirebaseUID == sqlItem.FirebaseUID && item.LastUpdated > sqlItem.LastUpdated)
                     {
                         // The Firestore item is more recent, so update the SQL item
                         await updateFunc(item);

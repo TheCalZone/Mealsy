@@ -9,9 +9,9 @@ namespace RecipeApp.Services
 {
     public static class RecipeService
     {
-        public static List<Recipe> Recipes = null;
-        public static List<Snack> Snacks = null;
-        public static List<Staple> Staples = null;
+        public static List<Recipe> Recipes = new();
+        public static List<Snack> Snacks = new();
+        public static List<Staple> Staples = new();
 
         public const string DatabaseFilename = "MyData.db3";
 
@@ -28,46 +28,30 @@ namespace RecipeApp.Services
 
         static SQLiteAsyncConnection db;
 
+        private static readonly SemaphoreSlim initializationLock = new(1, 1);
+        private static bool initialized;
+
         static async Task Init()
         {
-            if (db != null)
-            {
-                return;
-            }
-
-            //if (!File.Exists(databasePath))
-            //{
-            //    // Log a message or take appropriate action
-            //    Console.WriteLine("Database file not found: " + databasePath);
-            //    return;
-            //}
-
-
-            db = new SQLiteAsyncConnection(DatabasePath, Flags);
+            await initializationLock.WaitAsync();
             try
             {
-                    await db.CreateTableAsync<Recipe>();
-                    try
-                    {
-                        await db.CreateTableAsync<Ingredient>();
-                        // Consider adding this for all related tables, not just Recipe
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Failed to create Ingredient table: {ex.Message}");
-                        // Handle the exception appropriately
-                    }
-                    await db.CreateTableAsync<MealPlan>();
-                    await db.CreateTableAsync<MealPlanDay>();
-                    await db.CreateTableAsync<Snack>();
-                    await db.CreateTableAsync<Staple>();
-                    await db.CreateTableAsync<ShoppingList>();
+                if (initialized)
+                    return;
 
+                db ??= new SQLiteAsyncConnection(DatabasePath, Flags);
+                await db.CreateTableAsync<Recipe>();
+                await db.CreateTableAsync<Ingredient>();
+                await db.CreateTableAsync<MealPlan>();
+                await db.CreateTableAsync<MealPlanDay>();
+                await db.CreateTableAsync<Snack>();
+                await db.CreateTableAsync<Staple>();
+                await db.CreateTableAsync<ShoppingList>();
+                initialized = true;
             }
-            catch (Exception ex)
+            finally
             {
-                Console.WriteLine("Error creating tables" + ex.Message);
-                Console.WriteLine("Stack Trace: " + ex.StackTrace);
+                initializationLock.Release();
             }
         }
 
@@ -155,57 +139,25 @@ namespace RecipeApp.Services
         public static async Task AddRecipe(Recipe recipeToAdd)
         {
             await Init();
-
-            var prexisintRecipe = await db.Table<Recipe>().Where(x => x.Id == recipeToAdd.Id).FirstOrDefaultAsync();
-
-            if (prexisintRecipe == null)
+            var existing = recipeToAdd.Id == 0 ? null :
+                await db.Table<Recipe>().FirstOrDefaultAsync(recipe => recipe.Id == recipeToAdd.Id);
+            if (existing != null)
             {
-                try
-                {
-                    await db.InsertWithChildrenAsync(recipeToAdd);
-                    Recipes.Add(recipeToAdd);
-                }
-                catch (SQLiteException ex)
-                {
-                    // Check for SQLite constraint violation (unique constraint on RecipeId)
-                    Debug.WriteLine("Error updating recipe and ingredients: " + ex.Message);
-                    // Handle the case where there's a constraint violation (e.g., duplicate RecipeId)
-                }
-                catch (Exception ex)
-                {
-                    // Rethrow the exception if it's not a constraint violation
-                    Debug.WriteLine("Error updating recipe and ingredients: " + ex.Message);
-                    throw;
-                }
+                // Device-local numeric IDs cannot identify records from another account.
+                if (existing.FirebaseUID != recipeToAdd.FirebaseUID)
+                    throw new InvalidOperationException("Recipe ID conflicts with another account's local data.");
+                return;
             }
-            else
-            {
-                Debug.WriteLine("Recipe already exists");
-            }    
-            //await db.ExecuteAsync("ALTER TABLE Ingredient ADD COLUMN Quantity STRING");
-
-            //// Save recipe to the local SQLite database
-            //var recipe = new Recipe
-            //{
-            //    RecipeName = recipeToAdd.RecipeName,
-            //    Ingredients = recipeToAdd.Ingredients,
-            //    RecipeMethod = recipeToAdd.RecipeMethod,
-            //    Tags = recipeToAdd.Tags,
-            //    RecipeImage = recipeToAdd.RecipeImage,
-            //    Serving = recipeToAdd.Serving,
-            //    PrepTime = recipeToAdd.PrepTime,
-            //    Rating = recipeToAdd.Rating
-            //};
+            await db.InsertWithChildrenAsync(recipeToAdd);
+            Recipes.Add(recipeToAdd);
         }
-
-
-
 
         public static async Task AddSnack(string name)
         {
             await Init();
             var snack = new Snack { Name = name };
             await db.InsertAsync(snack);
+            Snacks.Add(snack);
         }
 
         public static async Task AddStaple(string name)
@@ -213,94 +165,58 @@ namespace RecipeApp.Services
             await Init();
             var staple = new Staple { Name = name };
             await db.InsertAsync(staple);
+            Staples.Add(staple);
         }
 
         public static async Task CreateMealPlan()
         {
             await Init();
-
-            await db.CreateTableAsync<MealPlan>();
-            await db.CreateTableAsync<MealPlanDay>();
-
-            // Attempt to load the existing meal plan with its days eagerly loaded
-            var existingMealPlan = await db.Table<MealPlan>().FirstOrDefaultAsync();
-            if (existingMealPlan != null)
+            await db.RunInTransactionAsync(connection =>
             {
-                // Eagerly load the MealPlanDay entities related to this MealPlan
-                await db.GetChildrenAsync(existingMealPlan, true);
-            }
-
-            if (existingMealPlan != null && existingMealPlan.Days != null && existingMealPlan.Days.Count == 7)
-            {
-                // Meal plan already exists and has 7 days, no further action needed
-                return;
-            }
-            else
-            {
-                // If there's no existing meal plan or it doesn't have 7 days
-                // Consider clearing any existing incomplete meal plans if necessary
-                // await db.DeleteAsync(existingMealPlan); // Be cautious with delete operations
-
-                // Create and insert the new MealPlan and its Days
-                var mealPlan = new MealPlan { Name = "Default 7 days" };
-                await db.InsertAsync(mealPlan); // Insert MealPlan to generate Id
-
-                var days = Enumerable.Range(0, 7).Select(index =>
-                    new MealPlanDay
-                    {
-                        MealDay = ((DayOfWeek)index).ToString(),
-                        MealDayIndex = index,
-                        MealPlanID = mealPlan.Id // Assign generated Id
-                    }).ToList();
-
-                foreach (var day in days)
+                var plan = connection.Table<MealPlan>().FirstOrDefault();
+                if (plan == null)
                 {
-                    await db.InsertAsync(day); // Insert each MealPlanDay
+                    plan = new MealPlan { Name = "Default 7 days" };
+                    connection.Insert(plan);
                 }
-            }
+
+                var days = connection.Table<MealPlanDay>()
+                    .Where(day => day.MealPlanID == plan.Id).ToList();
+                for (int index = 0; index < 7; index++)
+                {
+                    if (!days.Any(day => day.MealDayIndex == index))
+                        connection.Insert(new MealPlanDay
+                        {
+                            MealDay = ((DayOfWeek)index).ToString(),
+                            MealDayIndex = index,
+                            MealPlanID = plan.Id
+                        });
+                }
+            });
         }
 
         public static async Task UpdateRecipeAndIngredientsAsync(Recipe recipe, List<Ingredient> ingredients)
         {
             await Init();
-
-            await db.CreateTableAsync<Recipe>();
-            try
+            ingredients ??= new List<Ingredient>();
+            recipe.LastUpdated = DateTimeOffset.UtcNow;
+            await db.RunInTransactionAsync(connection =>
             {
-                try
-                {
-                    await db.UpdateAsync(recipe); // Update the recipe
-                }
-                catch (SQLiteException ex)
-                {
-                    // Check for SQLite constraint violation (unique constraint on RecipeId)
-                    Debug.WriteLine("Error updating recipe and ingredients: " + ex.Message);
-                    // Handle the case where there's a constraint violation (e.g., duplicate RecipeId)
-                }
-                catch (Exception ex)
-                {
-                    // Rethrow the exception if it's not a constraint violation
-                    Debug.WriteLine("Error updating recipe and ingredients: " + ex.Message);
-                    throw;
-                }
-
-
-                // Delete the existing ingredients for the recipe
-                await db.ExecuteAsync("DELETE FROM Ingredient WHERE RecipeId = ?", recipe.Id);
-
-                // Insert the updated ingredients
+                connection.Update(recipe);
+                connection.Execute("DELETE FROM Ingredient WHERE RecipeId = ?", recipe.Id);
                 foreach (var ingredient in ingredients)
                 {
-                    ingredient.Tag ??= String.Empty;
-                    ingredient.RecipeId = recipe.Id; // Ensure the RecipeId is set
-                    await db.InsertAsync(ingredient);
+                    // Ingredient IDs belong to this device, including after a cloud import.
+                    ingredient.Id = 0;
+                    ingredient.Tag ??= string.Empty;
+                    ingredient.RecipeId = recipe.Id;
+                    connection.Insert(ingredient);
                 }
-            }
-            catch (Exception ex)
-            {
-                // Log the exception to see if there are any errors during the update process
-                Debug.WriteLine("Error updating recipe and ingredients: " + ex.Message);
-            }
+            });
+            recipe.Ingredients = ingredients;
+            var index = Recipes.FindIndex(item => item.Id == recipe.Id);
+            if (index >= 0)
+                Recipes[index] = recipe;
         }
 
         public static async Task UpdateRecipeFavouriteState(Recipe recipe)
@@ -331,7 +247,11 @@ namespace RecipeApp.Services
         {
             await Init();
             await db.CreateTableAsync<Recipe>();
-            await db.DeleteAsync<Recipe>(id);
+            await db.RunInTransactionAsync(connection =>
+            {
+                connection.Execute("DELETE FROM Ingredient WHERE RecipeId = ?", id);
+                connection.Delete<Recipe>(id);
+            });
             Recipes.Remove(Recipes.FirstOrDefault(r => r.Id == id));
         }
         public static async Task<Recipe> GetRecipe(long id)
@@ -340,6 +260,8 @@ namespace RecipeApp.Services
             await db.CreateTableAsync<Recipe>();
 
             var recipe = await db.Table<Recipe>().FirstOrDefaultAsync(c => c.Id == id);
+            if (recipe == null)
+                return null;
             recipe.Ingredients = await db.Table<Ingredient>().Where(i => i.RecipeId == recipe.Id).ToListAsync();
             return recipe;
         }
@@ -435,6 +357,7 @@ namespace RecipeApp.Services
         {
             await Init();
             await db.DeleteAsync(snack);
+            Snacks.RemoveAll(item => item.Id == snack.Id);
         }
         public static async Task InsertSnack(Snack snack)
         {
@@ -475,6 +398,7 @@ namespace RecipeApp.Services
         {
             await Init();
             await db.DeleteAsync(staple);
+            Staples.RemoveAll(item => item.Id == staple.Id);
         }
         public static async Task InsertStaple(Staple staple)
         {
@@ -518,56 +442,57 @@ namespace RecipeApp.Services
                 if (mealPlan != null)
                 {
                     var mealPlanDays = await db.Table<MealPlanDay>().Where(d => d.MealPlanID == mealPlan.Id).ToListAsync();
-                    var recipeIds = mealPlanDays.SelectMany(d => new[] { d.BreakfastRecipeId, d.LunchRecipeId, d.DinnerRecipeId }).Distinct();
-                    var recipes = await db.Table<Recipe>().Where(r => recipeIds.Contains(r.Id)).ToListAsync();
+                    // Extra recipes are stored in JSON, so loading only the primary IDs loses them.
+                    var recipes = await db.GetAllWithChildrenAsync<Recipe>();
+                    mealPlanDays = mealPlanDays.OrderBy(day => day.MealDayIndex).ToList();
 
                     foreach (var mealPlanDay in mealPlanDays)
                     {
-                        mealPlanDay.Breakfast = recipes.FirstOrDefault(r => r.Id == mealPlanDay.BreakfastRecipeId)?.RecipeName ?? "Recipe not found";
+                        mealPlanDay.Breakfast = recipes.FirstOrDefault(r => r.Id == mealPlanDay.BreakfastRecipeId)?.RecipeName ?? string.Empty;
                         mealPlanDay.BreakfastNotesJson = mealPlanDay.BreakfastNotesJson ?? "[]";
                         if (string.IsNullOrWhiteSpace(mealPlanDay.BreakfastNotesJson))
                         {
                             mealPlanDay.BreakfastNotesJson = "[]";
                         }
-                        mealPlanDay.BreakfastNotes.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<string>>(mealPlanDay.BreakfastNotesJson));
+                        mealPlanDay.BreakfastNotes.AddRange(ReadList<string>(mealPlanDay.BreakfastNotesJson));
                         mealPlanDay.BreakfastIDJson = mealPlanDay.BreakfastIDJson ?? "[]";
                         if (string.IsNullOrWhiteSpace(mealPlanDay.BreakfastIDJson))
                         {
                             mealPlanDay.BreakfastIDJson = "[]";
                         }
-                        mealPlanDay.BreakfastRecipesIDs.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<long>>(mealPlanDay.BreakfastIDJson));
+                        mealPlanDay.BreakfastRecipesIDs.AddRange(ReadList<long>(mealPlanDay.BreakfastIDJson));
                         mealPlanDay.BreakfastRecipes.AddRange(recipes.Where(r => mealPlanDay.BreakfastRecipesIDs.Contains(r.Id)));
 
-                        mealPlanDay.Lunch = recipes.FirstOrDefault(r => r.Id == mealPlanDay.LunchRecipeId)?.RecipeName ?? "Recipe not found";
+                        mealPlanDay.Lunch = recipes.FirstOrDefault(r => r.Id == mealPlanDay.LunchRecipeId)?.RecipeName ?? string.Empty;
                         mealPlanDay.LunchNotesJson = mealPlanDay.LunchNotesJson ?? "[]";
                         if (string.IsNullOrWhiteSpace(mealPlanDay.LunchNotesJson))
                         {
                             mealPlanDay.LunchNotesJson = "[]";
                         }
 
-                        mealPlanDay.LunchNotes.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<string>>(mealPlanDay.LunchNotesJson));
+                        mealPlanDay.LunchNotes.AddRange(ReadList<string>(mealPlanDay.LunchNotesJson));
                         mealPlanDay.LunchIDJson = mealPlanDay.LunchIDJson ?? "[]";
                         if (string.IsNullOrWhiteSpace(mealPlanDay.LunchIDJson))
                         {
                             mealPlanDay.LunchIDJson = "[]";
                         }
 
-                        mealPlanDay.LunchRecipesIDs.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<long>>(mealPlanDay.LunchIDJson));
+                        mealPlanDay.LunchRecipesIDs.AddRange(ReadList<long>(mealPlanDay.LunchIDJson));
                         mealPlanDay.LunchRecipes.AddRange(recipes.Where(r => mealPlanDay.LunchRecipesIDs.Contains(r.Id)));
 
-                        mealPlanDay.Dinner = recipes.FirstOrDefault(r => r.Id == mealPlanDay.DinnerRecipeId)?.RecipeName ?? "Recipe not found";
+                        mealPlanDay.Dinner = recipes.FirstOrDefault(r => r.Id == mealPlanDay.DinnerRecipeId)?.RecipeName ?? string.Empty;
                         mealPlanDay.DinnerNotesJson = mealPlanDay.DinnerNotesJson ?? "[]";
                         if (string.IsNullOrWhiteSpace(mealPlanDay.DinnerNotesJson))
                         {
                             mealPlanDay.DinnerNotesJson = "[]";
                         }
-                        mealPlanDay.DinnerNotes.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<string>>(mealPlanDay.DinnerNotesJson));
+                        mealPlanDay.DinnerNotes.AddRange(ReadList<string>(mealPlanDay.DinnerNotesJson));
                         mealPlanDay.DinnerIDJson = mealPlanDay.DinnerIDJson ?? "[]";
                         if (string.IsNullOrWhiteSpace(mealPlanDay.DinnerIDJson))
                         {
                             mealPlanDay.DinnerIDJson = "[]";
                         }
-                        mealPlanDay.DinnerRecipesIDs.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<long>>(mealPlanDay.DinnerIDJson));
+                        mealPlanDay.DinnerRecipesIDs.AddRange(ReadList<long>(mealPlanDay.DinnerIDJson));
                         mealPlanDay.DinnerRecipes.AddRange(recipes.Where(r => mealPlanDay.DinnerRecipesIDs.Contains(r.Id)));
                     }
 
@@ -581,6 +506,20 @@ namespace RecipeApp.Services
             }
 
             return mealPlan;
+        }
+
+        private static List<T> ReadList<T>(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return new List<T>();
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<List<T>>(json) ?? new List<T>();
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return new List<T>();
+            }
         }
 
         public static async Task DeleteMealPlan()
@@ -655,9 +594,9 @@ namespace RecipeApp.Services
 
             foreach (Recipe recipe in recipes)
             {
-                if (!string.IsNullOrEmpty(recipe.FirebaseUID))
+                if (string.IsNullOrEmpty(recipe.FirebaseUID) && CrossFirebaseAuth.Current.CurrentUser != null)
                 {
-                    recipe.FirebaseUID ??= CrossFirebaseAuth.Current.CurrentUser.Uid;
+                    recipe.FirebaseUID = CrossFirebaseAuth.Current.CurrentUser.Uid;
                 }
             }
         }
@@ -666,7 +605,11 @@ namespace RecipeApp.Services
         {
             await Init();
 
-            await db.ExecuteAsync($"DELETE FROM {nameof(Recipe)}");
+            await db.RunInTransactionAsync(connection =>
+            {
+                connection.Execute("DELETE FROM Ingredient");
+                connection.Execute("DELETE FROM Recipe");
+            });
             Recipes.Clear();
         }
 

@@ -39,10 +39,13 @@ namespace RecipeApp.ViewModels
         {
             if (Snack == null)
             {
+                Staple.LastUpdated = DateTimeOffset.UtcNow;
                 await RecipeService.UpdateStaple(Staple);
+                await FirestoreService.UpdateStaple(Staple);
             }
             if (Staple == null)
             {
+                Snack.LastUpdated = DateTimeOffset.UtcNow;
                 await RecipeService.UpdateSnack(Snack);
                 await FirestoreService.UpdateSnack(Snack);
             }

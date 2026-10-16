@@ -95,7 +95,7 @@ namespace RecipeApp.ViewModels
 
                 RecipeService.AsignFireBaseUIDToRecipes();
                 GetUserInfo();
-                LoadDataAsync();
+                await LoadDataAsync();
             }
             catch (Plugin.Firebase.Core.Exceptions.FirebaseAuthException ex)
             {
@@ -146,12 +146,15 @@ namespace RecipeApp.ViewModels
             }
         }
 
-        private void SignOut(object obj)
+        private async void SignOut(object obj)
         {
             try
             {
                 // Sign out the user from Firebase
-                CrossFirebaseAuth.Current.SignOutAsync();
+                await CrossFirebaseAuth.Current.SignOutAsync();
+                AuthHelper.Reset();
+                User = null;
+                CurrentAppUser = null;
 
                 SecureStorage.Remove("email"); // Remove the email from SecureStorage
                 SecureStorage.Remove("password"); // Remove the password from SecureStorage
@@ -173,38 +176,46 @@ namespace RecipeApp.ViewModels
         public async void GetUserInfo()
         {
             User = CrossFirebaseAuth.Current.CurrentUser;
+            IsAuthenticated = User != null;
 
             if (User != null)
             {
-                CurrentAppUser = await FirestoreService.GetUserAsync(User.Uid);
+                try
+                {
+                    CurrentAppUser = await FirestoreService.GetUserAsync(User.Uid);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(ex.Message);
+                }
             }
         }
 
-        private async void LoadDataAsync()
+        private async Task LoadDataAsync()
         {
             try
             {
                 var recipes = await FirestoreService.GetAllRecipesAsync();
-                var sqlRecipes = RecipeService.Recipes;
+                var sqlRecipes = RecipeService.Recipes.Where(item => item.FirebaseUID == AuthHelper.UserId).ToList();
 
                 await UpdateLocalData(recipes.ToList(), sqlRecipes.ToList(), recipe => RecipeService.UpdateRecipeAndIngredientsAsync(recipe, recipe.Ingredients), recipe => RecipeService.AddRecipe(recipe), recipe => FirestoreService.AddRecipe(recipe));
 
                 // Fetch snacks
                 var snacks = await FirestoreService.GetAllSnacks();
-                var sqlSnacks = RecipeService.Snacks;
+                var sqlSnacks = RecipeService.Snacks.Where(item => item.FirebaseUID == AuthHelper.UserId).ToList();
 
-                await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.AddSnack(snack.Name), snack => FirestoreService.AddSnack(snack));
+                await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.InsertSnack(snack), snack => FirestoreService.AddSnack(snack));
 
                 // Fetch staples
                 var staples = await FirestoreService.GetAllEssentials();
-                var sqlStaples = RecipeService.Staples;
+                var sqlStaples = RecipeService.Staples.Where(item => item.FirebaseUID == AuthHelper.UserId).ToList();
 
-                await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.AddStaple(staple.Name), staple => FirestoreService.AddStaple(staple));
+                await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.InsertStaple(staple), staple => FirestoreService.AddStaple(staple));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                await Shell.Current.DisplayAlert("Sync unavailable", "Your local data is still available. Cloud synchronization could not finish.", "OK");
+                System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
         private async Task UpdateLocalData<T>(List<T> firestoreList, List<T> sqlList, Func<T, Task> updateFunc, Func<T, Task> addSqlFunc, Func<T, Task> addFirebaseFunc) where T : IIdentifiable

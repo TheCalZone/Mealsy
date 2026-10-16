@@ -34,6 +34,7 @@ namespace RecipeApp.Models
 
         [PrimaryKey, AutoIncrement]
         public long Id { get; set; }
+        [ForeignKey(typeof(MealPlan))]
         public long MealPlanID { get; set; }
         public string MealDay { get; set; }
         public long MealDayIndex { get; set; }
@@ -71,21 +72,21 @@ namespace RecipeApp.Models
         public ObservableRangeCollection<string> BreakfastNotes { get => breakfastNotes; set
             {
                 SetProperty(ref breakfastNotes, value);
-                IsBreakfastExtrasVisible = BreakfastRecipes?.Count > 0 && breakfastNotes?.Count > 0;
+                IsBreakfastExtrasVisible = BreakfastRecipes?.Count > 0 || breakfastNotes?.Count > 0;
             }
         }
         [Ignore]
         public ObservableRangeCollection<string> LunchNotes { get => lunchNotes; set
             {
                 SetProperty(ref lunchNotes, value);
-                IsLunchExtrasVisible = LunchRecipes?.Count > 0 && lunchNotes?.Count > 0;
+                IsLunchExtrasVisible = LunchRecipes?.Count > 0 || lunchNotes?.Count > 0;
             }
         }
         [Ignore]
         public ObservableRangeCollection<string> DinnerNotes { get => dinnerNotes; set
             {
                 SetProperty(ref dinnerNotes, value);
-                IsDinnerExtrasVisible = DinnerRecipes?.Count > 0 && dinnerNotes?.Count > 0;
+                IsDinnerExtrasVisible = DinnerRecipes?.Count > 0 || dinnerNotes?.Count > 0;
             }
         }
         [Ignore]
@@ -107,12 +108,12 @@ namespace RecipeApp.Models
             BreakfastRecipes = new ObservableRangeCollection<Recipe>();
             LunchRecipes = new ObservableRangeCollection<Recipe>();
             DinnerRecipes = new ObservableRangeCollection<Recipe>();
-            BreakfastRecipes.CollectionChanged += (sender, e) => IsBreakfastExtrasVisible = BreakfastRecipes?.Count > 0 && breakfastNotes?.Count > 0;
-            LunchRecipes.CollectionChanged += (sender, e) => IsLunchExtrasVisible = LunchRecipes?.Count > 0 && lunchNotes?.Count > 0;
-            DinnerRecipes.CollectionChanged += (sender, e) => IsDinnerExtrasVisible = DinnerRecipes?.Count > 0 && dinnerNotes?.Count > 0;
-            breakfastNotes.CollectionChanged += (sender, e) => IsBreakfastExtrasVisible = BreakfastRecipes?.Count > 0 && breakfastNotes?.Count > 0;
-            lunchNotes.CollectionChanged += (sender, e) => IsLunchExtrasVisible = LunchRecipes?.Count > 0 && lunchNotes?.Count > 0;
-            dinnerNotes.CollectionChanged += (sender, e) => IsDinnerExtrasVisible = DinnerRecipes?.Count > 0 && dinnerNotes?.Count > 0;
+            BreakfastRecipes.CollectionChanged += (sender, e) => IsBreakfastExtrasVisible = BreakfastRecipes?.Count > 0 || breakfastNotes?.Count > 0;
+            LunchRecipes.CollectionChanged += (sender, e) => IsLunchExtrasVisible = LunchRecipes?.Count > 0 || lunchNotes?.Count > 0;
+            DinnerRecipes.CollectionChanged += (sender, e) => IsDinnerExtrasVisible = DinnerRecipes?.Count > 0 || dinnerNotes?.Count > 0;
+            breakfastNotes.CollectionChanged += (sender, e) => IsBreakfastExtrasVisible = BreakfastRecipes?.Count > 0 || breakfastNotes?.Count > 0;
+            lunchNotes.CollectionChanged += (sender, e) => IsLunchExtrasVisible = LunchRecipes?.Count > 0 || lunchNotes?.Count > 0;
+            dinnerNotes.CollectionChanged += (sender, e) => IsDinnerExtrasVisible = DinnerRecipes?.Count > 0 || dinnerNotes?.Count > 0;
         }
 
     }

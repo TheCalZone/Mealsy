@@ -13,36 +13,23 @@ namespace RecipeApp.Views
             InitializeComponent();
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
-
-            ((RecipeViewModel)BindingContext).Recipes.ReplaceRange(RecipeService.Recipes);
-            ((RecipeViewModel)BindingContext).OriginalRecipes.ReplaceRange(RecipeService.Recipes);
-            if (((RecipeViewModel)BindingContext).Recipes.Count == 0)
+            try
             {
-                ((RecipeViewModel)BindingContext).Recipes.Clear();
-
-
-                if (CrossFirebaseAuth.Current.CurrentUser != null)
-                {
-                    var recipes = RecipeService.Recipes;
-
-                    ((RecipeViewModel)BindingContext).Recipes.ReplaceRange(recipes.Where(r => r.FirebaseUID == CrossFirebaseAuth.Current.CurrentUser.Uid));
-                    ((RecipeViewModel)BindingContext).OriginalRecipes.ReplaceRange(recipes.Where(r => r.FirebaseUID == CrossFirebaseAuth.Current.CurrentUser.Uid));
-                }
-                else
-                {
-                    var recipes = RecipeService.Recipes;
-
-                    ((RecipeViewModel)BindingContext).Recipes.ReplaceRange(recipes);
-                    ((RecipeViewModel)BindingContext).OriginalRecipes.ReplaceRange(recipes);
-                }
-
+                await RecipeService.GetRecipesForLocal();
+                var userId = CrossFirebaseAuth.Current.CurrentUser?.Uid;
+                var recipes = RecipeService.Recipes.Where(recipe => userId == null || recipe.FirebaseUID == userId);
+                var viewModel = (RecipeViewModel)BindingContext;
+                viewModel.Recipes.ReplaceRange(recipes);
+                viewModel.OriginalRecipes.ReplaceRange(recipes);
+                LoadFilters();
             }
-
-
-            LoadFilters();
+            catch (Exception ex)
+            {
+                await DisplayAlert("Unable to load recipes", ex.Message, "OK");
+            }
         }
 
         private void LoadFilters()

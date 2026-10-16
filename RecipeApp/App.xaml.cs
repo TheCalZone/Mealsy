@@ -18,6 +18,8 @@ public partial class App : Application
 
         protected override async void OnStart()
         {
+        try
+        {
         // Check if email and password exist in secure storage
             string email = await SecureStorage.GetAsync("email");
             string password = await SecureStorage.GetAsync("password");
@@ -35,7 +37,7 @@ public partial class App : Application
                 // Set user info in AuthHelper
                 AuthHelper.UserId = authResult.Uid;
                 AuthHelper.Email = authResult.Email;
-                LoadDataAsync();
+                await LoadDataAsync();
             }
             catch (Exception ex)
             {
@@ -45,38 +47,43 @@ public partial class App : Application
             
         }
         }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Startup failed: {ex.Message}");
+        }
+        }
 
         protected override void OnResume()
         {
 
         }
 
-    private async void LoadDataAsync()
+    private async Task LoadDataAsync()
     {
         try
         {
 
             var recipes = await FirestoreService.GetAllRecipesAsync();
-            var sqlRecipes = RecipeService.Recipes;
+            var sqlRecipes = RecipeService.Recipes.Where(item => item.FirebaseUID == AuthHelper.UserId).ToList();
 
             await UpdateLocalData(recipes.ToList(), sqlRecipes.ToList(), recipe => RecipeService.UpdateRecipeAndIngredientsAsync(recipe, recipe.Ingredients), recipe => RecipeService.AddRecipe(recipe), recipe => FirestoreService.AddRecipe(recipe));
 
             // Fetch snacks
             var snacks = await FirestoreService.GetAllSnacks();
-            var sqlSnacks = RecipeService.Snacks;
+            var sqlSnacks = RecipeService.Snacks.Where(item => item.FirebaseUID == AuthHelper.UserId).ToList();
 
-            await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.AddSnack(snack.Name), snack => FirestoreService.AddSnack(snack));
+            await UpdateLocalData(snacks.ToList(), sqlSnacks.ToList(), RecipeService.UpdateSnack, snack => RecipeService.InsertSnack(snack), snack => FirestoreService.AddSnack(snack));
 
             // Fetch staples
             var staples = await FirestoreService.GetAllEssentials();
-            var sqlStaples = RecipeService.Staples;
+            var sqlStaples = RecipeService.Staples.Where(item => item.FirebaseUID == AuthHelper.UserId).ToList();
 
-            await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.AddStaple(staple.Name), staple => FirestoreService.AddStaple(staple));
+            await UpdateLocalData(staples.ToList(), sqlStaples.ToList(), RecipeService.UpdateStaple, staple => RecipeService.InsertStaple(staple), staple => FirestoreService.AddStaple(staple));
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
-            throw;
+            // Keep local data available when cloud synchronization fails.
         }
     }
     private async Task UpdateLocalData<T>(List<T> firestoreList, List<T> sqlList, Func<T, Task> updateFunc, Func<T, Task> addSqlFunc, Func<T, Task> addFirebaseFunc) where T : IIdentifiable
@@ -103,8 +110,8 @@ public partial class App : Application
                 // Use the dictionary for a quick lookup by sql ID
                 if (sqlItemsDict.TryGetValue(item.Id, out var sqlItem))
                 {
-                    // Check for matching Name and FirebaseUID in addition to Id
-                    if (item.Name != sqlItem.Name || item.FirebaseUID != sqlItem.FirebaseUID)
+                    // Only update records owned by the same account.
+                    if (item.FirebaseUID == sqlItem.FirebaseUID)
                     {
                         if (item.LastUpdated > sqlItem.LastUpdated)
                         {

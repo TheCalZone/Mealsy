@@ -1,6 +1,6 @@
-﻿using MvvmHelpers;
+using MvvmHelpers;
+using MvvmHelpers.Commands;
 using Plugin.Firebase.Auth;
-using RecipeApp.Helpers;
 using RecipeApp.Models;
 using RecipeApp.Services;
 using System.Text.RegularExpressions;
@@ -11,114 +11,87 @@ namespace RecipeApp.ViewModels
     public class ChatViewModel : BaseViewModel
     {
         private string result;
-
         private AppUser appUser;
-        public AppUser CurrentAppUser { get => appUser; set => SetProperty(ref appUser, value); }
-
-        public Recipe DisplayRecipe { get => displayRecipe; set => SetProperty(ref displayRecipe, value); }
-
-        public string Result { get => result; set => SetProperty(ref result, value); }
-
-        private OpenAIApiService openAIApiService;
         private Recipe displayRecipe;
+        private readonly OpenAIApiService openAIApiService = new();
 
+        public AppUser CurrentAppUser { get => appUser; set => SetProperty(ref appUser, value); }
+        public Recipe DisplayRecipe { get => displayRecipe; set => SetProperty(ref displayRecipe, value); }
+        public string Result { get => result; set => SetProperty(ref result, value); }
         public ICommand AskDessertRecipeCommand { get; }
-
         public ICommand AskRecipeCommand { get; }
-
         public ICommand SaveRecipeCommand { get; }
 
         public ChatViewModel()
         {
-            openAIApiService = new OpenAIApiService();
-            AskDessertRecipeCommand = new Command(AskDessertRecipe);
-            AskRecipeCommand = new Command(AskRecipe);
-            SaveRecipeCommand = new Command(SaveRecipe);
-            LoadUserDataAsync();
+            AskDessertRecipeCommand = new AsyncCommand(() => AskRecipe(true));
+            AskRecipeCommand = new AsyncCommand(() => AskRecipe(false));
+            SaveRecipeCommand = new AsyncCommand(SaveRecipe);
         }
 
-        private async void AskDessertRecipe()
+        private async Task AskRecipe(bool dessert)
         {
+            if (IsBusy)
+                return;
             IsBusy = true;
-            LoadUserDataAsync();
-
-           Result = await openAIApiService.AskGpt($"I'm {CurrentAppUser.DietRestrictions} and I love {CurrentAppUser.FavouriteCuisines} Can you show me a dessert recipe with metric measurements? In the format of: Recipe Name: Ingredients: Method:");
-
-            Regex recipeNameRegex = new Regex(@"Recipe Name:(.*?)Ingredients:", RegexOptions.Singleline);
-            string recipeName = recipeNameRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex ingredientsRegex = new Regex(@"Ingredients:(.*?)Method:", RegexOptions.Singleline);
-            string ingredients = ingredientsRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex methodRegex = new Regex(@"Method:(.*)", RegexOptions.Singleline);
-            string method = methodRegex.Match(Result).Groups[1].Value.Trim();
-
-
-            string[] ingredientsArray = ingredients.Split('\n');
-
-            List<Ingredient> ingredientsList = new List<Ingredient>();
-            foreach (string ingredient in ingredientsArray)
+            try
             {
-                ingredientsList.Add(new Ingredient { Name = ingredient.Trim() });
+                var user = CrossFirebaseAuth.Current.CurrentUser;
+                CurrentAppUser = user == null ? new AppUser() :
+                    await FirestoreService.GetUserAsync(user.Uid) ?? new AppUser();
+                Result = await openAIApiService.AskGpt(
+                    $"I'm {CurrentAppUser.DietRestrictions} and I love {CurrentAppUser.FavouriteCuisines}. " +
+                    $"Show me a {(dessert ? "dessert " : "")}recipe with metric measurements. " +
+                    "Use the format: Recipe Name: Ingredients: Method:");
+
+                string Extract(string pattern) => Regex.Match(Result ?? string.Empty, pattern,
+                    RegexOptions.Singleline).Groups[1].Value.Trim();
+                var name = Extract(@"Recipe Name:(.*?)Ingredients:");
+                var ingredients = Extract(@"Ingredients:(.*?)Method:");
+                var method = Extract(@"Method:(.*)");
+                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(ingredients) ||
+                    string.IsNullOrWhiteSpace(method))
+                    throw new InvalidOperationException("The recipe response was incomplete. Please try again.");
+
+                DisplayRecipe = new Recipe
+                {
+                    RecipeName = name,
+                    Ingredients = ingredients.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(line => new Ingredient { Name = line.Trim(), MainIngredient = true }).ToList(),
+                    RecipeMethod = method,
+                    FirebaseUID = user?.Uid,
+                    LastUpdated = DateTimeOffset.UtcNow
+                };
             }
-
-            DisplayRecipe = new Recipe { RecipeName = recipeName, Ingredients = ingredientsList, RecipeMethod = method };
-
-            IsBusy = false;
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Unable to generate recipe", ex.Message, "OK");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
-        private async void AskRecipe()
+        public async Task SaveRecipe()
         {
+            if (DisplayRecipe == null || IsBusy)
+                return;
             IsBusy = true;
-
-            LoadUserDataAsync();
-
-            Result = await openAIApiService.AskGpt($"I'm {CurrentAppUser.DietRestrictions} and I love {CurrentAppUser.FavouriteCuisines} Can you show me a recipe with metric measurements? In the format of: Recipe Name: Ingredients: Method:");
-
-            Regex recipeNameRegex = new Regex(@"Recipe Name:(.*?)Ingredients:", RegexOptions.Singleline);
-            string recipeName = recipeNameRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex ingredientsRegex = new Regex(@"Ingredients:(.*?)Method:", RegexOptions.Singleline);
-            string ingredients = ingredientsRegex.Match(Result).Groups[1].Value.Trim();
-
-            Regex methodRegex = new Regex(@"Method:(.*)", RegexOptions.Singleline);
-            string method = methodRegex.Match(Result).Groups[1].Value.Trim();
-
-            string[] ingredientsArray = ingredients.Split('\n');
-
-            List<Ingredient> ingredientsList = new List<Ingredient>();
-            foreach (string ingredient in ingredientsArray)
+            try
             {
-                ingredientsList.Add(new Ingredient { Name = ingredient.Trim() });
+                // SQLite assigns the ID used by the existing cloud document format.
+                await RecipeService.AddRecipe(DisplayRecipe);
+                await FirestoreService.AddRecipe(DisplayRecipe);
             }
-
-            DisplayRecipe = new Recipe { RecipeName = recipeName, Ingredients = ingredientsList, RecipeMethod = method };
-
-            IsBusy = false;
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Unable to save recipe", ex.Message, "OK");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
-
-        public async void LoadUserDataAsync()
-        {
-            CurrentAppUser = await FirestoreService.GetUserAsync(CrossFirebaseAuth.Current.CurrentUser.Uid);
-        }
-
-        public void SaveRecipe()
-        {
-            SaveRecipeToFireStore();
-            SaveRecipeToLocalDatabase();
-        }
-
-        public async void SaveRecipeToFireStore()
-        {
-            await FirestoreService.AddRecipe(DisplayRecipe);
-        }
-
-        public async void SaveRecipeToLocalDatabase()
-        {
-            await RecipeService.AddRecipe(DisplayRecipe);
-        }
-
-        // add other commands here...
     }
-
 }
