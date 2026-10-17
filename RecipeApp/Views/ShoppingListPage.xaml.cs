@@ -43,6 +43,18 @@ public partial class ShoppingListPage : ContentPage
         sectionDrag??=new ShoppingSectionDrag(Model.SectionNames,Model.SaveSectionOrder,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
         sectionDrag.Attach(header,()=>(header.BindingContext as ShoppingListGroup)?.Title);
     }
+    private async void MoveItem_Clicked(object sender,EventArgs e)
+    {
+        if(sender is not BindableObject { BindingContext:RecipeApp.Models.ShoppingListItem item }||Model.IsEditing)return;
+        var uid=AccountSession.UserId;var context=Model.SectionOrderContext;
+        var group=Model.Groups.FirstOrDefault(g=>g.Contains(item));if(group==null)return;var index=group.IndexOf(item);var options=new List<string>();
+        if(index>0)options.Add("Move up");if(index<group.Count-1)options.Add("Move down");options.Add("Edit item / change section");
+        var choice=await DisplayActionSheet("Move "+item.Name+" within "+item.Category,"Cancel",null,options.ToArray());
+        try{
+            AccountSession.Check(uid);if(context!=Model.SectionOrderContext)return;
+            if(choice=="Move up")Model.MoveItem(item,-1);else if(choice=="Move down")Model.MoveItem(item,1);else if(choice=="Edit item / change section")Model.EditItemCommand.Execute(item);
+        }catch(Exception error){await DisplayAlert("Item order",error is InvalidOperationException?error.Message:"Couldn't save the item order. Please try again.","OK");}
+    }
     private async Task OpenSectionOrder()
     {
         if(Model.IsEditing){await DisplayAlert("Finish editing","Save or cancel your item edit before rearranging sections.","OK");return;}

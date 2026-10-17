@@ -76,7 +76,7 @@ public class ShoppingListDocument
     {
         if (string.IsNullOrWhiteSpace(item?.Name)) return;
         var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;
-        item.Category = CategoryName(item.Category);
+        item.Category = ShoppingCategories.Resolve(item.Name,item.Category);
         items.Add(item);
         Commit();
     }
@@ -138,7 +138,7 @@ public class ShoppingListDocument
                     item.Quantity=note.Success ? note.Groups[1].Value : detail;
                     item.Note=note.Success ? note.Groups[2].Value : "";
                 }
-                var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;
+                var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;item.Category=ShoppingCategories.Resolve(item.Name,item.Category);
                 result.Add(item);
             }
         }
@@ -159,7 +159,7 @@ public class ShoppingListDocument
         {
             if (string.IsNullOrWhiteSpace(i?.Name)) continue;
             var item = new ShoppingListItem { Name=i.Name.Trim(), Category=CategoryName(i.Tag), Quantity=i.Quantity?.Trim() ?? "", Note=i.Note?.Trim() ?? "", InBasket=i.InBasket };
-            var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;
+            var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;item.Category=ShoppingCategories.Resolve(item.Name,item.Category);
             ShoppingQuantity.TryParse(item.Quantity,out var amount);
             var merged=false;
             for (var index=0; index<rows.Count; index++)
@@ -196,7 +196,7 @@ public class ShoppingListDocument
     }
     public void AppendReusableItems(IEnumerable<ShoppingListItem> source)
     {
-        foreach(var item in source){var input=ShoppingItemInput.Parse(item.Name,item.Quantity);MergeItem(items,new ShoppingListItem { Name=input.Name, Category=CategoryName(item.Category), Quantity=input.Quantity, Note=item.Note, InBasket=false });}
+        foreach(var item in source){var input=ShoppingItemInput.Parse(item.Name,item.Quantity);MergeItem(items,new ShoppingListItem { Name=input.Name, Category=ShoppingCategories.Resolve(input.Name,item.Category), Quantity=input.Quantity, Note=item.Note, InBasket=false });}
         Commit();
     }
 
@@ -222,10 +222,10 @@ public class ShoppingListDocument
         Replace(parsed);
     }
 
-    public string PlainText(bool includeDetails = true, bool remainingOnly = false, IEnumerable<string> sectionOrder = null)
+    public string PlainText(bool includeDetails = true, bool remainingOnly = false, IEnumerable<string> sectionOrder = null, IEnumerable<Guid> itemOrder = null)
     {
         var builder = new StringBuilder();
-        var groups=items.Where(i=>!remainingOnly||!i.InBasket).GroupBy(i=>i.Category).ToList();
+        var groups=ShoppingItemOrder.Sort(items.Where(i=>!remainingOnly||!i.InBasket),itemOrder).GroupBy(i=>i.Category).ToList();
         var order=sectionOrder==null?null:ShoppingSectionOrder.Sort(groups.Select(g=>g.Key),sectionOrder);
         foreach (var group in groups.OrderBy(g=>order==null?0:order.FindIndex(name=>name.Equals(g.Key,StringComparison.OrdinalIgnoreCase))).ThenBy(g=>g.Key))
         {

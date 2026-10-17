@@ -1,5 +1,19 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest shopping update: item moves and category recognition
+
+The item-row ↕ icon opens available up/down actions within the visible section;
+editing/changing section is available there and by swipe. Local per-list/account
+`<storage key>.itemOrder` GUID preferences preserve placement through filter/sync
+and new items append. Hidden items and other sections retain their positions.
+Copy/share follows item order. No new Firebase fields or backend changes.
+
+ShoppingCategories supplies local whole-word and phrase rules for new uncategorized
+items after quantity extraction. Explicit non-Other/custom categories are retained;
+saved lists are not migrated. Recipe shopping normalizes source categories before
+merging so provenance/cupboard checks remain associated. Household list ordering is
+personal to each device, consistent with section ordering. Social remains paused.
+
 ## Latest update: drag sections and recognize shopping amounts
 
 Long-press section headers on the shopping screen, or rows in Reorder sections,

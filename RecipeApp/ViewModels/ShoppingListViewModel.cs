@@ -20,6 +20,13 @@ public class ShoppingListViewModel : CustomViewModelBase
     private string loadedKey;
     public string CurrentJson => document.Serialize();
     public string SectionOrderContext=>StorageKey;
+    private string ItemOrderKey=>StorageKey+".itemOrder";
+    public void MoveItem(ShoppingListItem item,int direction)
+    {
+        if(IsEditing||item==null)return;
+        var order=ShoppingItemOrder.Move(document.Items,ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]")),item.Id,direction,document.Visible(SearchText,HideCollected).Select(i=>i.Id));
+        Preferences.Set(ItemOrderKey,JsonSerializer.Serialize(order));RefreshGroups();StatusText="Item order saved on this device";
+    }
     private string SectionOrderKey=>StorageKey+".sectionOrder";
     public List<string> SectionNames()=>ShoppingSectionOrder.Sort(Categories.Concat(document.Items.Select(i=>i.Category)),ShoppingSectionOrder.Read(Preferences.Get(SectionOrderKey,"[]")));
     public void SaveSectionOrder(IEnumerable<string> order)
@@ -233,7 +240,7 @@ public class ShoppingListViewModel : CustomViewModelBase
     private void RefreshGroups()
     {
         var order=SectionNames();
-        Groups.ReplaceRange(document.Visible(SearchText, HideCollected).GroupBy(i => i.Category)
+        Groups.ReplaceRange(ShoppingItemOrder.Sort(document.Visible(SearchText, HideCollected),ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]"))).GroupBy(i => i.Category)
             .OrderBy(g=>order.FindIndex(name=>name.Equals(g.Key,StringComparison.OrdinalIgnoreCase)))
             .Select(g => new ShoppingListGroup(g.Key, g)));
         OnPropertyChanged(nameof(EmptyTitle)); OnPropertyChanged(nameof(EmptyMessage));
@@ -268,7 +275,7 @@ public class ShoppingListViewModel : CustomViewModelBase
     {
         var choice = await Shell.Current.DisplayActionSheet("Send your shopping list", "Cancel", null, "Share remaining", "Share full list", "Copy remaining", "Copy full list");
         if (choice == null || choice == "Cancel") return;
-        var text = document.PlainText(remainingOnly: choice.EndsWith("remaining", StringComparison.Ordinal),sectionOrder:SectionNames());
+        var text = document.PlainText(remainingOnly: choice.EndsWith("remaining", StringComparison.Ordinal),sectionOrder:SectionNames(),itemOrder:ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]")));
         if (string.IsNullOrWhiteSpace(text)) { await Shell.Current.DisplayAlert("Nothing left to buy", "All items are collected.", "OK"); return; }
         if (choice.StartsWith("Copy")) { await Clipboard.Default.SetTextAsync(text); StatusText = "List copied"; }
         else await Share.Default.RequestAsync(new ShareTextRequest { Title = "Shopping list", Text = text });

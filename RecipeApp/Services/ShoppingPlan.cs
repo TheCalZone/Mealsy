@@ -46,14 +46,14 @@ public static class ShoppingPlan
             var factor = choice.Factor();
             foreach (var original in choice.Recipe.Ingredients ?? new())
             {
-                var item = RecipeDraft.CopyIngredient(original);var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity; item.InBasket = false; item.Quantity = ShoppingQuantity.Scale(item.Quantity, factor);
+                var item = RecipeDraft.CopyIngredient(original);var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;item.Tag=ShoppingCategories.Resolve(item.Name,item.Tag); item.InBasket = false; item.Quantity = ShoppingQuantity.Scale(item.Quantity, factor);
                 sources.Add((item, choice.Recipe.RecipeName, CupboardRules.Check(item,rules,cupboard)));
             }
         }
-        foreach (var s in snacks){var input=ShoppingItemInput.Parse(s.Name,s.Quantity);sources.Add((new() { Name=input.Name, Quantity=input.Quantity, Tag=s.Tag, Note=s.Note }, "Snacks", false));}
+        foreach (var s in snacks){var input=ShoppingItemInput.Parse(s.Name,s.Quantity);sources.Add((new() { Name=input.Name, Quantity=input.Quantity, Tag=ShoppingCategories.Resolve(input.Name,s.Tag), Note=s.Note }, "Snacks", false));}
         foreach (var original in essentials)
         {
-            var input=ShoppingItemInput.Parse(original.Name,original.Quantity);var s=new Staple{Name=input.Name,Quantity=input.Quantity,Tag=original.Tag,Note=original.Note};
+            var input=ShoppingItemInput.Parse(original.Name,original.Quantity);var s=new Staple{Name=input.Name,Quantity=input.Quantity,Tag=ShoppingCategories.Resolve(input.Name,original.Tag),Note=original.Note};
             var matches=sources.Where(x => x.Source!="Snacks" && ShoppingQuantity.Identity(x.Item.Name)==ShoppingQuantity.Identity(s.Name)).ToList();
             var source="Essentials";
             if (matches.Count>0)

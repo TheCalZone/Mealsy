@@ -135,9 +135,9 @@
                                         StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource ThemeBackground}" MaximumWidthRequest="100">
                                     <Label Text="{Binding Quantity}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </Border>
-                                <Button Grid.Column="3" Text="Edit" Padding="2,0" FontSize="{DynamicResource ThemeFont12}" BackgroundColor="Transparent"
+                                <Button Grid.Column="3" Text="↕" Padding="2,0" FontSize="{DynamicResource ThemeFont12}" BackgroundColor="Transparent"
                                         TextColor="{DynamicResource ThemeText}" HeightRequest="48" Margin="0"
-                                        Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />
+                                        Clicked="MoveItem_Clicked" SemanticProperties.Description="{Binding Name, StringFormat='Move {0} up or down'}" />
                             </Grid>
                         </Border>
                     </SwipeView>
