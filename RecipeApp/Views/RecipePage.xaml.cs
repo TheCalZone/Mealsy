@@ -7,7 +7,7 @@ public partial class RecipePage : ContentPage
     public RecipePage(){InitializeComponent();Title="Your recipes";ShoppingUi.Theme(this);}
     protected override async void OnAppearing()
     {
-        base.OnAppearing();sort=AppSettings.Current.RecipeSort;var uid=AccountSession.UserId;Content=ShoppingUi.Text("Opening your recipe book…");
+        base.OnAppearing();sort=AppSettings.Current.RecipeSort;var uid=AccountSession.UserId;Content=new LoadingIndicator("Opening your recipe book…");
         try{await RecipeService.GetRecipesForLocal();AccountSession.Check(uid);if(account!=uid){search="";tag="All";favourites=false;}account=uid;all=RecipeBrowser.Visible(RecipeService.Recipes,uid).ToList();Render();}
         catch(Exception){Content=ShoppingUi.Button("Couldn't open recipes · Retry",async()=>{await RecipeService.GetRecipesForLocal();account=AccountSession.UserId;all=RecipeBrowser.Visible(RecipeService.Recipes,account).ToList();Render();});}
     }

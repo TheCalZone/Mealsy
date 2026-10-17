@@ -53,3 +53,13 @@ Public plan name is Mealsy Premium, including Family sharing. Product/base-plan 
 ## Invitations and onboarding update
 
 `ONBOARDING_AND_INVITES.md` covers the new optional Get started guide, shared Android download/household-code landing page, native `mealsy://join` and `mealsy://welcome` links, and the complimentary-Premium admin shortcut. The admin UI uses the existing audited `setFamilyGrant` API; no live grant or server deployment was performed. Deploy Hosting to activate `/join/` and distribute an updated app. Google Play listing/test eligibility remains required; fresh installs may need code paste and native link handling needs phone verification. Validation: 213 .NET tests, 103 backend tests and 10 browser tests passed. No signed artifacts or signing material are committed.
+
+## Account refresh/loading fix
+
+See `ACCOUNT_LOADING_FIX.md`. Inline Account-tab sign-in now refreshes the owning
+page directly instead of relying on navigating to the same Shell route to trigger
+OnAppearing. Native progress indicators cover authentication, account hydration
+and main loading screens; slower shared actions show a working caption. Account
+load generations block obsolete responses after account/page changes. No backend
+deployment is needed. This change is on the Android branch; iOS can merge the
+shared fix separately. Automated checks now include 217 shared app tests.

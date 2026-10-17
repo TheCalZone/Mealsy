@@ -6,28 +6,55 @@ public partial class AccountPage : ContentPage
     private RecipeApp.Models.CommunityProfile community;
     private bool administrator;
     public AccountPage(){InitializeComponent();Title="Your account";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Get started",null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem("Share Mealsy",null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
+    private readonly LoadGeneration requests=new();
+    private bool visible,loading;
+    private string loadWarning;
     protected override async void OnAppearing()
     {
-        base.OnAppearing();administrator=false;if(account!=AccountSession.UserId)community=null;account=AccountSession.UserId;Render();if(account==null)return;
-        await AccountSession.LoadProfile();
-        try { var current=await FoodFeedService.Profile(); if(account==AccountSession.UserId)community=current; } catch(Exception) { }
-        try { var current=await AdminService.Status(); if(account==AccountSession.UserId)administrator=current.Admin; } catch(Exception) { administrator=false; }
-        if(account==AccountSession.UserId)Render();
+        base.OnAppearing();visible=true;await RefreshAccountAsync();
+    }
+    protected override void OnDisappearing(){visible=false;requests.Invalidate();base.OnDisappearing();}
+    private Task SignedIn()
+    {
+        // The Account tab is already selected: its OnAppearing won't fire again.
+        _=RefreshAccountAsync();return Task.CompletedTask;
+    }
+    private async Task RefreshAccountAsync()
+    {
+        if(!visible)return;
+        var uid=AccountSession.UserId;var ticket=requests.Begin(uid);
+        if(account!=uid)community=null;
+        account=uid;administrator=false;loadWarning=null;loading=uid!=null;Render();
+        if(uid==null)return;
+        var unavailable=false;
+        async Task Profile(){try{await AccountSession.LoadProfile();}catch(Exception){unavailable=true;}}
+        async Task Community(){try{var saved=await FoodFeedService.Profile();if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))community=saved;}catch(Exception){unavailable=true;}}
+        async Task Role(){try{var saved=await AdminService.Status();if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))administrator=saved.Admin;}catch(Exception){unavailable=true;}}
+        try{await Task.WhenAll(Profile(),Community(),Role());}
+        finally
+        {
+            if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))
+            {
+                loading=false;loadWarning=unavailable?"Signed in. Some account details couldn't load. Your saved data is kept; retry when connected.":null;Render();
+            }
+        }
     }
     private void Render()
     {
-        if(AccountSession.UserId==null){Content=new AuthFormView(false);return;}
+        if(AccountSession.UserId==null){Content=new AuthFormView(false,SignedIn);return;}
         var profile=AccountSession.CachedProfile;var status=ShoppingUi.Text(AccountSession.Status,13);var body=new VerticalStackLayout{Padding=20,Spacing=16};
         body.Add(ShoppingUi.Text("Your place at the table",28,true));body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Text(string.IsNullOrWhiteSpace(profile.FirstName)?"Welcome to Mealsy":profile.FirstName+" "+profile.LastName,23,true),ShoppingUi.Text(AccountSession.Email??"",14),ShoppingUi.Text("Private account · Each family member uses their own login",13)}}));
+        if(loading)body.Add(new LoadingIndicator("Updating profile, community name and account permissions…"));
+        if(loadWarning!=null){body.Add(ShoppingUi.Text(loadWarning,13));body.Add(ShoppingUi.Button("Retry account details",RefreshAccountAsync,true));}
         body.Add(ShoppingUi.Text("Your community username",22,true));
-        var username=ShoppingUi.Entry(community?.Username??"","Choose your public name",_=>{},40);body.Add(username);
+        var username=ShoppingUi.Entry(community?.Username??"","Choose your public name",_=>{},40);username.IsEnabled=!loading;body.Add(username);
         body.Add(ShoppingUi.Text("Only your chosen name appears on posts. A hidden identifier keeps accounts distinct when names match.",13));
         body.Add(ShoppingUi.Button("Save username",async()=>{
-            AccountSession.Check(account);await FoodFeedService.Call<object>(new{action="setUsername",username=username.Text??""});
+            if(loading)throw new InvalidOperationException("Wait for your account details to finish loading.");AccountSession.Check(account);await FoodFeedService.Call<object>(new{action="setUsername",username=username.Text??""});
             var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();
         }));
-        body.Add(ShoppingUi.Text(community?.EmailVerified==true?"✓ Email confirmed · You can share recipes":"Confirm your email before sharing recipes",14,true));
-        if(community?.EmailVerified!=true)body.Add(ShoppingUi.Button("Send confirmation email",async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.","OK");},true));
+        body.Add(ShoppingUi.Text(loading?"Checking email confirmation…":community?.EmailVerified==true?"✓ Email confirmed · You can share recipes":"Confirm your email before sharing recipes",14,true));
+        if(!loading&&community?.EmailVerified!=true)body.Add(ShoppingUi.Button("Send confirmation email",async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.","OK");},true));
         body.Add(ShoppingUi.Button("Check email confirmation",async()=>{var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();},true));
         body.Add(status);body.Add(ShoppingUi.Button("Sync my account",async()=>{AccountSession.Check(account);status.Text="Syncing your recipes and checklists…";status.Text=await AccountSession.SyncSafely();},true));
         body.Add(ShoppingUi.Button("Edit my profile",()=>AppNavigation.Open(new EditdetailsPage())));
@@ -43,7 +70,7 @@ public partial class AccountPage : ContentPage
         body.Add(ShoppingUi.Button("Premium · "+SubscriptionPricing.Summary,()=>AppNavigation.Open(new PlanPage())));
         body.Add(ShoppingUi.Button("See everything included",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
         body.Add(ShoppingUi.Text("Your recipes and shopping checklists sync when connected to the account service. Meal plans and editor drafts are device-local. Signing in doesn't automatically upload recipes created in device mode.",13));
-        body.Add(ShoppingUi.Button("Sign out",async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.","Sign out","Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();account=null;community=null;administrator=false;Render();},true));
+        body.Add(ShoppingUi.Button("Sign out",async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.","Sign out","Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();requests.Invalidate();loading=false;loadWarning=null;account=null;community=null;administrator=false;Render();},true));
         Content=new ScrollView{Content=body};
     }
 }

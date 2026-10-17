@@ -6,7 +6,7 @@ public partial class Homepage : ContentPage
     public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Get started",null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem("Share Mealsy",null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem("Import recipe link",null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
     protected override async void OnAppearing()
     {
-        base.OnAppearing();var uid=AccountSession.UserId;Content=ShoppingUi.Text("Getting your kitchen ready…");
+        base.OnAppearing();var uid=AccountSession.UserId;Content=new LoadingIndicator("Getting your kitchen ready…");
         try{await RecipeService.GetRecipesForLocal();AccountSession.Check(uid);await Render(uid);}catch(Exception){Content=ShoppingUi.Text("Your local dashboard couldn't load. Open Shopping or Account from the tabs to continue.");}
     }
     private async Task Render(string account)

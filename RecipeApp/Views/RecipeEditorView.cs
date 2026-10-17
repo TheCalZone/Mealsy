@@ -16,6 +16,7 @@ public class RecipeEditorView : ContentView
     {
         this.model = model; BindingContext = model;
         var intro = new VerticalStackLayout { Spacing = 8 };
+        var busyIndicator=new LoadingIndicator("Working on your recipe…",false);intro.Add(busyIndicator);
         var title = Text("", 28, true); title.SetBinding(Label.TextProperty, nameof(model.Heading)); intro.Add(title);
         intro.Add(Text("Capture the details once. Cook it your way.", 15));
         var summary = Text("", 13); summary.SetBinding(Label.TextProperty, nameof(model.Summary)); intro.Add(summary);
@@ -76,7 +77,7 @@ public class RecipeEditorView : ContentView
         body.Add(Button("Discard draft / changes", model.Discard, true));
         Content = new ScrollView { Content = body };
         model.StructureChanged += Rebuild;
-        model.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(model.Busy)) body.IsEnabled = !model.Busy; };
+        model.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(model.Busy)) {body.IsEnabled = !model.Busy;busyIndicator.IsBusy=model.Busy;} };
         Rebuild();
     }
     internal static Label Text(string value, int size = 15, bool bold = false)
@@ -96,7 +97,7 @@ public class RecipeEditorView : ContentView
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? "ThemeText" : "ThemeOnAccent");
         button.Clicked += async (_, _) => {
             button.IsEnabled = false;
-            try { await action(); model.Changed(); }
+            try { await ActionProgress.Run(button,action); model.Changed(); }
             catch (Exception e) { await Shell.Current.DisplayAlert("Recipe", e is InvalidOperationException ? e.Message : "That action couldn't finish. Your draft has been kept.", "OK"); }
             finally { button.IsEnabled = true; }
         }; return button;

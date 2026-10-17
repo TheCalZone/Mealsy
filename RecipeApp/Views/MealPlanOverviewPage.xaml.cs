@@ -31,7 +31,7 @@ public partial class MealPlanOverviewPage : ContentPage
     private void Check(){if(account!=HouseholdService.UserId)throw new InvalidOperationException("Your account changed. Reopen the meal planner.");}
     private async Task Load()
     {
-        if(account!=HouseholdService.UserId)Content=ShoppingUi.Text("Loading your plan…");
+        if(account!=HouseholdService.UserId)Content=new LoadingIndicator("Loading your plan…");
         account=HouseholdService.UserId;await RecipeService.CreateMealPlan(account);plan=await RecipeService.GetMealPlan(account);await RecipeService.GetRecipesForLocal();Check();
         recipes=RecipeService.Recipes.Where(r=>account==null ? string.IsNullOrEmpty(r.FirebaseUID) : r.FirebaseUID==account).ToList();Render();
     }

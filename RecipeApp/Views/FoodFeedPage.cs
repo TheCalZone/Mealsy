@@ -9,6 +9,7 @@ public class FoodFeedPage : ContentPage
     private readonly ObservableCollection<FoodPost> posts = new();
     private readonly Label status = Text("Discover what’s cooking", 16);
     private readonly Button more;
+    private readonly LoadingIndicator loading=new("Loading the food community…",false);
     private FeedCursor cursor;
     private bool busy, moderator;
     private string account;
@@ -33,7 +34,7 @@ public class FoodFeedPage : ContentPage
                 Button("Latest",()=>{mode="latest";return Load(true);})}}, search,
             Button("Search all posts", SearchPosts),
             Button("Businesses & recipe creators",()=>Navigation.PushAsync(new BusinessDirectoryPage())),
-            status, new RecipeApp.Controls.AdBanner() } };
+            status, loading, new RecipeApp.Controls.AdBanner() } };
         search.SearchButtonPressed += async (_, _) => await SearchPosts();
         search.TextChanged += async (_, e) => { if (string.IsNullOrEmpty(e.NewTextValue) && activeSearch.Length>0) await SearchPosts(); };
         var collection = new CollectionView { ItemsSource = posts, SelectionMode = SelectionMode.None, Header = layout, Footer = more,
@@ -55,13 +56,13 @@ public class FoodFeedPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        visible=true;
+        visible=true;loading.Message="Opening your food community…";loading.IsBusy=true;
         var uid = AccountSession.UserId;
         if (uid != null && promptedAccount != uid)
         {
             try {
                 var preferences = await FoodFeedService.Preferences(); AccountSession.Check(uid); promptedAccount = uid;
-                if (!preferences.SetupComplete) { await Navigation.PushAsync(new FeedPreferencesPage(preferences)); return; }
+                if (!preferences.SetupComplete) { loading.IsBusy=false;await Navigation.PushAsync(new FeedPreferencesPage(preferences)); return; }
             } catch (Exception) { status.Text = "Interests unavailable. You can try again from the menu."; }
         }
         await Load(true);
@@ -73,7 +74,7 @@ public class FoodFeedPage : ContentPage
         button.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeAccent");
         button.Clicked += async (_, _) => {
             button.IsEnabled = false;
-            try { await action(); }
+            try { await ActionProgress.Run(button,action); }
             catch (HouseholdException e) { await Shell.Current.DisplayAlert("Food feed", e.Message, "OK"); }
             catch (Exception error) { var reference=AppDiagnostics.Report(error,"ui.action");await Shell.Current.DisplayAlert("Food feed unavailable", "Check your connection and try again. Your local recipes are still available.\nReference: "+reference, "OK"); }
             finally { button.IsEnabled = true; }
@@ -85,8 +86,8 @@ public class FoodFeedPage : ContentPage
         if (busy) { reloadPending |= reset; return; }
         var uid = HouseholdService.UserId;
         if (uid != account || reset) { posts.Clear(); cursor = null; count = 0; account = uid; }
-        if (uid == null) { status.Text = "Sign in on the Account tab to join the Mealsy community."; more.IsVisible = false; return; }
-        busy = true; status.Text = "Setting the table…";
+        if (uid == null) { status.Text = "Sign in on the Account tab to join the Mealsy community."; more.IsVisible = false; loading.IsBusy=false;return; }
+        busy = true; loading.Message=reset?"Refreshing the food community…":"Loading more posts…";loading.IsBusy=true;status.Text = "Setting the table…";
         try
         {
             var page = await FoodFeedService.Load(reset ? null : cursor, Mode, activeSearch);
@@ -99,7 +100,7 @@ public class FoodFeedPage : ContentPage
         }
         catch (HouseholdException e) { status.Text = e.Message; more.IsVisible = true; }
         catch (Exception error) { var reference=AppDiagnostics.Report(error,"feed.load");status.Text = "Feed unavailable. Check your connection; pull down to retry.\nReference: "+reference; more.IsVisible = true; }
-        finally { busy = false; if (reloadPending) { reloadPending = false; await Load(true); } }
+        finally { busy = false; loading.IsBusy=false;if (reloadPending) { reloadPending = false; await Load(true); } }
     }
     private View Card(FoodPost post)
     {

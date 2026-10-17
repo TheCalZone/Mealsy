@@ -6,7 +6,8 @@ public class AuthFormView : ContentView
     private readonly Label status=ShoppingUi.Text("",14);
     private readonly Entry email,password,confirm,first,last,diet,cuisines;
     private bool busy,authenticated;
-    public AuthFormView(bool signup)
+    private readonly LoadingIndicator progress=new("",false);
+    public AuthFormView(bool signup,Func<Task> signedIn=null)
     {
         body.Add(ShoppingUi.Text(signup?"A little less planning. A lot more good food.":"Welcome back to your kitchen",29,true));
         body.Add(ShoppingUi.Text(signup?"Create your own Mealsy account. Keep your recipes and personal shopping separate, and join a family when you're ready.":"Sign in to sync your personal recipes and checklists, join your household and share with the food community.",15));
@@ -17,23 +18,24 @@ public class AuthFormView : ContentView
         var reveal=ShoppingUi.Check(false,v=>{password.IsPassword=!v;if(confirm!=null)confirm.IsPassword=!v;});body.Add(new HorizontalStackLayout{Children={reveal,ShoppingUi.Text("Show password",13)}});
         if(signup){diet=Field("Dietary needs · optional","Allergies, dietary preferences…",500);cuisines=Field("Favourite cuisines · optional","Italian, Thai, comfort food…",500);body.Add(ShoppingUi.Text("Personal tools are free. Family sharing is optional and paid; creating an account does not start a subscription.",13));}
         body.Add(status);body.Add(ShoppingUi.Button(signup?"Create my account":"Sign in",async()=>{
-            if(busy||authenticated)return;busy=true;body.IsEnabled=false;status.Text=signup?"Creating your account…":"Signing in…";
+            if(busy||authenticated)return;busy=true;body.IsEnabled=false;status.Text="";progress.Message=signup?"Creating your account…":"Signing in…";progress.IsBusy=true;AppNavigation.DismissKeyboard();
             try
             {
                 if(signup)await AccountSession.Register(email.Text,password.Text,confirm.Text,first.Text,last.Text,diet.Text,cuisines.Text);else await AccountSession.SignIn(email.Text,password.Text);
-                authenticated=true;password.Text="";if(confirm!=null)confirm.Text="";if(Shell.Current.Navigation.NavigationStack.Count>1)await Shell.Current.Navigation.PopToRootAsync(false);await AppNavigation.Root("AccountPage");if(signup||OnboardingState.PendingCode.Length>0)await AppNavigation.Open(new OnboardingPage(startAt:OnboardingState.PendingCode.Length>0?2:0));
+                authenticated=true;password.Text="";if(confirm!=null)confirm.Text="";progress.Message="Opening your account…";if(signedIn!=null)await signedIn();else{if(Shell.Current.Navigation.NavigationStack.Count>1)await Shell.Current.Navigation.PopToRootAsync(false);await AppNavigation.Root("AccountPage");}if(signup||OnboardingState.PendingCode.Length>0)await AppNavigation.Open(new OnboardingPage(startAt:OnboardingState.PendingCode.Length>0?2:0));
             }
             catch(Exception e){status.Text=e is InvalidOperationException?e.Message:"Couldn't reach the account service. Check your connection and try again.";}
-            finally{busy=false;body.IsEnabled=true;}
+            finally{busy=false;body.IsEnabled=true;progress.IsBusy=false;}
         }));
         if(!signup)body.Add(ShoppingUi.Button("Forgot your password?",async()=>{
-            if(busy)return;busy=true;try{await AccountSession.ResetPassword(email.Text);status.Text="If an account exists for this address, check its inbox and spam folder for reset instructions.";}catch(Exception e){status.Text=e is InvalidOperationException?e.Message:"Couldn't request a reset. Check your connection and try again.";}finally{busy=false;}
+            if(busy)return;busy=true;body.IsEnabled=false;progress.Message="Sending reset instructions…";progress.IsBusy=true;try{await AccountSession.ResetPassword(email.Text);status.Text="If an account exists for this address, check its inbox and spam folder for reset instructions.";}catch(Exception e){status.Text=e is InvalidOperationException?e.Message:"Couldn't request a reset. Check your connection and try again.";}finally{busy=false;body.IsEnabled=true;progress.IsBusy=false;}
         },true));
         body.Add(ShoppingUi.Button(signup?"Already have an account? Sign in":"New here? Create an account",async()=>{
             if(Shell.Current.CurrentPage is LoginPage or SignupPage)await AppNavigation.Back();
             await AppNavigation.Open(signup?new LoginPage():new SignupPage());
         },true));
         body.Add(ShoppingUi.Button("Continue with my device",()=>AppNavigation.Root("Homepage"),true));
-        Content=new ScrollView{Content=body};
+        Content=new Grid{Children={new ScrollView{Content=body},new Border{Padding=12,StrokeThickness=0,VerticalOptions=LayoutOptions.Center,HorizontalOptions=LayoutOptions.Fill,Margin=20,Content=progress}}};
+        var overlay=(Border)((Grid)Content).Children[1];overlay.SetDynamicResource(VisualElement.BackgroundColorProperty,"ThemeSurface");overlay.IsVisible=false;progress.PropertyChanged+=(_,e)=>{if(e.PropertyName==nameof(IsVisible))overlay.IsVisible=progress.IsVisible;};
     }
 }

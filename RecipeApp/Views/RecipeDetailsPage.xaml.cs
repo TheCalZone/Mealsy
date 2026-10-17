@@ -27,7 +27,7 @@ public partial class RecipeDetailsPage : ContentPage
     }
     protected override async void OnAppearing()
     {
-        base.OnAppearing();account=AccountSession.UserId;Content=ShoppingUi.Text("Opening your recipe…");
+        base.OnAppearing();account=AccountSession.UserId;Content=new LoadingIndicator("Opening your recipe…");
         try
         {
             var recipe=long.TryParse(RecipeId,out var id)?await RecipeService.GetRecipe(id):null;AccountSession.Check(account);
