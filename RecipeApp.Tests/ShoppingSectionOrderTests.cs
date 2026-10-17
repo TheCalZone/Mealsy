@@ -34,3 +34,16 @@ public class ShoppingSectionOrderTests
         Assert.DoesNotContain("Milk",document.PlainText(remainingOnly:true,sectionOrder:new[]{"Produce","Dairy"}));Assert.Equal(before,document.Serialize());
     }
 }
+
+public class ShoppingSectionDropTests
+{
+    [Fact]
+    public void DragCanMoveAcrossSeveralSectionsInEitherDirection()
+    {
+        var names=new[]{"Bakery","Dairy","Meat","Produce","Other"};
+        Assert.Equal(new[]{"Dairy","Meat","Produce","Bakery","Other"},ShoppingSectionOrder.Drop(names,"Bakery","Produce",true));
+        Assert.Equal(new[]{"Produce","Bakery","Dairy","Meat","Other"},ShoppingSectionOrder.Drop(names,"Produce","Bakery",false));
+        Assert.Equal(names,ShoppingSectionOrder.Drop(names,"Dairy","Dairy",true));Assert.Equal(names,ShoppingSectionOrder.Drop(names,"unknown","Dairy",false));
+        Assert.Equal(new[]{"Bakery","Dairy","Meat","Produce","Other"},names);
+    }
+}

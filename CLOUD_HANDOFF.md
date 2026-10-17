@@ -1,5 +1,20 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest update: drag sections and recognize shopping amounts
+
+Long-press section headers on the shopping screen, or rows in Reorder sections,
+to drag above/below another section. The reorder screen keeps optional buttons
+under its menu for accessibility. Only drags started in the current list are
+accepted; section preferences remain per-list/account on this device. Sync waits
+while a section is being dragged. Native gesture interaction needs phone testing.
+
+ShoppingItemInput extracts a recognized leading amount (`500 g beef` → `beef`,
+`500 g`). Nonempty explicit quantity always wins. Quick-add, widget additions,
+paste, editing, reusable items and recipe shopping use this rule. Recipe shopping
+extracts before portion scaling so combined quantities remain correct, without
+rewriting the original recipes. Existing notes/checkmarks remain intact. Social
+features remain paused; no backend changes are required.
+
 ## Latest shopping change: reorderable sections
 
 Shopping has a Reorder sections toolbar/tools action with accessible up/down

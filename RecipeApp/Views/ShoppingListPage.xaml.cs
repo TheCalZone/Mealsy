@@ -19,6 +19,8 @@ public partial class ShoppingListPage : ContentPage
     private string householdId, sharedName, listAccount;
     private int generation;
     private bool syncing, conflict, visible;
+    private ShoppingSectionDrag sectionDrag;
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<View,object> sectionHeaders=new();
     private bool shoppingMode,previousNav,previousTabs;
     private void SetShoppingMode(bool active){
         if(active==shoppingMode)return;
@@ -34,6 +36,13 @@ public partial class ShoppingListPage : ContentPage
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
     public ShoppingListPage(){InitializeComponent();ToolbarItems.Add(new ToolbarItem("Reorder sections",null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
+    private void SectionHeader_Loaded(object sender,EventArgs e)
+    {
+        if(sender is not View header||sectionHeaders.TryGetValue(header,out _))return;
+        sectionHeaders.Add(header,new object());
+        sectionDrag??=new ShoppingSectionDrag(Model.SectionNames,Model.SaveSectionOrder,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
+        sectionDrag.Attach(header,()=>(header.BindingContext as ShoppingListGroup)?.Title);
+    }
     private async Task OpenSectionOrder()
     {
         if(Model.IsEditing){await DisplayAlert("Finish editing","Save or cancel your item edit before rearranging sections.","OK");return;}
@@ -74,6 +83,7 @@ public partial class ShoppingListPage : ContentPage
     }
     private void SelectPersonal()
     {
+        sectionDrag?.Cancel();
         generation++; householdId = sharedName = null; conflict = false;
         listAccount = HouseholdService.UserId;
         Model.SelectList(null); ListSelector.Text = listAccount == null ? "Device list ▾" : "Personal list ▾";
@@ -89,7 +99,7 @@ public partial class ShoppingListPage : ContentPage
     {
         if (!visible) return;
         if (HouseholdService.UserId != listAccount) { SelectPersonal(); Model.Load(true, null); }
-        if (syncing || conflict || Model.IsEditing || listAccount == null) return;
+        if (syncing || conflict || Model.IsEditing || sectionDrag?.IsDragging==true || listAccount == null) return;
         syncing = true;
         var currentGeneration = generation;
         var uid = listAccount;
@@ -190,6 +200,7 @@ public partial class ShoppingListPage : ContentPage
         visible = false; timer?.Stop();
         // Never persist one account's visible list into another account's storage.
         if (listAccount == HouseholdService.UserId) Model.Persist();
+        sectionDrag?.Cancel();
         base.OnDisappearing();
     }
     protected override bool OnBackButtonPressed()

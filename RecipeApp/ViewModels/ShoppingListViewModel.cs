@@ -191,7 +191,7 @@ public class ShoppingListViewModel : CustomViewModelBase
         batching = true;
         try
         {
-            editingItem.Name = EditName.Trim(); editingItem.Quantity = EditQuantity?.Trim() ?? "";
+            var input=ShoppingItemInput.Parse(EditName,EditQuantity);editingItem.Name=input.Name;editingItem.Quantity=input.Quantity;
             editingItem.Category = ShoppingListDocument.CategoryName(EditCategory); editingItem.Note = EditNote?.Trim() ?? "";
         }
         finally { batching = false; }

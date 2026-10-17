@@ -68,8 +68,13 @@ new social backend. See [content sharing setup](CONTENT_SHARING.md).
 - Explicitly share an independent recipe snapshot to the food community.
 
 **Personal shopping list**
-- Reorder category sections using Shopping → Reorder sections (also in shopping
-  tools). Move sections up/down, including custom categories, and restore default
+- Recognize leading quantities such as `500 g beef` in quick-add, pasted items,
+  widget additions and recipe shopping. A filled quantity field takes precedence;
+  recipe amounts are extracted before serving adjustments. Saved recipe names
+  stay unchanged.
+- Long-press shopping section headers and drag them above/below another section,
+  or use Shopping → Reorder sections (also in shopping tools). Drag custom categories
+  too; optional movement buttons are available in the reorder menu. Restore default
   alphabetical order with Other last. The layout saves per list/account on this
   device, including household lists, without changing another member's layout.
   Search, collected filters, sync and new shops retain the layout; copy/share uses

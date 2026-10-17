@@ -75,7 +75,7 @@ public class ShoppingListDocument
     public void Add(ShoppingListItem item)
     {
         if (string.IsNullOrWhiteSpace(item?.Name)) return;
-        item.Name = item.Name.Trim();
+        var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;
         item.Category = CategoryName(item.Category);
         items.Add(item);
         Commit();
@@ -138,6 +138,7 @@ public class ShoppingListDocument
                     item.Quantity=note.Success ? note.Groups[1].Value : detail;
                     item.Note=note.Success ? note.Groups[2].Value : "";
                 }
+                var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;
                 result.Add(item);
             }
         }
@@ -158,6 +159,7 @@ public class ShoppingListDocument
         {
             if (string.IsNullOrWhiteSpace(i?.Name)) continue;
             var item = new ShoppingListItem { Name=i.Name.Trim(), Category=CategoryName(i.Tag), Quantity=i.Quantity?.Trim() ?? "", Note=i.Note?.Trim() ?? "", InBasket=i.InBasket };
+            var input=ShoppingItemInput.Parse(item.Name,item.Quantity);item.Name=input.Name;item.Quantity=input.Quantity;
             ShoppingQuantity.TryParse(item.Quantity,out var amount);
             var merged=false;
             for (var index=0; index<rows.Count; index++)
@@ -194,7 +196,7 @@ public class ShoppingListDocument
     }
     public void AppendReusableItems(IEnumerable<ShoppingListItem> source)
     {
-        foreach(var item in source) MergeItem(items,new ShoppingListItem { Name=item.Name, Category=CategoryName(item.Category), Quantity=item.Quantity, Note=item.Note, InBasket=false });
+        foreach(var item in source){var input=ShoppingItemInput.Parse(item.Name,item.Quantity);MergeItem(items,new ShoppingListItem { Name=input.Name, Category=CategoryName(item.Category), Quantity=input.Quantity, Note=item.Note, InBasket=false });}
         Commit();
     }
 
