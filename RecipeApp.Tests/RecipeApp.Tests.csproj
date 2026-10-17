@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <PackageReference Include="Plugin.Firebase.Auth" Version="2.0.7" />
+    <PackageReference Include="Plugin.Firebase.Firestore" Version="2.0.6" />
+    <PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
+    <PackageReference Include="SQLiteNetExtensions.Async" Version="2.1.0" />
+    <PackageReference Include="SQLiteNetExtensions" Version="2.1.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../RecipeApp/Services/PastedListText.cs" Link="PastedListText.cs" />
+    <Compile Include="../RecipeApp/Services/SettingsOptions.cs" Link="SettingsOptions.cs" />
+    <Compile Include="../RecipeApp/Services/AccountInput.cs" Link="AccountInput.cs" />
+    <Compile Include="../RecipeApp/Services/RecipeBrowser.cs" Link="RecipeBrowser.cs" />
+    <Compile Include="../RecipeApp/Services/NavigationCatalog.cs" Link="NavigationCatalog.cs" />
+    <None Include="../RecipeApp/AppShell.xaml" Link="Navigation/AppShell.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../RecipeApp/Services/RecipeDraft.cs" Link="RecipeDraft.cs" />
+    <Compile Include="../RecipeApp/Services/RecipeDraftStore.cs" Link="RecipeDraftStore.cs" />
+    <Compile Include="../RecipeApp/Services/RecipePresentation.cs" Link="RecipePresentation.cs" />
+    <Compile Include="../RecipeApp/Services/RecipeService.cs" Link="RecipeService.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingQuantity.cs" Link="ShoppingQuantity.cs" />
+    <Compile Include="../RecipeApp/Services/WidgetShoppingStore.cs" Link="WidgetShoppingStore.cs" />
+    <Compile Include="../RecipeApp/Services/MealPlanning.cs" Link="MealPlanning.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingPlan.cs" Link="ShoppingPlan.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />
+    <Compile Include="../RecipeApp/Models/FoodPost.cs" Link="FoodPost.cs" />
+    <Compile Include="../RecipeApp/Models/ShoppingListItem.cs" Link="ShoppingListItem.cs" />
+    <Compile Include="../RecipeApp/Interfaces/IIdentifiable.cs" Link="IIdentifiable.cs" />
+    <Compile Include="../RecipeApp/Models/Recipe.cs;../RecipeApp/Models/Ingredient.cs;../RecipeApp/Models/Snack.cs;../RecipeApp/Models/Staple.cs;../RecipeApp/Models/MealPlan.cs;../RecipeApp/Models/MealPlanDay.cs;../RecipeApp/Models/ShoppingList.cs" Link="Models/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

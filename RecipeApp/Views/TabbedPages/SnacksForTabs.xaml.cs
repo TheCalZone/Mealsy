@@ -1,11 +1,5 @@
-﻿namespace RecipeApp.Views.TabbedPages
+namespace RecipeApp.Views.TabbedPages;
+public partial class SnacksForTabs : ShoppingListMakerPage
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class SnacksForTabs : ContentPage
-    {
-        public SnacksForTabs()
-        {
-            InitializeComponent();
-        }
-    }
+    public SnacksForTabs() : base(true) { InitializeComponent(); }
 }

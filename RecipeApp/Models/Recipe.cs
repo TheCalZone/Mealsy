@@ -26,11 +26,23 @@ namespace RecipeApp.Models
         [Ignore]
         [FirestoreDocumentId]
         public string FirestoreID { get; set; }
+        [FirestoreProperty("cloud_key")] public string CloudKey { get; set; }
+        [Ignore, FirestoreProperty("deleted")] public bool IsDeleted { get; set; }
         private string recipeName;
         [FirestoreProperty("recipe_name")]
         public string RecipeName { get => recipeName; set => SetProperty(ref recipeName, value); }
         [FirestoreProperty("recipe_method")]
         public string RecipeMethod { get; set; }
+
+        [FirestoreProperty("description")]
+        public string Description { get; set; } = "";
+        [FirestoreProperty("cook_time")]
+        public long CookTime { get; set; }
+        [FirestoreProperty("source_url")]
+        public string SourceUrl { get; set; } = "";
+        [FirestoreProperty("notes")]
+        public string Notes { get; set; } = "";
+        [Ignore] public long TotalTime => PrepTime + CookTime;
 
         private string recipeImage;
         [FirestoreProperty("recipe_image")]
@@ -81,7 +93,7 @@ namespace RecipeApp.Models
         //    set => SetProperty(ref ingredientGroups, value);
         //}
 
-        private List<Ingredient> ingredients;
+        private List<Ingredient> ingredients = new();
 
         [OneToMany(CascadeOperations = CascadeOperation.All)]
         public List<Ingredient> Ingredients

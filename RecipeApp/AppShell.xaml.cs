@@ -1,47 +1,27 @@
-﻿using RecipeApp.Helpers;
 using RecipeApp.Views;
-
+using RecipeApp.Services;
 namespace RecipeApp;
-
 public partial class AppShell : Shell
 {
     public AppShell()
     {
         InitializeComponent();
-
-        Routing.RegisterRoute(nameof(Homepage), typeof(Homepage));
-
-        Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
-
-        Routing.RegisterRoute(nameof(AccountPage), typeof(AccountPage));
-
-        Routing.RegisterRoute(nameof(RecipePage), typeof(RecipePage));
-
-        Routing.RegisterRoute(nameof(ShoppingListMakerPage), typeof(ShoppingListMakerPage));
-
-        Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
-
-        Routing.RegisterRoute(nameof(RecipeDetailsPage), typeof(RecipeDetailsPage));
-
-        Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
-
-        Routing.RegisterRoute(nameof(EditRecipePage), typeof(EditRecipePage));
-
-        Routing.RegisterRoute(nameof(MealPlannerPage), typeof(MealPlannerPage));
-
-        Routing.RegisterRoute(nameof(MealPlanOverviewPage), typeof(MealPlanOverviewPage));
-
-        Routing.RegisterRoute(nameof(EditExtraPage), typeof(EditExtraPage));
-
-        Routing.RegisterRoute(nameof(ShoppingListCreator), typeof(ShoppingListCreator));
-
-        Routing.RegisterRoute(nameof(ChatPage), typeof(ChatPage));
-
-        Routing.RegisterRoute(nameof(SignupPage), typeof(SignupPage));
-
-        Routing.RegisterRoute(nameof(EditdetailsPage),typeof(EditdetailsPage));
-
-
+        // Tab roots are declared only in XAML. Registering them again creates ambiguous routes.
+        var pages=new Dictionary<string,Type>{
+            [nameof(SettingsPage)]=typeof(SettingsPage),
+            [nameof(LoginPage)]=typeof(LoginPage),
+            [nameof(SignupPage)]=typeof(SignupPage),
+            [nameof(AddRecipePage)]=typeof(AddRecipePage),
+            [nameof(EditRecipePage)]=typeof(EditRecipePage),
+            [nameof(RecipeDetailsPage)]=typeof(RecipeDetailsPage),
+            [nameof(ShoppingListMakerPage)]=typeof(ShoppingListMakerPage),
+            [nameof(ShoppingListCreator)]=typeof(ShoppingListCreator),
+            [nameof(MealPlannerPage)]=typeof(MealPlannerPage),
+            [nameof(EditExtraPage)]=typeof(EditExtraPage),
+            [nameof(EditdetailsPage)]=typeof(EditdetailsPage),
+            [nameof(ChatPage)]=typeof(ChatPage),
+            [nameof(FoodFeedPage)]=typeof(FoodFeedPage),
+        };
+        foreach(var route in NavigationCatalog.Details)Routing.RegisterRoute(route,pages[route]);
     }
-
 }

@@ -1,301 +1,177 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    x:Class="RecipeApp.Views.ShoppingListPage"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:behaviors="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:model="clr-namespace:RecipeApp.Models"
-    xmlns:tool="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:viewmodels="clr-namespace:RecipeApp.ViewModels"
-    xmlns:views="clr-namespace:RecipeApp.CustomViews"
-    x:Name="ShoppingPage"
-    Title="Shopping List"
-    NavigationPage.HasNavigationBar="True">
-
-    <ContentPage.BindingContext>
-        <viewmodels:ShoppingListViewModel />
-    </ContentPage.BindingContext>
-
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:RecipeApp.Models"
+             xmlns:vm="clr-namespace:RecipeApp.ViewModels"
+             x:Class="RecipeApp.Views.ShoppingListPage"
+             x:Name="ShoppingPage" Title="Shopping list"
+             BackgroundColor="{DynamicResource ThemeBackground}">
+    <ContentPage.BindingContext><vm:ShoppingListViewModel /></ContentPage.BindingContext>
+    <ContentPage.Resources>
+        <Style x:Key="QuietButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{DynamicResource ThemeSubtle}" />
+            <Setter Property="TextColor" Value="{DynamicResource ThemeText}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="MinimumWidthRequest" Value="48" />
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="FontSize" Value="{DynamicResource ThemeFont13}" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style x:Key="Field" TargetType="Entry">
+            <Setter Property="TextColor" Value="{DynamicResource ThemeText}" />
+            <Setter Property="PlaceholderColor" Value="{DynamicResource ThemeMuted}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="FontSize" Value="{DynamicResource ThemeFont16}" />
+        </Style>
+    </ContentPage.Resources>
     <ContentPage.ToolbarItems>
-        <ToolbarItem Command="{Binding AddGroupCommand}" IconImageSource="plus_icon.png" />
-        <ToolbarItem Command="{Binding EditShoppingListCommand}" IconImageSource="edit.png" />
-        <ToolbarItem Command="{Binding ShowHelpCommand}" IconImageSource="icon_about.png" />
+        <ToolbarItem Text="Household" Clicked="Household_Clicked" />
+        <ToolbarItem Text="Plan from recipes &amp; checklists" Clicked="Creator_Clicked" Order="Secondary" />
+        <ToolbarItem Text="Home-screen quick add" Clicked="Widget_Clicked" Order="Secondary" />
+        <ToolbarItem Text="Sync now" Clicked="Sync_Clicked" Order="Secondary" />
+        <ToolbarItem Text="Resolve sync conflict" Clicked="Resolve_Clicked" Order="Secondary" />
+        <ToolbarItem Text="Paste list" Command="{Binding PasteCommand}" Order="Secondary" />
+        <ToolbarItem Text="Clear list" Command="{Binding ClearListCommand}" Order="Secondary" />
     </ContentPage.ToolbarItems>
 
-
-    <!--<ListView
-                x:Name="ListViewShopping"
-                GroupDisplayBinding="{Binding Key}"
-                HasUnevenRows="True"
-                IsGroupingEnabled="True"
-                ItemsSource="{Binding ListOfIngredients, Mode=TwoWay}"
-                SelectionMode="None"
-                SeparatorVisibility="None"
-                VerticalOptions="FillAndExpand">
-                <ListView.GroupHeaderTemplate>
-                    <DataTemplate>
-                        <ViewCell>
-                            <Border Padding="0" BackgroundColor="#eeeeee">
-                                <StackLayout Orientation="Horizontal">
-                                    <Entry
-                                        x:Name="HeaderEntry"
-                                        Margin="5,0,0,0"
-                                        BackgroundColor="Transparent"
-                                        ClearButtonVisibility="WhileEditing"
-                                        FontAttributes="Bold"
-                                        FontSize="Medium"
-                                        HorizontalOptions="FillAndExpand"
-                                        Placeholder="Header"
-                                        PlaceholderColor="DarkGray"
-                                        Text="{Binding Key, Mode=TwoWay}"
-                                        TextColor="Black"
-                                        VerticalOptions="CenterAndExpand" />
-                                    <Button
-                                        Margin="0,0,5,0"
-                                        BackgroundColor="Transparent"
-                                        BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
-                                        Command="{Binding RemoveGroupCommand}"
-                                        CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
-                                        HeightRequest="32"
-                                        HorizontalOptions="End"
-                                        ImageSource="minus.png"
-                                        IsVisible="{Binding IsEditing}"
-                                        WidthRequest="32" />
-                                    <Button
-                                        Margin="0,0,5,0"
-                                        BackgroundColor="Transparent"
-                                        BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
-                                        Command="{Binding AddIngredientCommand}"
-                                        CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
-                                        HeightRequest="32"
-                                        HorizontalOptions="End"
-                                        ImageSource="plus.png"
-                                        IsVisible="{Binding IsEditing}"
-                                        WidthRequest="32" />
-                                </StackLayout>
-                            </Border>
-                        </ViewCell>
-                    </DataTemplate>
-                </ListView.GroupHeaderTemplate>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="model:Ingredient">
-                        <ViewCell>
-                            <StackLayout HorizontalOptions="Fill" Orientation="Horizontal">
-                                <Entry
-                                    x:Name="ItemEntry"
-                                    HorizontalOptions="FillAndExpand"
-                                    Placeholder="Ingredient"
-                                    PlaceholderColor="DarkGray"
-                                    ReturnType="Done"
-                                    Text="{Binding Name}"
-                                    TextColor="Black" />
-                                <Button
-                                    Margin="0,0,5,0"
-                                    BackgroundColor="Transparent"
-                                    Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveIngredientCommand}"
-                                    CommandParameter="{Binding .}"
-                                    HeightRequest="32"
-                                    HorizontalOptions="End"
-                                    ImageSource="minus.png"
-                                    IsVisible="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.IsEditing}"
-                                    WidthRequest="32" />
-                                <CheckBox
-                                    HorizontalOptions="End"
-                                    IsChecked="{Binding InBasket, Mode=TwoWay}"
-                                    Scale="1.5"
-                                    Color="#FF6347">
-                                    <CheckBox.Behaviors>
-                                        <behaviors:EventToCommandBehavior Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.CheckBoxChangedCommand}" EventName="CheckedChanged" />
-                                    </CheckBox.Behaviors>
-                                </CheckBox>
-                            </StackLayout>
-                        </ViewCell>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>-->
-    <Grid Margin="5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <HorizontalStackLayout Spacing="25">
-            <!--  Top Border  -->
-            <Border
-                Grid.Row="0"
-                Padding="5"
-                BackgroundColor="{Binding CheckedColor}"
-                HorizontalOptions="Start"
-                StrokeThickness="4">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="40,0,0,40" />
-                </Border.StrokeShape>
-                <Label
-                    Padding="3"
-                    FontAttributes="Bold"
-                    HorizontalOptions="CenterAndExpand"
-                    Text="{Binding CheckedText}"
-                    TextColor="White" />
-            </Border>
-            <Button Command="{Binding ClearListCommand}" Text="Clear List" />
-            <Button Command="{Binding ClearSelectedCommand}" Text="Clear Selected" />
-        </HorizontalStackLayout>
-
-        <!--  CollectionView  -->
-        <CollectionView
-            x:Name="CollectionViewShopping"
-            Grid.Row="1"
-            IsGrouped="True"
-            ItemsSource="{Binding ListOfIngredients, Mode=TwoWay}">
-            <CollectionView.GroupHeaderTemplate>
-                <DataTemplate>
-                    <Border
-                        Padding="0"
-                        BackgroundColor="#eeeeee"
-                        HeightRequest="45">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="5,5,5,5" />
-                        </Border.StrokeShape>
-                        <StackLayout Orientation="Horizontal">
-                            <Entry
-                                x:Name="HeaderEntry"
-                                Margin="5,0,0,0"
-                                BackgroundColor="Transparent"
-                                ClearButtonVisibility="WhileEditing"
-                                FontAttributes="Bold"
-                                FontSize="Medium"
-                                HorizontalOptions="FillAndExpand"
-                                Placeholder="Header"
-                                PlaceholderColor="DarkGray"
-                                Text="{Binding Key, Mode=TwoWay}"
-                                TextColor="Black"
-                                VerticalOptions="CenterAndExpand"
-                                VerticalTextAlignment="Center" />
-                            <Button
-                                Margin="0,0,5,0"
-                                BackgroundColor="Transparent"
-                                BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
-                                Command="{Binding RemoveGroupCommand}"
-                                CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
-                                HeightRequest="32"
-                                HorizontalOptions="End"
-                                ImageSource="minus.png"
-                                IsVisible="{Binding IsEditing}"
-                                WidthRequest="32" />
-                            <Button
-                                Margin="0,0,5,0"
-                                BackgroundColor="Transparent"
-                                BindingContext="{Binding BindingContext, Source={x:Reference ShoppingPage}}"
-                                Command="{Binding AddIngredientCommand}"
-                                CommandParameter="{Binding Source={x:Reference HeaderEntry}, Path=Text}"
-                                HeightRequest="32"
-                                HorizontalOptions="End"
-                                ImageSource="plus.png"
-                                IsVisible="{Binding IsEditing}"
-                                WidthRequest="32" />
-                        </StackLayout>
+    <Grid Padding="16,8,16,8" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
+        <Border Padding="18,16" BackgroundColor="{DynamicResource ThemePrimary}" StrokeThickness="0" StrokeShape="RoundRectangle 20">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="3">
+                        <Button x:Name="ListSelector" Text="Personal list ▾" Clicked="ListSelector_Clicked" BackgroundColor="Transparent" TextColor="#C3DAC8" Padding="0" HorizontalOptions="Start" HeightRequest="44" />
+                        <Label Text="{Binding ProgressText}" FontSize="{DynamicResource ThemeFont22}" FontAttributes="Bold" TextColor="White" />
+                    </VerticalStackLayout>
+                    <Border Grid.Column="1" Padding="10,5" StrokeThickness="0" BackgroundColor="{DynamicResource ThemeAccent}" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                        <Label Text="{Binding RemainingText}" FontSize="{DynamicResource ThemeFont12}" TextColor="White" />
                     </Border>
+                </Grid>
+                <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border Grid.Row="1" Padding="12" StrokeThickness="0" StrokeShape="RoundRectangle 18"
+                BackgroundColor="{DynamicResource ThemeSurface}">
+            <VerticalStackLayout Spacing="5">
+                <Grid ColumnDefinitions="*,68,64" ColumnSpacing="7">
+                    <Entry x:Name="QuickAddEntry" Style="{StaticResource Field}" Text="{Binding QuickName}" Placeholder="What do you need?"
+                           ReturnType="Done" ReturnCommand="{Binding AddItemCommand}" ClearButtonVisibility="WhileEditing" SemanticProperties.Description="New shopping item" />
+                    <Entry Grid.Column="1" Style="{StaticResource Field}" Text="{Binding QuickQuantity}" Placeholder="Qty" SemanticProperties.Description="Optional quantity or unit" />
+                    <Button Grid.Column="2" Text="Add" Command="{Binding AddItemCommand}" BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White"
+                            HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" FontAttributes="Bold" />
+                </Grid>
+                <Button Text="Category &amp; note" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" HorizontalOptions="Start" />
+                <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">
+                    <Picker Title="Category" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
+                            TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="Category for new items" />
+                    <Entry Grid.Row="1" Style="{StaticResource Field}" Text="{Binding QuickNote}" Placeholder="Optional note, e.g. ripe or gluten-free" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <SearchBar Text="{Binding SearchText}" Placeholder="Find an item" BackgroundColor="Transparent"
+                               TextColor="{DynamicResource ThemeText}" CancelButtonColor="{DynamicResource ThemeAccent}" />
+                    <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                        <Label Text="Hide collected" FontSize="{DynamicResource ThemeFont12}" VerticalOptions="Center" TextColor="{DynamicResource ThemeText}" />
+                        <Switch IsToggled="{Binding HideCollected}" OnColor="{DynamicResource ThemeAccent}" ThumbColor="{DynamicResource ThemeOnAccent}" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Groups}" IsGrouped="True" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="28,36" Spacing="10" VerticalOptions="Center" HorizontalOptions="Center">
+                    <Label Text="{Binding EmptyTitle}" FontSize="{DynamicResource ThemeFont22}" FontAttributes="Bold" HorizontalTextAlignment="Center"
+                           TextColor="{DynamicResource ThemeText}" />
+                    <Label Text="{Binding EmptyMessage}" FontSize="{DynamicResource ThemeFont15}" HorizontalTextAlignment="Center" MaximumWidthRequest="310"
+                           TextColor="{DynamicResource ThemeText}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate x:DataType="vm:ShoppingListGroup">
+                    <Grid Padding="4,12,4,8" ColumnDefinitions="*,Auto">
+                        <Label Text="{Binding Title}" FontSize="{DynamicResource ThemeFont16}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" />
+                        <Label Grid.Column="1" Text="{Binding Summary}" FontSize="{DynamicResource ThemeFont12}" VerticalOptions="Center" TextColor="{DynamicResource ThemeText}" />
+                    </Grid>
                 </DataTemplate>
             </CollectionView.GroupHeaderTemplate>
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="model:Ingredient">
-                    <StackLayout HorizontalOptions="Fill" Orientation="Horizontal">
-                        <Entry
-                            x:Name="ItemEntry"
-                            HorizontalOptions="FillAndExpand"
-                            Placeholder="Ingredient"
-                            PlaceholderColor="DarkGray"
-                            ReturnType="Done"
-                            Text="{Binding Name}" />
-                        <ImageButton
-                            BindingContext="{Binding .}"
-                            Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ShowNoteCommand}"
-                            CommandParameter="{Binding .}"
-                            HeightRequest="20"
-                            HorizontalOptions="Start"
-                            IsVisible="{Binding HasNote}"
-                            Source="icon_about"
-                            VerticalOptions="Center">
-                            <ImageButton.Behaviors>
-                                <tool:IconTintColorBehavior TintColor="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.IconColor}" />
-                            </ImageButton.Behaviors>
-                        </ImageButton>
-                        <ImageButton
-                            Margin="0,0,5,0"
-                            BackgroundColor="Transparent"
-                            Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveIngredientCommand}"
-                            CommandParameter="{Binding .}"
-                            HeightRequest="32"
-                            HorizontalOptions="End"
-                            IsVisible="{Binding BindingContext.IsEditing, Source={x:Reference ShoppingPage}}"
-                            Source="minus.png"
-                            WidthRequest="32" />
-                        <CheckBox
-                            HorizontalOptions="End"
-                            IsChecked="{Binding InBasket, Mode=TwoWay}"
-                            Scale="1.5"
-                            Color="#FF6347">
-                            <CheckBox.Behaviors>
-                                <behaviors:EventToCommandBehavior Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.CheckBoxChangedCommand}" EventName="CheckedChanged" />
-                            </CheckBox.Behaviors>
-                        </CheckBox>
-                    </StackLayout>
+                <DataTemplate x:DataType="models:ShoppingListItem">
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Edit" BackgroundColor="{DynamicResource ThemeAccent}" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />
+                                <SwipeItem Text="Remove" BackgroundColor="#9A4840" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveItemCommand}" CommandParameter="{Binding .}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+                        <Border Margin="0,0,0,7" Padding="8,10,10,10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                                BackgroundColor="{DynamicResource ThemeSurface}">
+                            <Grid ColumnDefinitions="48,*,Auto,48" ColumnSpacing="5" MinimumHeightRequest="48">
+                                <CheckBox IsChecked="{Binding InBasket, Mode=TwoWay}" Color="{DynamicResource ThemeAccent}" VerticalOptions="Center"
+                                          SemanticProperties.Description="{Binding Name, StringFormat='Collected: {0}'}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                    <VerticalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ToggleItemCommand}" CommandParameter="{Binding .}" />
+                                    </VerticalStackLayout.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="{DynamicResource ThemeFont17}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding InBasket}" Value="True">
+                                                <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                <Setter Property="Opacity" Value="0.5" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="2" IsVisible="{Binding HasQuantity}" Padding="8,4" VerticalOptions="Center" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource ThemeBackground}" MaximumWidthRequest="100">
+                                    <Label Text="{Binding Quantity}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
+                                </Border>
+                                <Button Grid.Column="3" Text="Edit" Padding="2,0" FontSize="{DynamicResource ThemeFont12}" BackgroundColor="Transparent"
+                                        TextColor="{DynamicResource ThemeText}" HeightRequest="48" Margin="0"
+                                        Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Border>
+                    </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
+        <VerticalStackLayout Grid.Row="3" Spacing="5">
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="7">
+                <Button Text="Undo" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
+                <Button Grid.Column="1" Text="Redo" Command="{Binding RedoCommand}" Style="{StaticResource QuietButton}" />
+                <Button Grid.Column="2" Text="Clear done" Command="{Binding ClearCollectedCommand}" Style="{StaticResource QuietButton}" Padding="4,0" FontSize="{DynamicResource ThemeFont12}" />
+                <Button Grid.Column="3" Text="Share" Command="{Binding ShareCommand}" Style="{StaticResource QuietButton}" />
+            </Grid>
+            <Label Text="{Binding StatusText}" FontSize="{DynamicResource ThemeFont11}" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="Save status" />
+        </VerticalStackLayout>
 
-        <!--  Bottom Menu  -->
-        <StackLayout Grid.Row="2">
-            <StackLayout>
-                <Frame BorderColor="Black" IsVisible="{Binding ShowPlainText}">
-                    <VerticalStackLayout>
-                        <StackLayout>
-                            <StackLayout HorizontalOptions="StartAndExpand" Orientation="Horizontal">
-                                <Button
-                                    BackgroundColor="Transparent"
-                                    Command="{Binding CopyPlainTextCommand}"
-                                    HeightRequest="20"
-                                    ImageSource="copy20px"
-                                    WidthRequest="20" />
-                                <Label
-                                    FontSize="Micro"
-                                    Text="Copy PlainText"
-                                    VerticalTextAlignment="Center" />
-                            </StackLayout>
-                            <views:CustomEditor
-                                x:Name="PlainTextEntry"
-                                AutoSize="TextChanges"
-                                EnterPressedCommand="{Binding ProcessListFromEnterCommand}"
-                                HeightRequest="300"
-                                Text="{Binding ShoppingListText, Mode=TwoWay}"
-                                TextColor="Black">
-                            </views:CustomEditor>
-
-                        </StackLayout>
+        <Grid Grid.RowSpan="4" IsVisible="{Binding IsEditing}" BackgroundColor="#99000000" Padding="4" ZIndex="10">
+            <Border Padding="20" StrokeThickness="0" StrokeShape="RoundRectangle 22" VerticalOptions="Center"
+                    BackgroundColor="{DynamicResource ThemeSurface}">
+                <ScrollView MaximumHeightRequest="500">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Edit item" FontSize="{DynamicResource ThemeFont23}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" />
+                        <Label Text="ITEM NAME" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
+                        <Entry Text="{Binding EditName}" Style="{StaticResource Field}" Placeholder="Item name" />
+                        <Label Text="QUANTITY / UNIT" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
+                        <Entry Text="{Binding EditQuantity}" Style="{StaticResource Field}" Placeholder="e.g. 2 packs or 500 g" />
+                        <Label Text="CATEGORY" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
+                        <Entry Text="{Binding EditCategory}" Style="{StaticResource Field}" Placeholder="e.g. Produce or Household" />
+                        <Label Text="NOTE" FontSize="{DynamicResource ThemeFont11}" TextColor="{DynamicResource ThemeText}" />
+                        <Entry Text="{Binding EditNote}" Style="{StaticResource Field}" Placeholder="Optional detail" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
+                            <Button Text="Cancel" Command="{Binding CancelEditCommand}" Style="{StaticResource QuietButton}" />
+                            <Button Grid.Column="1" Text="Save item" Command="{Binding SaveEditCommand}" HeightRequest="48" CornerRadius="12"
+                                    BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White" Margin="0" FontAttributes="Bold" />
+                        </Grid>
+                        <Button Text="Remove this item" Clicked="RemoveEditingItem_Clicked" BackgroundColor="Transparent" TextColor="{DynamicResource ThemeText}"
+                                HeightRequest="48" Margin="0" />
                     </VerticalStackLayout>
-                </Frame>
-                <Button
-                    Command="{Binding ProcessPastedListCommand}"
-                    IsVisible="{Binding ShowPlainText}"
-                    Text="Process" />
-            </StackLayout>
-
-            <StackLayout
-                HorizontalOptions="FillAndExpand"
-                Orientation="Horizontal"
-                Spacing="10">
-                <Button
-                    Command="{Binding UndoCommand}"
-                    HorizontalOptions="StartAndExpand"
-                    Text="Undo" />
-                <Button Command="{Binding ShowPlainTextCommand}" Text="Plain Text" />
-                <Button
-                    Command="{Binding RedoCommand}"
-                    HorizontalOptions="EndAndExpand"
-                    Text="Redo" />
-            </StackLayout>
-        </StackLayout>
+                </ScrollView>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

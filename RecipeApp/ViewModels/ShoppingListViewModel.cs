@@ -1,815 +1,274 @@
-﻿using MvvmHelpers;
-using MvvmHelpers.Commands;
-using RecipeApp.Actions;
+using MvvmHelpers;
 using RecipeApp.Models;
 using RecipeApp.Services;
+using System.ComponentModel;
+using System.Text.Json;
 
-namespace RecipeApp.ViewModels
+namespace RecipeApp.ViewModels;
+
+public class ShoppingListGroup : ObservableRangeCollection<ShoppingListItem>
 {
-    internal class ShoppingListViewModel : CustomViewModelBase
+    public string Title { get; }
+    public string Summary => Count == 1 ? "1 item" : $"{Count} items";
+    public ShoppingListGroup(string title, IEnumerable<ShoppingListItem> items) : base(items) => Title = title;
+}
+
+public class ShoppingListViewModel : CustomViewModelBase
+{
+    private string StorageKey => sharedKey ?? ShoppingListStore.StateKey;
+    private string sharedKey;
+    private string loadedKey;
+    public string CurrentJson => document.Serialize();
+    public bool IsShared => sharedKey != null;
+    public void SelectList(string key)
     {
-        public List<Ingredient> PlainIngredients { get; set; }
-        private ObservableRangeCollection<IngredientGroup> originalIngredients;
-        public ObservableRangeCollection<IngredientGroup> OriginalIngredients
-        { get => originalIngredients; set => SetProperty(ref originalIngredients, value); }
-        public AsyncCommand CopyPlainTextCommand { get; set; }
-        public MvvmHelpers.Commands.Command<Ingredient> ShowNoteCommand { get; set; }
-        public MvvmHelpers.Commands.Command ClearListCommand { get; set; }
-        public MvvmHelpers.Commands.Command ClearSelectedCommand { get; set; }
+        sharedKey = key; loaded = false; loadedKey = null; IsEditing = false; document = new();
+        QuickName = QuickQuantity = QuickNote = EditName = EditQuantity = EditCategory = EditNote = "";
+        SearchText = ""; ShowDetails = false;
+    }
+    public void AcceptRemote(string json) { document = ShoppingListDocument.Deserialize(json); ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist(); }
+    private string ExportKey => ShoppingListStore.ExportKey;
+    private ShoppingListDocument document = new();
+    private readonly List<ShoppingListItem> subscriptions = new();
+    private bool loaded, batching;
+    private string searchText, quickName, quickQuantity, quickNote, selectedCategory = "Other", statusText = "Changes save automatically";
+    private bool hideCollected, showDetails, isEditing;
+    private ShoppingListItem editingItem;
+    private string editName, editQuantity, editCategory, editNote;
 
-        private Color iconColor;
-        public Color IconColor
+    public ObservableRangeCollection<ShoppingListGroup> Groups { get; } = new();
+    public ObservableRangeCollection<string> Categories { get; } = new();
+    public string SearchText { get => searchText; set { if (SetProperty(ref searchText, value)) RefreshGroups(); } }
+    public bool HideCollected { get => hideCollected; set { if (SetProperty(ref hideCollected, value)) RefreshGroups(); } }
+    public bool ShowDetails { get => showDetails; set => SetProperty(ref showDetails, value); }
+    public string QuickName { get => quickName; set { SetProperty(ref quickName, value); AddItemCommand?.ChangeCanExecute(); } }
+    public string QuickQuantity { get => quickQuantity; set => SetProperty(ref quickQuantity, value); }
+    public string QuickNote { get => quickNote; set => SetProperty(ref quickNote, value); }
+    public string SelectedCategory { get => selectedCategory; set => SetProperty(ref selectedCategory, value); }
+    public string StatusText { get => statusText; set => SetProperty(ref statusText, value); }
+    public int Total => document.Items.Count;
+    public int Collected => document.Items.Count(i => i.InBasket);
+    public int Remaining => Total - Collected;
+    public double Progress => Total == 0 ? 0 : (double)Collected / Total;
+    public string ProgressText => Total == 0 ? "Ready for your next shop" : $"{Collected} of {Total} collected";
+    public string RemainingText => Remaining == 1 ? "1 item left" : $"{Remaining} items left";
+    public string EmptyTitle => Total == 0 ? "A fresh start" : Remaining == 0 && HideCollected ? "All done!" : "No matching items";
+    public string EmptyMessage => Total == 0 ? "Add your first item above, paste a list, or send ingredients from a recipe."
+        : Remaining == 0 && HideCollected ? "Everything is collected. Turn off Hide collected to review your list."
+        : "Try a different search or turn off Hide collected.";
+    public bool IsEditing { get => isEditing; set { if (SetProperty(ref isEditing, value)) NotifySummary(); } }
+    public string EditName { get => editName; set => SetProperty(ref editName, value); }
+    public string EditQuantity { get => editQuantity; set => SetProperty(ref editQuantity, value); }
+    public string EditCategory { get => editCategory; set => SetProperty(ref editCategory, value); }
+    public string EditNote { get => editNote; set => SetProperty(ref editNote, value); }
+
+    public Command AddItemCommand { get; }
+    public Command ToggleDetailsCommand { get; }
+    public Command<ShoppingListItem> EditItemCommand { get; }
+    public Command<ShoppingListItem> ToggleItemCommand { get; }
+    public Command<ShoppingListItem> RemoveItemCommand { get; }
+    public Command SaveEditCommand { get; }
+    public Command CancelEditCommand { get; }
+    public Command UndoCommand { get; }
+    public Command RedoCommand { get; }
+    public Command ClearCollectedCommand { get; }
+    public Command ClearListCommand { get; }
+    public Command PasteCommand { get; }
+    public Command ShareCommand { get; }
+
+    public ShoppingListViewModel()
+    {
+        AddItemCommand = new Command(AddItem, () => !string.IsNullOrWhiteSpace(QuickName));
+        ToggleDetailsCommand = new Command(() => ShowDetails = !ShowDetails);
+        EditItemCommand = new Command<ShoppingListItem>(BeginEdit);
+        ToggleItemCommand = new Command<ShoppingListItem>(item => { if (item != null) item.InBasket = !item.InBasket; });
+        RemoveItemCommand = new Command<ShoppingListItem>(item => { if (item == null) return; document.Remove(item.Id); Changed("Item removed · Undo available"); });
+        SaveEditCommand = new Command(() => _ = RunAsync(SaveEditAsync));
+        CancelEditCommand = new Command(() => IsEditing = false);
+        UndoCommand = new Command(() => { document.Undo(); Changed("Change undone"); }, () => document.CanUndo && !IsEditing);
+        RedoCommand = new Command(() => { document.Redo(); Changed("Change restored"); }, () => document.CanRedo && !IsEditing);
+        ClearCollectedCommand = new Command(() => { document.ClearCollected(); Changed("Collected items removed · Undo available"); }, () => Collected > 0 && !IsEditing);
+        ClearListCommand = new Command(() => _ = RunAsync(ClearAsync), () => Total > 0 && !IsEditing);
+        PasteCommand = new Command(() => _ = RunAsync(PasteAsync), () => !IsEditing);
+        ShareCommand = new Command(() => _ = RunAsync(ShareAsync), () => Total > 0 && !IsEditing);
+        UpdateCategories();
+    }
+
+    public void Load(bool manual, string incomingJson)
+    {
+        HideCollected = AppSettings.Current.HideCollected;
+        ShowDetails = AppSettings.Current.ShoppingDetails;
+        if (loadedKey != StorageKey) { loaded = false; document = new(); IsEditing = false; loadedKey = StorageKey; }
+        var legacy = IsShared ? "" : Preferences.Get(ShoppingListStore.LegacyKey, "");
+        var stored = Preferences.Get(StorageKey, "");
+        if (!loaded)
         {
-            get
+            try { if (!string.IsNullOrWhiteSpace(stored)) document = ShoppingListDocument.Deserialize(stored); }
+            catch (JsonException)
             {
-                if (AppInfo.RequestedTheme == AppTheme.Dark)
-                {
-                    // Dark theme is active, set icon color to white
-                    return Color.FromArgb("#FFFFFF");
-                }
-                else
-                {
-                    // Light theme is active, set icon color to black
-                    return Color.FromArgb("#000000");
-                }
+                Preferences.Set(StorageKey + ".recovery", stored);
+                StatusText = "Previous list could not be read; a recovery copy was kept";
             }
-            set
-            {
-                SetProperty(ref iconColor, value);
-            }
+            loaded = true;
         }
-
-
-        private ObservableRangeCollection<IngredientGroup> listOfIngredients;
-        public ObservableRangeCollection<IngredientGroup> ListOfIngredients
+        else if (!string.IsNullOrWhiteSpace(stored) && stored != document.Serialize())
         {
-            get
-            {
-                return listOfIngredients;
-            }
-            set
-            {
-                SetProperty(ref listOfIngredients, value);
-
-                if (ListOfIngredients.Count > 0)
-                {
-                    var shoppingListText = string.Join("\n", ListOfIngredients.Select(g =>
-                    {
-                        var sectionTitle = $"[{g.Key}]";
-                        var sectionItems = string.Join("\n", g.Select(i => i.Name));
-                        return $"{sectionTitle}\n{sectionItems}\n";
-                    }));
-
-                    ShoppingListText = shoppingListText;
-                }
-                
-            }
+            document.Replace(ShoppingListDocument.Deserialize(stored).Items);
+            StatusText = "List updated";
         }
-        private Stack<ListViewAction> _undoStack = new Stack<ListViewAction>();
-        private Stack<ListViewAction> _redoStack = new Stack<ListViewAction>();
-        private ObservableRangeCollection<Recipe> recipes;
-        public ObservableRangeCollection<Recipe>Recipes
+        if (!string.IsNullOrWhiteSpace(incomingJson))
         {
-            get => recipes;
-            set { SetProperty(ref recipes,value); }
+            ImportIngredients(incomingJson);
+            SearchText = "";
+            HideCollected = false;
+            Changed("New recipe list ready · Undo available");
         }
-        private ObservableRangeCollection<Snack> snacks;
-        public ObservableRangeCollection<Snack> Snacks
+        else if (!IsShared && (legacy != Preferences.Get(ExportKey, "") || (Total == 0 && !string.IsNullOrWhiteSpace(legacy))))
         {
-            get => snacks;
-            set { SetProperty(ref snacks, value); }
+            document.MergeLegacyText(legacy);
+            Changed("List updated");
         }
-        private ObservableRangeCollection<Staple> staples;
-        public ObservableRangeCollection<Staple> Staples
+        else if (!IsShared && Total == 0 && !manual && string.IsNullOrWhiteSpace(Preferences.Get(StorageKey, "")))
         {
-            get => staples;
-            set { SetProperty(ref staples, value); }
+            var oldIngredients = Preferences.Get(ShoppingListStore.IngredientsKey, "");
+            if (!string.IsNullOrWhiteSpace(oldIngredients)) ImportIngredients(oldIngredients);
+            Changed();
         }
-        public string ShoppingListText
+        else { ConnectItems(); RefreshGroups(); NotifySummary(); }
+    }
+
+    private void ImportIngredients(string json)
+    {
+        // Shell may already have decoded the query. Try raw JSON first to preserve literal '+' and '%'.
+        List<Ingredient> ingredients;
+        try { ingredients = JsonSerializer.Deserialize<List<Ingredient>>(json); }
+        catch (JsonException) { ingredients = JsonSerializer.Deserialize<List<Ingredient>>(Uri.UnescapeDataString(json)); }
+        document.Replace(ShoppingListDocument.FromIngredients(ingredients ?? new()));
+    }
+
+    private void AddItem()
+    {
+        if (string.IsNullOrWhiteSpace(QuickName)) return;
+        document.Add(new() { Name = QuickName, Quantity = QuickQuantity?.Trim() ?? "", Category = SelectedCategory, Note = QuickNote?.Trim() ?? "" });
+        QuickName = QuickQuantity = QuickNote = "";
+        SearchText = "";
+        Changed("Item added");
+    }
+
+    private void BeginEdit(ShoppingListItem item)
+    {
+        if (item == null) return;
+        editingItem = item;
+        EditName = item.Name; EditQuantity = item.Quantity; EditCategory = item.Category; EditNote = item.Note;
+        IsEditing = true;
+    }
+
+    public void RemoveEditingItem()
+    {
+        if (editingItem == null) return;
+        document.Remove(editingItem.Id);
+        IsEditing = false;
+        Changed("Item removed · Undo available");
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(EditName))
         {
-            get
-            {
-                return shoppingListText;
-            }
-            set
-            {
-                SetProperty(ref shoppingListText, value);
-                //SaveShoppingListToSecureStorage();
-            }
+            await Shell.Current.DisplayAlert("Item name required", "Give this item a name before saving.", "OK");
+            return;
         }
-        public MvvmHelpers.Commands.Command ShowPlainTextCommand { get; }
-        public MvvmHelpers.Commands.Command ShowCheckedCommand { get; }
-        public MvvmHelpers.Commands.Command<string> AddIngredientCommand { get; }
-        public MvvmHelpers.Commands.Command<Ingredient> RemoveIngredientCommand { get; }
-        public MvvmHelpers.Commands.Command AddGroupCommand { get; }
-        public MvvmHelpers.Commands.Command RemoveGroupCommand { get; }
-        public MvvmHelpers.Commands.Command CheckBoxChangedCommand { get; }
-        public MvvmHelpers.Commands.Command UndoCommand => new MvvmHelpers.Commands.Command(Undo);
-        public MvvmHelpers.Commands.Command RedoCommand => new MvvmHelpers.Commands.Command(Redo);
-
-
-        private bool showPlainText;
-        private bool isEditing;
-        public bool IsEditing
+        if (editingItem == null) return;
+        batching = true;
+        try
         {
-            get { return isEditing; }
-            set { SetProperty(ref isEditing, value); }
+            editingItem.Name = EditName.Trim(); editingItem.Quantity = EditQuantity?.Trim() ?? "";
+            editingItem.Category = ShoppingListDocument.CategoryName(EditCategory); editingItem.Note = EditNote?.Trim() ?? "";
         }
-        public bool ListIsFiltered { get; set; }
-        private string checkedText;
-        public string CheckedText
+        finally { batching = false; }
+        document.Commit();
+        IsEditing = false;
+        Changed("Item updated");
+    }
+
+    private void ConnectItems()
+    {
+        foreach (var item in subscriptions) item.PropertyChanged -= ItemChanged;
+        subscriptions.Clear();
+        foreach (var item in document.Items) { item.PropertyChanged += ItemChanged; subscriptions.Add(item); }
+    }
+    private void ItemChanged(object sender, PropertyChangedEventArgs args)
+    {
+        if (batching || args.PropertyName is not (nameof(ShoppingListItem.InBasket) or nameof(ShoppingListItem.Name)
+            or nameof(ShoppingListItem.Quantity) or nameof(ShoppingListItem.Note) or nameof(ShoppingListItem.Category))) return;
+        document.Commit();
+        Persist();
+        NotifySummary();
+        if (HideCollected) RefreshGroups();
+    }
+    private void Changed(string message = "Saved on this device")
+    {
+        ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist(message);
+    }
+    public void Persist(string message = "Saved on this device")
+    {
+        if (!loaded || loadedKey != StorageKey) return;
+        try
         {
-            get { return checkedText; }
-            set { SetProperty(ref checkedText, value); }
+            if (IsShared) Preferences.Set(StorageKey, document.Serialize());
+            else ShoppingListStore.Save(document);
+            StatusText = message;
         }
-        public Color CheckedColor
-        {
-            get => checkedColor;
-            set { SetProperty(ref checkedColor, value); }
-        }
-        private Color checkedColor = Color.FromArgb("#FF6347");
-
-        public int InBasket { get; set; }
-        public int OutBasket { get; set; }
-        public MvvmHelpers.Commands.Command EditShoppingListCommand { get; }
-
-        public MvvmHelpers.Commands.Command ProcessPastedListCommand { get; }
-        public MvvmHelpers.Commands.Command ProcessListFromEnterCommand { get; }
-
-        public bool ShowPlainText
-        {
-            get { return showPlainText; }
-            set { SetProperty(ref showPlainText, value); }
-        }
-
-        public bool IsManualList { get; set; }
-
-        public AsyncCommand ShowHelpCommand { get; }
-        public IngredientGroup CurrentGroup { get; private set; }
-
-        string helpMessage = $"Welcome to the Shopping List!\n\n" +
-                             $"Here, you can create a list of all the items you need to buy. Once you've added an item, you can tick it off your list when you've added it to your basket.\n\n" +
-                             $"You can also add items on the fly by pressing the '+' button next to each section header. This is useful for when you're walking around the store and remember something you need to buy.\n\n" +
-                             "Happy shopping!";
-
-        private string shoppingListText;
-
-        public ShoppingListViewModel()
-        {
-            ShowHelpCommand = new AsyncCommand(ShowHelp);
-            ListOfIngredients = new ObservableRangeCollection<IngredientGroup>();
-            PlainIngredients = new List<Ingredient>();
-            ShowPlainTextCommand = new MvvmHelpers.Commands.Command(() =>
-            {
-                ShowPlainText = !ShowPlainText;
-                UpdateShoppingText();
-            });
-            EditShoppingListCommand = new MvvmHelpers.Commands.Command(() => { IsEditing = !IsEditing; });
-            AddIngredientCommand = new MvvmHelpers.Commands.Command<string>(AddIngredient);
-            RemoveIngredientCommand = new MvvmHelpers.Commands.Command<Ingredient>(RemoveIngredient);
-            AddGroupCommand = new MvvmHelpers.Commands.Command(AddGroup);
-            RemoveGroupCommand = new MvvmHelpers.Commands.Command<string>(RemoveGroup);
-            CheckBoxChangedCommand = new MvvmHelpers.Commands.Command(UpdateCheckedText);
-            //ShowCheckedCommand = new MvvmHelpers.Commands.Command(ShowSelected);
-            OriginalIngredients = ListOfIngredients;
-            CopyPlainTextCommand = new AsyncCommand(Copy);
-            ShowNoteCommand = new MvvmHelpers.Commands.Command<Ingredient>(ShowNote);
-            ClearListCommand = new MvvmHelpers.Commands.Command(ClearShoppingList);
-            ClearSelectedCommand = new MvvmHelpers.Commands.Command(ClearSelected);
-            ProcessPastedListCommand = new MvvmHelpers.Commands.Command(ProcessPastedList);
-            ProcessListFromEnterCommand = new MvvmHelpers.Commands.Command(ProcessPastedListFromEnter);
-            Recipes = new ObservableRangeCollection<Recipe>();
-            Snacks = new ObservableRangeCollection<Snack>();
-            Staples = new ObservableRangeCollection<Staple>();
-            LoadDataAsync();
-        }
-
-        private async void ClearShoppingList()
-        {
-            bool confirm = await Application.Current.MainPage.DisplayAlert("Clear List", "Are you sure you want to clear your shopping list?", "Yes", "No");
-            if (confirm)
-            {
-                ListOfIngredients.Clear();
-                PlainIngredients.Clear();
-                UpdateCheckedText();
-                UpdateShoppingText();
-                SaveShoppingList();
-            }
-        }
-
-        private async void ClearSelected()
-        {
-            bool confirm = await Application.Current.MainPage.DisplayAlert("Clear List", "Are you sure you want to clear the selected items from your shopping list?", "Yes", "No");
-
-            if (confirm)
-            {
-                // Create a copy of the ingredients to remove
-                var ingredientsToRemove = new List<Ingredient>();
-
-                foreach (var group in ListOfIngredients)
-                {
-                    foreach (var ingredient in group)
-                    {
-                        if (ingredient.InBasket)
-                        {
-                            ingredientsToRemove.Add(ingredient);
-                        }
-                    }
-                }
-
-                // Remove the ingredients from the original list
-                foreach (var ingredientToRemove in ingredientsToRemove)
-                {
-                    RemoveIngredient(ingredientToRemove);
-                }
-
-                UpdateCheckedText();
-            }
-        }
-
-        public async Task ShowHelp()
-        {
-            await Application.Current.MainPage.DisplayAlert("Help", helpMessage, "Close");
-        }
-
-        private void UpdateCheckedText()
-        {
-            if (ListOfIngredients.Count == 0)
-            {
-                CheckedText = "0/0";
-            }
-            else
-            {
-                int totalCheckedCount = 0;
-
-                foreach (var group in ListOfIngredients)
-                {
-                    int groupCheckedCount = 0;
-
-                    foreach (var ingredient in group)
-                    {
-                        if (ingredient.InBasket)
-                        {
-                            totalCheckedCount++;
-                            groupCheckedCount++;
-                        }
-                    }
-
-                    // Output the count for the current group (optional)
-                    Console.WriteLine($"Group: {group.Key}, Checked: {groupCheckedCount}");
-                }
-
-                CheckedText = $"{totalCheckedCount}/{PlainIngredients.Count}";
-
-                CheckedColor = totalCheckedCount == PlainIngredients.Count ? Color.FromArgb("#36C977") : Color.FromArgb("#FF6347");
-            }
-        }
-
-
-        private void UpdateShoppingText()
-        {
-            ShoppingListText = string.Join("\n", ListOfIngredients.Select(g =>
-            {
-                var sectionTitle = $"[{g.Key}]";
-                var sectionItems = string.Join("\n", g.Select(i => i.Name));
-                return $"{sectionTitle}\n{sectionItems}\n";
-            }));
-        }
-
-        //private void ShowSelected()
-        //{
-        //    if (ListIsFiltered)
-        //    {
-        //        foreach (var group in ListOfIngredients)
-        //        {
-        //            var visibleItems = group.Where(i => !i.InBasket).ToList();
-        //            group.ReplaceRange(visibleItems);
-        //        }
-
-        //    }
-        //    else
-        //    {
-        //        ListOfIngredients = OriginalIngredients;
-        //    }
-
-        //    ListIsFiltered = !ListIsFiltered;
-        //}
-
-        private void AddGroup()
-        {
-            var listOfIngredients = ListOfIngredients;
-            var newIngredient = new Ingredient { Name = String.Empty };
-
-            string newKey;
-            if (listOfIngredients.Count == 0)
-            {
-                newKey = "1";
-            }
-            else
-            {
-                // Find the highest key in the collection
-                var maxKey = listOfIngredients.Max(g => int.TryParse(g.Key, out int result) ? result : 0);
-
-                // Create a new key as an increment of the max key
-                newKey = "New Group" + (maxKey + 1).ToString();
-            }
-
-            var newGroup = new IngredientGroup(newKey, new List<Ingredient> { newIngredient });
-            listOfIngredients.Add(newGroup);
-
-            // Set the current group to the newly created group
-            CurrentGroup = newGroup;
-
-            var collectionView = Shell.Current.CurrentPage.FindByName<CollectionView>("ColelctionViewShopping");
-            if (collectionView != null)
-            {
-                collectionView.ScrollTo(CurrentGroup[0], CurrentGroup, ScrollToPosition.MakeVisible, true);
-            }
-            ListOfIngredients = listOfIngredients;
-
-            _undoStack.Push(new ListViewAction
-            {
-                Type = ActionType.AddGroup,
-                Group = newGroup,
-                GroupIndex = listOfIngredients.IndexOf(newGroup)
-            });
-
-            PlainIngredients.Add(newIngredient);
-            UpdateCheckedText();
-
-            if (IsManualList)
-            {
-                UpdateShoppingText();
-                SaveShoppingList();
-            }
-        }
-
-        private async void RemoveGroup(string key)
-        {
-            var removeGroup = await Application.Current.MainPage.DisplayAlert("Remove Group", "Are you sure you want to remove this group?", "Yes", "No");
-            if (removeGroup)
-            {
-                var listofIngredients = ListOfIngredients;
-                var groupToRemove = listofIngredients.FirstOrDefault(g => g.Key == key);
-
-                if (groupToRemove != null)
-                {
-                    foreach (var ingredient in groupToRemove)
-                    {
-                        PlainIngredients.Remove(ingredient);
-                    }
-
-                    _undoStack.Push(new ListViewAction
-                    {
-                        Type = ActionType.RemoveGroup,
-                        Group = groupToRemove,
-                        GroupIndex = listOfIngredients.IndexOf(groupToRemove)
-                    });
-
-                    if (groupToRemove != null)
-                    {
-                        listofIngredients.Remove(groupToRemove);
-                    }
-
-                    ListOfIngredients = listOfIngredients;
-                    UpdateCheckedText();
-
-                    if (IsManualList)
-                    {
-                        UpdateShoppingText();
-                        SaveShoppingList();
-                    }
-
-                }
-            }
-            else
-            {
-                return;
-            }
-        }
-
-
-        private void AddIngredient(string key)
-        {
-            var listofIngredients = ListOfIngredients;
-            var newIngredient = new Ingredient { Name = String.Empty };
-            var group = listofIngredients.FirstOrDefault(g => g.Key == key);
-
-            if (group == null)
-            {
-                // If the group is null, add the new ingredient to a new group with the specified key
-                listofIngredients.Add(new IngredientGroup(key, new List<Ingredient> { newIngredient }));
-            }
-            else
-            {
-                // Add the new ingredient to the existing group
-                group.Add(newIngredient);
-                var listView = Shell.Current.CurrentPage.FindByName<ListView>("ListViewShopping");
-                if (listView != null)
-                {
-                    listView.ScrollTo(newIngredient, group, ScrollToPosition.MakeVisible, true);
-                }
-
-                _undoStack.Push(new ListViewAction
-                {
-                    Type = ActionType.AddItem,
-                    Group = group,
-                    Item = newIngredient,
-                    ItemIndex = group.Count - 1
-                });
-
-            }
-            ListOfIngredients = listofIngredients;
-            PlainIngredients.Add(newIngredient);
-            UpdateCheckedText();
-
-            if (IsManualList)
-            {
-                UpdateShoppingText();
-                SaveShoppingList();
-            }
-        }
-
-        private void RemoveIngredient(Ingredient ingredient)
-        {
-            for (int i = 0; i < ListOfIngredients.Count; i++)
-            {
-                var group = ListOfIngredients[i];
-
-                if (group.Contains(ingredient))
-                {
-                    // Add the action to the undo stack
-                    _undoStack.Push(new ListViewAction
-                    {
-                        Type = ActionType.RemoveItem,
-                        Group = group,
-                        ItemIndex = group.IndexOf(ingredient),
-                        Item = ingredient
-                    });
-
-                    group.Remove(ingredient);
-                    PlainIngredients.Remove(ingredient);
-
-                    if (group.Count == 0)
-                    {
-                        ListOfIngredients.RemoveAt(i);
-                        i--; // Adjust the index as we removed an item
-                    }
-                }
-            }
-
-            UpdateCheckedText();
-
-            if (IsManualList)
-            {
-                UpdateShoppingText();
-                SaveShoppingList();
-            }
-        }
-
-        private void Undo()
-        {
-            if (_undoStack.Count > 0)
-            {
-                ListViewAction action = _undoStack.Pop();
-
-                switch (action.Type)
-                {
-                    case ActionType.AddGroup:
-                        ListOfIngredients.RemoveAt(action.GroupIndex);
-                        _redoStack.Push(new ListViewAction { 
-                            Type = ActionType.RemoveGroup, 
-                            Group = action.Group, 
-                            GroupIndex = action.GroupIndex });
-                        break;
-                    case ActionType.RemoveGroup:
-                        ListOfIngredients.Insert(action.GroupIndex, action.Group);
-                        _redoStack.Push(new ListViewAction { Type = ActionType.AddGroup, Group = action.Group, GroupIndex = action.GroupIndex });
-                        break;
-                    case ActionType.AddItem:
-                        action.Group.RemoveAt(action.ItemIndex);
-                        _redoStack.Push(new ListViewAction { Type = ActionType.RemoveItem, Group = action.Group, ItemIndex = action.ItemIndex, Item = action.Item });
-                        break;
-                    case ActionType.RemoveItem:
-                        action.Group.Insert(action.ItemIndex, action.Item);
-                        _redoStack.Push(new ListViewAction { Type = ActionType.AddItem, Group = action.Group, ItemIndex = action.ItemIndex, Item = action.Item });
-                        break;
-                }
-
-                if (IsManualList)
-                {
-                    UpdateShoppingText();
-                    SaveShoppingList();
-                }
-                // Update the UI as necessary, e.g., refreshing the ListView or updating buttons
-            }
-        }
-
-        private void Redo()
-        {
-            if (_redoStack.Count > 0)
-            {
-                ListViewAction action = _redoStack.Pop();
-
-                switch (action.Type)
-                {
-                    case ActionType.AddGroup:
-                        ListOfIngredients.RemoveAt(action.GroupIndex);
-                        _undoStack.Push(new ListViewAction
-                        {
-                            Type = ActionType.RemoveGroup,
-                            Group = action.Group,
-                            GroupIndex = action.GroupIndex
-                        });
-                        break;
-                    case ActionType.RemoveGroup:
-                        ListOfIngredients.Insert(action.GroupIndex, action.Group);
-                        _undoStack.Push(new ListViewAction { Type = ActionType.AddGroup, Group = action.Group, GroupIndex = action.GroupIndex });
-                        break;
-                    case ActionType.AddItem:
-                        action.Group.RemoveAt(action.ItemIndex);
-                        _undoStack.Push(new ListViewAction { Type = ActionType.RemoveItem, Group = action.Group, ItemIndex = action.ItemIndex, Item = action.Item });
-                        break;
-                    case ActionType.RemoveItem:
-                        action.Group.Insert(action.ItemIndex, action.Item);
-                        _undoStack.Push(new ListViewAction { Type = ActionType.AddItem, Group = action.Group, ItemIndex = action.ItemIndex, Item = action.Item });
-                        break;
-                }
-
-                if (IsManualList)
-                {
-                    UpdateShoppingText();
-                    SaveShoppingList();
-                }
-                // Update the UI as necessary, e.g., refreshing the ListView or updating buttons
-            }
-        }
-
-        private void ShowNote(Ingredient ing)
-        {
-            if (ing.Note != null)
-            {
-                Shell.Current.DisplayAlert("Note", ing.Note, "OK");
-            }
-        }
-
-        private async Task Copy()
-        {
-            // Copy the text to the clipboard
-            await Clipboard.SetTextAsync(ShoppingListText);
-        }
-        private void LoadDataAsync()
-        {
-            if (Recipes.Count <= 0)
-            {
-                Recipes.AddRange(RecipeService.Recipes);
-            }
-            if (Snacks.Count <= 0)
-            {
-                Snacks.Clear();
-                Snacks.AddRange(RecipeService.Snacks);
-            }
-            if (Staples.Count <= 0)
-            {
-                Staples.Clear();
-                Staples.AddRange(RecipeService.Staples);
-            }
-        }
-
-        private void ProcessPastedList()
-        {
-            ListOfIngredients.Clear();
-            PlainIngredients.Clear();
-
-            // Get the pasted list from the Entry
-            string pastedList = ShoppingListText;
-
-            // Split the pasted list into individual items
-            List<string> items = pastedList.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(line => !line.TrimStart().StartsWith("[") && !line.TrimStart().StartsWith("]"))
-                .ToList();
-
-            // Iterate through each item in the list
-            foreach (string item in items)
-            {
-                if (string.IsNullOrWhiteSpace(item))
-                {
-                    continue;
-                }
-                // Separate the note from the ingredient name
-                string ingredientName = item;
-                string ingredientNote = null;
-                int noteIndex = item.IndexOf('(');
-
-                if (noteIndex >= 0)
-                {
-                    // Extract the note if it exists
-                    ingredientName = item.Substring(0, noteIndex).Trim();
-                    ingredientNote = item.Substring(noteIndex + 1, item.Length - noteIndex - 2).Trim();
-                }
-
-                // Search for a match based on the ingredient name
-                Ingredient matchedIngredient = FindMatchedIngredient(ingredientName);
-
-                // Create an Ingredient based on the matched item
-                Ingredient ingredient;
-                if (matchedIngredient != null)
-                {
-                    // Use the matched ingredient's tag if available
-                    ingredient = new Ingredient { Name = ingredientName, Tag = matchedIngredient.Tag, Note = ingredientNote };
-                }
-                else
-                {
-                    // No match found, create a new ingredient without a tag
-                    ingredient = new Ingredient { Name = ingredientName, Note = ingredientNote };
-                }
-
-                PlainIngredients.Add(ingredient);
-
-                // Add the ingredient to your shopping list
-                var group = ListOfIngredients.FirstOrDefault(g => g.Key == (ingredient.Tag?.ToLower() ?? string.Empty));
-            }
-
-            ListOfIngredients.Clear();
-
-            ListOfIngredients.AddRange(PlainIngredients
-                .GroupBy(i => (i.Tag?.ToLower()) ?? string.Empty)
-                .OrderBy(g => g.Key)
-                .Select(g => new IngredientGroup(g.Key, g.ToList()))
-                .ToList());
-
-            UpdateCheckedText();
-            ShowPlainText = false;
-
-            if (IsManualList)
-            {
-                UpdateShoppingText();
-                SaveShoppingList();
-            }
-        }
-
-        private void ProcessPastedListFromEnter()
-        {
-            ListOfIngredients.Clear();
-            PlainIngredients.Clear();
-
-            // Get the pasted list from the Entry
-            string pastedList = ShoppingListText;
-
-            // Split the pasted list into individual items
-            List<string> items = pastedList.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(line => !line.TrimStart().StartsWith("[") && !line.TrimStart().StartsWith("]"))
-                .ToList();
-
-            // Iterate through each item in the list
-            foreach (string item in items)
-            {
-                // Separate the note from the ingredient name
-                string ingredientName = item;
-                string ingredientNote = null;
-                int noteIndex = item.IndexOf('(');
-
-                if (noteIndex >= 0)
-                {
-                    // Extract the note if it exists
-                    ingredientName = item.Substring(0, noteIndex).Trim();
-                    ingredientNote = item.Substring(noteIndex + 1, item.Length - noteIndex - 2).Trim();
-                }
-
-                // Search for a match based on the ingredient name
-                Ingredient matchedIngredient = FindMatchedIngredient(ingredientName);
-
-                // Create an Ingredient based on the matched item
-                Ingredient ingredient;
-                if (matchedIngredient != null)
-                {
-                    // Use the matched ingredient's tag if available
-                    ingredient = new Ingredient { Name = ingredientName, Tag = matchedIngredient.Tag, Note = ingredientNote };
-                }
-                else
-                {
-                    // No match found, create a new ingredient without a tag
-                    ingredient = new Ingredient { Name = ingredientName, Note = ingredientNote };
-                }
-
-                PlainIngredients.Add(ingredient);
-
-                // Add the ingredient to your shopping list
-                var group = ListOfIngredients.FirstOrDefault(g => g.Key == (ingredient.Tag?.ToLower() ?? string.Empty));
-            }
-
-            ListOfIngredients.Clear();
-
-            ListOfIngredients.AddRange(PlainIngredients
-                .GroupBy(i => (i.Tag?.ToLower()) ?? string.Empty)
-                .OrderBy(g => g.Key)
-                .Select(g => new IngredientGroup(g.Key, g.ToList()))
-                .ToList());
-
-            UpdateCheckedText();
-
-            if (IsManualList)
-            {
-                UpdateShoppingText();
-                SaveShoppingList();
-            }
-        }
-
-
-        private Ingredient FindMatchedIngredient(string ingredientName)
-        {
-            Ingredient matchedIngredient = null;
-            string matchedTag = null;
-
-
-            if (Recipes.Count > 0)
-            {
-                // Search for a match in Recipes
-                foreach (var recipe in Recipes)
-                {
-                    if (recipe.Ingredients != null)
-                    {
-                        matchedIngredient = recipe.Ingredients.FirstOrDefault(ing => ing?.Name?.IndexOf(ingredientName, StringComparison.OrdinalIgnoreCase) >= 0);
-                        if (matchedIngredient != null)
-                        {
-                            matchedTag = matchedIngredient.Tag;
-                            if (matchedTag != null)
-                            {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            // Search for a match in Snacks
-            if (matchedIngredient == null)
-            {
-                if (Snacks.Count > 0)
-                {
-                    foreach (var snack in Snacks)
-                    {
-                        Snack matchedSnack = Snacks.FirstOrDefault(ing => ing.Name.IndexOf(ingredientName, StringComparison.OrdinalIgnoreCase) >= 0);
-                        if (matchedSnack != null)
-                        {
-                            matchedIngredient = new Ingredient { Name = matchedSnack.Name, Tag = matchedSnack.Tag };
-                            if (matchedSnack != null)
-                            {
-                                matchedTag = matchedSnack.Tag;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-            }
-
-            // Search for a match in Staples
-            if (matchedIngredient == null)
-            {
-                if (Staples.Count > 0)
-                {
-                    foreach (var staple in Staples)
-                    {
-                        Staple matchedStaple = Staples.FirstOrDefault(ing => ing.Name.IndexOf(ingredientName, StringComparison.OrdinalIgnoreCase) >= 0);
-                        if (matchedStaple != null)
-                        {
-                            matchedIngredient = new Ingredient { Name = matchedStaple.Name, Tag = matchedStaple.Tag };
-                            if (matchedStaple != null)
-                            {
-                                matchedTag = matchedStaple.Tag;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (matchedIngredient == null)
-            {
-                foreach (Ingredient ingredient in RecipeService.MasterIngredientList)
-                {
-                    matchedIngredient = RecipeService.MasterIngredientList.FirstOrDefault(ing => ing.Name.IndexOf(ingredientName, StringComparison.OrdinalIgnoreCase) >= 0);
-                    if (matchedIngredient != null)
-                    {
-                        matchedTag = matchedIngredient.Tag;
-                        break;
-                    }
-                }
-            }
-
-            return matchedIngredient;
-        }
-
-        private void SaveShoppingList()
-        {
-                Preferences.Set("ShoppingListText", ShoppingListText);
-        }
-
-        private void GetShoppingListFromSecureStorage()
-        {
-            ShoppingListText = Preferences.Get("ShoppingListText", "");
-        }
+        catch (Exception) { StatusText = "Couldn't save changes. Keep this screen open and try again."; }
+    }
+    private void RefreshGroups()
+    {
+        Groups.ReplaceRange(document.Visible(SearchText, HideCollected).GroupBy(i => i.Category)
+            .OrderBy(g => g.Key == "Other").ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new ShoppingListGroup(g.Key, g)));
+        OnPropertyChanged(nameof(EmptyTitle)); OnPropertyChanged(nameof(EmptyMessage));
+    }
+    private void UpdateCategories()
+    {
+        var selected = SelectedCategory;
+        Categories.ReplaceRange(new[] { "Produce", "Dairy", "Meat", "Pantry", "Bakery", "Frozen", "Drinks", "Other" }
+            .Concat(document.Items.Select(i => i.Category)).Distinct(StringComparer.OrdinalIgnoreCase));
+        SelectedCategory = selected != null && Categories.Contains(selected) ? selected : "Other";
+    }
+    private void NotifySummary()
+    {
+        foreach (var property in new[] { nameof(Total), nameof(Collected), nameof(Remaining), nameof(Progress), nameof(ProgressText), nameof(RemainingText), nameof(EmptyTitle), nameof(EmptyMessage) }) OnPropertyChanged(property);
+        UndoCommand.ChangeCanExecute(); RedoCommand.ChangeCanExecute(); ClearCollectedCommand.ChangeCanExecute(); ClearListCommand.ChangeCanExecute(); ShareCommand.ChangeCanExecute(); PasteCommand.ChangeCanExecute();
+    }
+    private async Task ClearAsync()
+    {
+        if (await Shell.Current.DisplayAlert("Start a fresh list?", "Remove all items? You can undo this while the screen remains open.", "Clear list", "Keep list"))
+        { document.Clear(); Changed("List cleared · Undo available"); }
+    }
+    private async Task PasteAsync()
+    {
+        var text = await Clipboard.Default.GetTextAsync();
+        if (string.IsNullOrWhiteSpace(text)) { await Shell.Current.DisplayAlert("Nothing to paste", "Copy a list with one item per line first.", "OK"); return; }
+        var before = Total;
+        document.AppendText(text);
+        SearchText = "";
+        Changed($"List updated from clipboard · {Total - before} new rows · Compatible amounts combined");
+    }
+    private async Task ShareAsync()
+    {
+        var choice = await Shell.Current.DisplayActionSheet("Send your shopping list", "Cancel", null, "Share remaining", "Share full list", "Copy remaining", "Copy full list");
+        if (choice == null || choice == "Cancel") return;
+        var text = document.PlainText(remainingOnly: choice.EndsWith("remaining", StringComparison.Ordinal));
+        if (string.IsNullOrWhiteSpace(text)) { await Shell.Current.DisplayAlert("Nothing left to buy", "All items are collected.", "OK"); return; }
+        if (choice.StartsWith("Copy")) { await Clipboard.Default.SetTextAsync(text); StatusText = "List copied"; }
+        else await Share.Default.RequestAsync(new ShareTextRequest { Title = "Shopping list", Text = text });
+    }
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        try { await action(); }
+        catch (Exception) { await Shell.Current.DisplayAlert("Couldn't finish", "Please try that action again.", "OK"); }
+        finally { IsBusy = false; }
     }
 }
