@@ -15,6 +15,7 @@ function recipe(value) {
   if (!Array.isArray(value.ingredients) || value.ingredients.length > 100 || value.ingredients.some(i => !i || typeof i !== 'object')) fail('invalid-argument', 'Recipes support up to 100 ingredients.');
   if (value.ingredients.some(i => i.isKey != null && typeof i.isKey !== 'boolean')) fail('invalid-argument', 'Invalid key ingredient flag.');
   const integer = n => { if (!Number.isInteger(n) || n < 0 || n > 10000) fail('invalid-argument', 'Invalid serving or preparation time.'); return n; };
+  if (!Number.isInteger(value.servings) || value.servings < 1) fail('invalid-argument', 'Servings must be at least one.');
   return {description: text(value.description ?? "", 500), cookMinutes: integer(value.cookMinutes ?? 0), title: text(value.title, 160, true), method: text(value.method, 15000), servings: integer(value.servings),
     prepMinutes: integer(value.prepMinutes), ingredients: value.ingredients.map(i => ({name: text(i.name, 200, true), quantity: text(i.quantity, 200), category: text(i.category, 100), note: text(i.note, 500), section: text(i.section ?? "Ingredients", 100), isKey: i.isKey == null ? true : i.isKey}))};
 }
@@ -52,19 +53,24 @@ function cursor(value) {
 function createFeedHandler(db, clock = Date.now) {
   return async request => {
     if (!request.auth) fail('unauthenticated', 'Sign in to explore the food feed.');
-    const uid = request.auth.uid, data = request.data || {}, moderator = request.auth.token.feedModerator === true;
+    const uid = request.auth.uid, data = request.data || {}, moderator = request.auth.token?.feedModerator === true;
+    if (typeof data !== 'object' || Array.isArray(data) || typeof data.action !== 'string') fail('invalid-argument', 'Choose a feed action.');
     const posts = db.collection('feedPosts');
     if (data.action === 'list') {
       const next = cursor(data.cursor);
       let query = posts.orderBy('createdAt', 'desc').orderBy(FieldPath.documentId(), 'desc');
       if (next) query = query.startAfter(next.createdAt, next.id);
       // Hidden/deleted records are filtered server-side; cursor advances over them too.
-      const snapshot = await query.limit(15).get();
-      const visible = snapshot.docs.filter(doc => !doc.data().hidden && !doc.data().deleted);
-      const likes = await Promise.all(visible.map(doc => doc.ref.collection('likes').doc(uid).get()));
-      const result = visible.map((doc, i) => ({...publicPost(doc), liked: likes[i].exists}));
-      const last = snapshot.docs.at(-1);
-      return {posts: result, cursor: snapshot.size === 15 && last ? {createdAt: last.data().createdAt, id: last.id} : null, moderator};
+      // Read visibility and like state in one consistent snapshot. A concurrent
+      // hide/delete cannot leave old post content mixed with newer like reads.
+      return db.runTransaction(async tx => {
+        const snapshot = await tx.get(query.limit(15));
+        const visible = snapshot.docs.filter(doc => !doc.data().hidden && !doc.data().deleted);
+        const likes = await Promise.all(visible.map(doc => tx.get(doc.ref.collection('likes').doc(uid))));
+        const result = visible.map((doc, i) => ({...publicPost(doc), liked: likes[i].exists}));
+        const last = snapshot.docs.at(-1);
+        return {posts: result, cursor: snapshot.size === 15 && last ? {createdAt: last.data().createdAt, id: last.id} : null, moderator};
+      }, {readOnly: true});
     }
     if (data.action === 'moderation') {
       if (!moderator) fail('permission-denied', 'Moderator access is required.');
@@ -84,6 +90,7 @@ function createFeedHandler(db, clock = Date.now) {
       const ref = posts.doc(id(data.id));
       const body = {caption: text(data.caption, 2000), authorName: text(data.authorName, 60, true), recipe: recipe(data.recipe), photo: photo(data.photo)};
       if (!body.caption && !body.recipe) fail('invalid-argument', 'Write a caption or attach a recipe.');
+      if (Buffer.byteLength(JSON.stringify(body), 'utf8') > 500000) fail('invalid-argument', 'This post is too large. Shorten the recipe or choose a smaller photo.');
       const digest = hash(body), limitRef = db.doc(`feedLimits/${uid}`);
       return db.runTransaction(async tx => {
         const [existing, limits] = await Promise.all([tx.get(ref), tx.get(limitRef)]);
@@ -168,7 +175,14 @@ function createFeedHandler(db, clock = Date.now) {
       }
       if (data.action === 'report') {
         const reason = text(data.reason, 500, true);
-        tx.set(ref.collection('reports').doc(uid), {reason, reporterId: uid, createdAt: clock(), resolved: false}); return {};
+        const reportRef = ref.collection('reports').doc(uid), limitRef = db.doc(`feedLimits/${uid}`);
+        const [existing, limits] = await Promise.all([tx.get(reportRef), tx.get(limitRef)]);
+        // A repeated submission or lost response must not reopen a reviewed report.
+        if (existing.exists && existing.data().reason === reason) return {};
+        const now = clock();
+        if (limits.exists && now - (limits.data().reportAt || 0) < 10000) fail('resource-exhausted', 'Wait a few seconds before reporting again.');
+        tx.set(reportRef, {reason, reporterId: uid, createdAt: now, resolved: false});
+        tx.set(limitRef, {...limits.data(), reportAt: now}); return {};
       }
       fail('invalid-argument', 'Unknown feed action.');
     });

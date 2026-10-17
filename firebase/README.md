@@ -136,3 +136,13 @@ remain after leaving/removal/deletion.
 The same backend also includes `foodFeed` and an optional desktop studio. See
 [Food feed deployment and moderation](FEED.md) for web configuration, Hosting, and
 moderator roles.
+
+## Social feed and hosted Community Studio
+
+For the current social backend and the combined deployment command, follow
+[FEED.md](FEED.md#deploying-the-current-version). It includes public post/recipe
+snapshots, likes, comments, moderator reports, authenticated callable functions,
+Hosting configuration discovery and hardened browser headers. The deploy command
+uses the same Functions codebase as households and billing; it is not a separate
+replacement backend. Production credentials and services must be configured on
+your desktop before deployment.

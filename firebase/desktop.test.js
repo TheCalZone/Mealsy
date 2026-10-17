@@ -10,6 +10,9 @@ before(async () => {
   server = http.createServer((req, res) => {
     const path = req.url === '/' ? '/index.html' : req.url;
     if (!['/index.html','/app.js','/style.css','/firebase-config.js'].includes(path)) { res.writeHead(404).end(); return; }
+    for (const rule of JSON.parse(readFileSync(`${__dirname}/../firebase.json`, 'utf8')).hosting.headers || []) {
+      if (rule.source === '**') for (const header of rule.headers) res.setHeader(header.key, header.value);
+    }
     res.setHeader('Content-Type', path.endsWith('.js') ? 'text/javascript' : path.endsWith('.css') ? 'text/css' : 'text/html');
     res.end(readFileSync(`${__dirname}/desktop${path}`));
   });
@@ -19,7 +22,7 @@ before(async () => {
   browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox']});
 });
 after(async () => { if (browser) await browser.close(); if (server) await new Promise(resolve => server.close(resolve)); });
-async function page(moderator = false, configured = true) {
+async function page(moderator = false, configured = true, hosted = false) {
   const page = await browser.newPage();
   await page.addInitScript(({moderator}) => {
     window.calls = [];
@@ -34,6 +37,7 @@ async function page(moderator = false, configured = true) {
       return {data: {id: data.id}};
     };
   }, {moderator});
+  if (hosted) await page.route('**/__/firebase/init.json', route => route.fulfill({contentType: 'application/json', body: JSON.stringify({apiKey: 'hosted-test-key', appId: 'hosted-test-app', projectId: hosted === true ? 'mealsy-b732b' : 'another-project', authDomain: 'mealsy-b732b.firebaseapp.com'})}));
   const modules = {
     'firebase-app.js': 'export const initializeApp = config => config;',
     'firebase-auth.js': `export const getAuth = () => ({}); export const onAuthStateChanged = (auth, callback) => {window.authChanged = callback; queueMicrotask(() => callback(window.testUser));}; export const signInWithEmailAndPassword = async () => {}; export const createUserWithEmailAndPassword = async () => {}; export const signOut = async () => window.authChanged(null);`,
@@ -90,5 +94,19 @@ test('desktop renders extended recipe metadata and ingredient sections safely', 
   await p.getByText('Serves 4 · Prep 10 min · Cook 20 min', {exact:true}).waitFor();
   await p.getByRole('heading', {name:'Sauce', exact:true}).waitFor();
   await p.getByText('• 400 g Tomatoes', {exact:true}).waitFor();
+  await p.close();
+});
+
+test('Firebase Hosting discovers web configuration without editing public identifiers', async () => {
+  const p = await page(false, false, true);
+  await p.getByRole('heading', {name: 'Chef', exact: true}).waitFor();
+  assert.equal(await p.locator('#signed-in').isVisible(), true);
+  await p.close();
+});
+
+test('Hosting discovery refuses configuration for a different Firebase project', async () => {
+  const p = await page(false, false, 'wrong-project');
+  await p.getByRole('status').filter({hasText: 'Desktop setup:'}).waitFor();
+  assert.equal(await p.locator('#signed-in').isVisible(), false);
   await p.close();
 });

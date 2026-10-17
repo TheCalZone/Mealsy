@@ -51,11 +51,13 @@ required: the Firebase CLI commands below work from a desktop terminal as well.
 
 1. Open **Firebase Console → Project settings → Your apps → Add app → Web** in
    project `mealsy-b732b`. Copy the public web Firebase configuration.
-2. Replace the `ADD_...` placeholders in
-   **`firebase/desktop/firebase-config.js`** with that web app's `apiKey` and `appId`.
-   Confirm `projectId` and `authDomain` match your project. These are public client
-   identifiers, not an Admin SDK private key. Configure any API-key restrictions
-   for this web application and its Hosting domain.
+2. On Firebase Hosting, the studio now loads its public web configuration from
+   `/__/firebase/init.json` automatically, once a web app is registered in the same
+   project. Its project ID must match `mealsy-b732b`; a mismatched config is rejected.
+   If Hosting cannot supply that configuration, or you use another static host,
+   replace the `ADD_...` values in `firebase/desktop/firebase-config.js` with the
+   registered web app's public `apiKey` and `appId`. Never use an Admin private key.
+   Check API-key restrictions for this web app and its Hosting domain.
 3. Deploy the web studio from the repository root:
 
    ```sh
@@ -72,9 +74,9 @@ required: the Firebase CLI commands below work from a desktop terminal as well.
    The feed and comments are paged; use **Load more/Older comments** to continue.
    Changes from other devices appear when you refresh. No background polling runs.
 
-The checked-in desktop config intentionally contains placeholders: the cloud session
-has no connection to your desktop Firebase plug-in or a registered Firebase web app.
-The unconfigured page explains the missing setup instead of making live calls.
+The checked-in desktop config intentionally contains placeholders. Firebase Hosting
+can resolve these from its reserved endpoint; other static hosts need manual public
+config. If neither is available, the page explains the missing setup.
 
 ## Grant your account moderator access
 
@@ -128,7 +130,10 @@ counters stay consistent.
   to remove EXIF/location metadata. This keeps the first version independent of
   Cloud Storage configuration; a larger media library should move to Storage.
 - Publishing is limited to one new post per ten seconds/account; comments to one
-  every three seconds/account. Post/comment IDs make retries safe after a lost
+  every three seconds/account; changed/new reports to one every ten seconds/account.
+  Identical report retries do not reopen a report already reviewed by a moderator.
+  A combined 500,000-byte UTF-8 payload limit rejects unusually large posts before
+  any database write, and recipe servings must be at least one. Post/comment IDs make retries safe after a lost
   response. Likes use a requested final state, preventing duplicate counts.
 - Hidden/deleted posts cannot be liked, commented on or read through the comments
   endpoint. Authors can remove their own posts/comments; moderators can remove
@@ -188,3 +193,51 @@ comment, save the recipe, report, hide/restore, delete, sign out and reconnect a
 a failed publish. Confirm private household lists/recipes never appear in the feed.
 Native photo picker, keyboard, layout and share-to-feed navigation require device
 validation; cloud build success does not establish those interactions work.
+
+
+## Deploying the current version
+
+The latest changes were tested locally; **no live project deployment or database
+edition inspection was possible in the cloud because Firebase CLI was not signed
+in**. No production database, rules, users, billing plan or content was changed.
+The Functions use the existing default Firestore database and current native SDK;
+there is no migration or new database provisioning in this update. Do not create
+another database just to activate the feed.
+
+After pulling `codex/android-runtime-fixes`, from the repository root:
+
+```sh
+npm ci --prefix firebase/functions
+npx --prefix firebase/functions firebase login
+npx --prefix firebase/functions firebase firestore:databases:list --project mealsy-b732b
+npx --prefix firebase/functions firebase firestore:databases:get '(default)' --project mealsy-b732b
+npm test --prefix firebase/functions
+npm run deploy:social --prefix firebase/functions
+```
+
+The deploy script explicitly targets `mealsy-b732b` and deploys the **whole existing
+households Functions codebase** (household, feed, billing and scheduled billing
+reconciliation), Firestore rules and Hosting together. It does not delete another
+Functions codebase. A predeploy hook runs the backend tests and blocks deployment
+if they fail. Review the rules first if other apps use this Firebase project.
+Enable Email/Password sign-in, use the existing default database, register a web app,
+and ensure Blaze billing and appropriate deployment permissions are available.
+Billing functions also need the existing Play billing IAM/Pub/Sub setup described
+in [MONETIZATION.md](../MONETIZATION.md); deploying does not configure Google Play.
+
+Hosting now sends a Content Security Policy, anti-framing, MIME protection,
+referrer and permissions headers. JavaScript revalidates its cache on navigation
+so redeployments pick up new public configuration. The CSP names this project's
+Auth and callable hosts: update it if you change project, region or login provider.
+The present feed pagination uses `createdAt` and the document ID, supported by
+Firestore's automatic indexes; no new composite index is required by this change.
+Do not disable these indexes. Photo data remains bounded inline content, so no
+Storage bucket or storage access rules are required for this version.
+
+Feed pages and their like state now use one transaction snapshot. Hidden/deleted
+posts are excluded consistently within that snapshot; content already delivered to
+a reader cannot be recalled. Moderator reports stay on the server and direct client
+reads/writes remain denied. App Check enforcement is still off because both Android
+and web providers/tokens must be configured before enabling it; switching it on at
+the server alone would lock out the current app. There are no push notifications
+or automatic external moderation services configured by this update.

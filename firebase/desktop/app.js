@@ -117,9 +117,22 @@ $('composer').onsubmit = e => { e.preventDefault(); run(e.submitter, async () =>
     localStorage.removeItem(draftKey()); const name = $('name').value; $('composer').reset(); $('name').value = name; photo = ''; draftId = crypto.randomUUID(); await load();
   } finally { controls.forEach(c => c.disabled = false); }
 }); };
-if (firebaseConfig.apiKey.startsWith('ADD_')) { $('login-form').hidden = true; status('Desktop setup: copy your public Firebase web app configuration into firebase-config.js, then redeploy Hosting. See firebase/FEED.md.'); }
+// Hosting supplies public web config for its project. Manual config still works
+// for other static hosts; never request or embed Admin credentials in the browser.
+let webConfig = firebaseConfig;
+if (webConfig.apiKey?.startsWith('ADD_')) {
+  try {
+    const response = await fetch('/__/firebase/init.json', {cache: 'no-store'});
+    if (response.ok) {
+      const hosted = await response.json();
+      if (hosted.projectId === firebaseConfig.projectId && typeof hosted.apiKey === 'string' && hosted.appId && hosted.authDomain)
+        webConfig = hosted;
+    }
+  } catch { /* A non-Firebase host can use the manual public configuration. */ }
+}
+if (!webConfig.apiKey || webConfig.apiKey.startsWith('ADD_')) { $('login-form').hidden = true; status('Desktop setup: copy your public Firebase web app configuration into firebase-config.js, then redeploy Hosting. See firebase/FEED.md.'); }
 else {
-  const app = initializeApp(firebaseConfig); auth = getAuth(app); callable = httpsCallable(getFunctions(app, 'us-central1'), 'foodFeed');
+  const app = initializeApp(webConfig); auth = getAuth(app); callable = httpsCallable(getFunctions(app, 'us-central1'), 'foodFeed');
   onAuthStateChanged(auth, async current => {
     user = current; $('feed').replaceChildren(); $('moderation').checked = false; cursor = null;
     $('login').hidden = !!user; $('signed-in').hidden = !user; $('password').value = '';

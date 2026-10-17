@@ -118,3 +118,36 @@ test('new recipe descriptions, cook time and sections survive publication; priva
   assert.equal(shared.ingredients[0].section, 'Soup'); assert.equal(shared.ingredients[0].isKey, false);
   assert(!JSON.stringify(shared).includes('Private note')); assert(!JSON.stringify(shared).includes('private.example'));
 });
+
+test('reports are rate limited across posts and retries do not reopen reviewed reports', async () => {
+  const f = fixture(); await f.call('alice', content); await f.call('carol', {...content, id: 'post-2'});
+  const report = {action: 'report', postId: content.id, reason: 'Please review'};
+  await f.call('bob', report);
+  await f.call('mod', {action: 'resolveReport', postId: content.id, reporterId: 'bob'}, true);
+  await f.call('bob', report);
+  assert.equal(f.db.docs.get('feedPosts/post-1/reports/bob').resolved, true);
+  await assert.rejects(f.call('bob', {...report, postId: 'post-2'}), {code: 'resource-exhausted'});
+  f.advance(10000); await f.call('bob', {...report, postId: 'post-2'});
+  assert.equal(f.db.docs.get('feedPosts/post-2/reports/bob').resolved, false);
+});
+test('invalid request shapes and zero servings fail with controlled errors', async () => {
+  const f = fixture();
+  for (const data of [[], 'publish', 42, {action: 42}]) await assert.rejects(f.call('alice', data), {code: 'invalid-argument'});
+  assert.throws(() => recipe({title: 'Soup', method: '', servings: 0, prepMinutes: 0, ingredients: []}), {code: 'invalid-argument'});
+});
+test('feed listing performs its query and likes inside a transaction', async () => {
+  const f = fixture(); await f.call('alice', content);
+  let transactions = 0;
+  const transaction = f.db.runTransaction.bind(f.db);
+  f.db.runTransaction = (action, options) => { assert.equal(options.readOnly, true); transactions++; return transaction(action); };
+  const page = await f.call('bob', {action: 'list'});
+  assert.equal(page.posts.length, 1); assert.equal(transactions, 1);
+});
+test('combined UTF-8 payload limit rejects oversized multi-byte recipes before writing', async () => {
+  const f = fixture(); const png = Buffer.alloc(149000); Buffer.from('89504e470d0a1a0a', 'hex').copy(png); png.writeUInt32BE(1, 16); png.writeUInt32BE(1, 20);
+  const field = length => '食'.repeat(length);
+  const large = {title: field(160), description: field(500), method: field(15000), servings: 2, prepMinutes: 0,
+    ingredients: Array.from({length: 100}, () => ({name: field(200), quantity: field(200), category: field(100), note: field(500), section: field(100)}))};
+  await assert.rejects(f.call('alice', {...content, recipe: large, photo: png.toString('base64')}), {code: 'invalid-argument'});
+  assert.equal(f.db.docs.size, 0);
+});
