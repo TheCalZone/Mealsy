@@ -1,5 +1,5 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import {getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import {getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendEmailVerification, reload} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import {getFunctions, httpsCallable} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js';
 import {firebaseConfig} from './firebase-config.js';
 const $ = id => document.getElementById(id);
@@ -9,9 +9,17 @@ const call = async data => {
   const uid = user?.uid; if (!uid) throw Error('Sign in first.');
   const result = await callable(data); if (user?.uid !== uid) throw Error('Your account changed. Refresh the page.'); return result.data;
 };
+async function loadProfile() {
+  const profile = await call({action: 'profile'});
+  $('community-username').value = profile.username || ''; $('name').value = profile.username || '';
+  $('verification-state').textContent = profile.emailVerified ? 'Email confirmed. You can publish.' : 'Confirm your email before publishing.';
+}
+$('save-username').onclick = () => run($('save-username'), async () => { await call({action: 'setUsername', username: $('community-username').value}); await loadProfile(); });
+$('verify-email').onclick = () => run($('verify-email'), async () => { await sendEmailVerification(user); status('Check your email for the confirmation link.'); });
+$('check-verification').onclick = () => run($('check-verification'), async () => { await reload(user); await user.getIdToken(true); await loadProfile(); });
 const run = async (button, action) => {
   if (button) button.disabled = true;
-  try { await action(); } catch (e) { status(e.message || 'Could not complete this action.'); }
+  try { await action(); } catch (e) { status(/firebase|google|firestore|gemini|vertex/i.test(e.message || '') ? 'Could not reach the account service. Check your connection and try again.' : e.message || 'Could not complete this action.'); }
   finally { if (button) button.disabled = false; }
 };
 const element = (tag, text) => { const node = document.createElement(tag); if (text != null) node.textContent = text; return node; };
@@ -39,6 +47,7 @@ async function load(reset = true) {
 }
 function render(post, moderation) {
   const card = element('article'); card.append(element('h3', `${post.authorName || 'Removed post'}${post.hidden ? ' · Hidden' : ''}${post.deleted ? ' · Deleted' : ''}`), element('small', new Date(post.createdAt).toLocaleString()));
+  if (post.promoted) card.append(element('strong', 'Promoted'));
   if (post.photo) { const image = element('img'); image.src = `data:image/${post.photo.startsWith('iVBOR') ? 'png' : 'jpeg'};base64,${post.photo}`; image.alt = 'Food shared by ' + post.authorName; card.append(image); }
   card.append(element('p', post.caption || ''));
   if (post.recipe) {
@@ -62,7 +71,7 @@ function render(post, moderation) {
 }
 async function comments(postId, container) {
   const list = element('div'), more = button('Older comments', () => page(false)); let next = null;
-  const name = element('input'); name.placeholder = 'Public display name'; name.maxLength = 60; name.value = $('name').value;
+  const name = element('input'); name.placeholder = 'Public display name'; name.readOnly = true; name.value = $('name').value;
   const text = element('textarea'); text.placeholder = 'Add a kind comment'; text.maxLength = 1000;
   let id = crypto.randomUUID(), sentText;
   const send = button('Post comment', async () => {
@@ -113,6 +122,7 @@ $('composer').onsubmit = e => { e.preventDefault(); run(e.submitter, async () =>
   saveDraft(); const recipe = $('recipe').value.trim() ? JSON.parse($('recipe').value) : null;
   const controls = [...$('composer').querySelectorAll('input,textarea,button')]; controls.forEach(c => c.disabled = true);
   try {
+    await user.getIdToken(true);
     await call({action: 'publish', id: draftId, caption: $('caption').value, authorName: $('name').value, recipe, photo});
     localStorage.removeItem(draftKey()); const name = $('name').value; $('composer').reset(); $('name').value = name; photo = ''; draftId = crypto.randomUUID(); await load();
   } finally { controls.forEach(c => c.disabled = false); }
@@ -130,7 +140,7 @@ if (webConfig.apiKey?.startsWith('ADD_')) {
     }
   } catch { /* A non-Firebase host can use the manual public configuration. */ }
 }
-if (!webConfig.apiKey || webConfig.apiKey.startsWith('ADD_')) { $('login-form').hidden = true; status('Desktop setup: copy your public Firebase web app configuration into firebase-config.js, then redeploy Hosting. See firebase/FEED.md.'); }
+if (!webConfig.apiKey || webConfig.apiKey.startsWith('ADD_')) { $('login-form').hidden = true; status('The account service is not configured yet. Please contact support and try again later.'); }
 else {
   const app = initializeApp(webConfig); auth = getAuth(app); callable = httpsCallable(getFunctions(app, 'us-central1'), 'foodFeed');
   onAuthStateChanged(auth, async current => {
@@ -138,6 +148,6 @@ else {
     $('login').hidden = !!user; $('signed-in').hidden = !user; $('password').value = '';
     if (!user) { status('Sign in with your Mealsy account.'); return; }
     $('identity').textContent = user.email; restoreDraft();
-    await run(null, async () => { const token = await current.getIdTokenResult(); if (user !== current) return; moderator = token.claims.feedModerator === true; $('moderation-control').hidden = !moderator; await load(); });
+    await run(null, async () => { const token = await current.getIdTokenResult(); if (user !== current) return; moderator = token.claims.feedModerator === true; $('moderation-control').hidden = !moderator; await loadProfile(); await load(); });
   });
 }

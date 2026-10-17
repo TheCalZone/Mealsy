@@ -62,8 +62,8 @@ public class ShoppingListMakerViewModel : ObservableObject
     {
         CheckAccount(); var old = Review.GroupBy(r => r.Key).ToDictionary(g => g.Key, g => g.First());
         Review = ShoppingPlan.Build(Recipes, Library.Where(s => s.IsSnack && s.Selected).Select(s => s.ToSnack()),
-            Library.Where(s => !s.IsSnack && s.Selected).Select(s => s.ToStaple()), Library.Where(s => !s.IsSnack).Select(s => s.Name));
-        foreach (var row in Review) { if (old.TryGetValue(row.Key, out var previous)) { row.Included=previous.Included; row.Item.Quantity=previous.Item.Quantity; row.Item.Note=previous.Item.Note; } row.PropertyChanged += (_, _) => Notify(); }
+            Library.Where(s => !s.IsSnack && s.Selected).Select(s => s.ToStaple()), Library.Where(s => !s.IsSnack).Select(s => s.Name), CupboardStore.Load(Account));
+        foreach (var row in Review) { if (old.TryGetValue(row.Key, out var previous)) { if(row.CheckCupboard==previous.CheckCupboard)row.Included=previous.Included; row.Item.Quantity=previous.Item.Quantity; row.Item.Note=previous.Item.Note; } row.PropertyChanged += (_, _) => Notify(); }
         Notify();
     }
     public void Reset()

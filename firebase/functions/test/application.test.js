@@ -118,7 +118,7 @@ test('household size limit prevents invite acceptance without consuming the code
   const f = fixture(); const {householdId} = await f.call('parent', {action: 'create', name: 'Full'});
   const {code} = await f.call('parent', {action: 'invite'});
   const house = f.db.docs.get(`households/${householdId}`);
-  for (let i = 0; i < 19; i++) house.members[`member${i}`] = 'Member';
+  for (let i = 0; i < 3; i++) house.members[`member${i}`] = 'Member';
   await assert.rejects(f.call('child', {action: 'join', code}), {code: 'resource-exhausted'});
   assert.equal([...f.db.docs.keys()].filter(k => k.startsWith('householdInvites/')).length, 1);
 });

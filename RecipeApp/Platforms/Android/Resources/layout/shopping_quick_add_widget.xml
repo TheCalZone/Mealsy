@@ -6,4 +6,5 @@
   <Button android:id="@+id/widget_add" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="+ Add item" android:textAllCaps="false" android:contentDescription="Quickly add a shopping item" />
   <Button android:id="@+id/widget_choose" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Choose list" android:textAllCaps="false" android:contentDescription="Choose the shopping list for this widget" />
  </LinearLayout>
+ <Button android:id="@+id/widget_open" android:layout_width="match_parent" android:layout_height="48dp" android:text="Open chosen list" android:textAllCaps="false" android:contentDescription="Open the shopping list selected for this widget" />
 </LinearLayout>

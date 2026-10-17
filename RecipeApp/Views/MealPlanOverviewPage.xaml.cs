@@ -5,7 +5,23 @@ namespace RecipeApp.Views;
 public partial class MealPlanOverviewPage : ContentPage
 {
     private MealPlan plan;private List<Recipe> recipes=new();private string account;private bool busy;
-    public MealPlanOverviewPage(){InitializeComponent();ShoppingUi.Theme(this);}
+    public MealPlanOverviewPage(){InitializeComponent();ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Plan a household batch",null,async()=>await Run(PlanBatch)));}
+    private async Task PlanBatch()
+    {
+        Check();if(recipes.Count==0)throw new InvalidOperationException("Save a recipe first.");
+        var labels=recipes.Select((r,i)=>$"{i+1}. {r.RecipeName} · {r.Serving} portions").ToArray();
+        var selected=await DisplayActionSheet("Choose a batch recipe","Cancel",null,labels);var index=Array.IndexOf(labels,selected);if(index<0)return;
+        var people=2;
+        if(account!=null){try{var info=await HouseholdService.StatusAsync();people=Math.Max(1,info.Members?.Count??2);}catch(HouseholdException){}}
+        Check();var answer=await DisplayPromptAsync("Members eating this meal","How many people? The recipe's portions will be spread over consecutive days, with shopping counted once across the batch.",initialValue:people.ToString(),keyboard:Keyboard.Numeric,maxLength:4);if(answer==null)return;
+        if(!int.TryParse(answer,out people)||people<1||people>1000)throw new InvalidOperationException("Choose 1–1,000 people.");
+        var dates=plan.Days.OrderBy(d=>d.MealDayIndex).Select(d=>plan.WeekStart.AddDays(d.MealDayIndex).ToString("dddd d MMM")).ToArray();
+        var date=await DisplayActionSheet("Cook on","Cancel",null,dates);var start=Array.IndexOf(dates,date);if(start<0)return;
+        var meal=await DisplayActionSheet("Meal","Cancel",null,MealPlanning.Slots);var slot=Array.IndexOf(MealPlanning.Slots,meal);if(slot<0)return;
+        Check();var copies=MealPlanning.PlanBatch(plan.Days,recipes[index],people,start,slot);var count=(int)Math.Ceiling((double)recipes[index].Serving/people);
+        if(!await DisplayAlert("Review batch",$"{recipes[index].RecipeName}: {recipes[index].Serving} portions for {people} people across {count} meals. Ingredients total one recipe batch. All chosen meal slots must be empty.","Add batch","Cancel"))return;
+        Check();await RecipeService.SaveMealPlanDays(copies,plan.Id);await Load();
+    }
     protected override async void OnAppearing(){base.OnAppearing();await Run(Load);}
     private async Task Run(Func<Task> action)
     {
@@ -21,11 +37,11 @@ public partial class MealPlanOverviewPage : ContentPage
     }
     private string SlotText(MealPlanDay day,int slot)=>string.Join(" · ",MealPlanning.Ids(day,slot).Select(id=>{
         var recipe=recipes.FirstOrDefault(r=>r.Id==id);return recipe==null ? "Recipe unavailable" : $"{recipe.RecipeName} ({MealPlanning.Servings(day,slot,recipe)} servings)";
-    }));
+    }).Concat(new[]{MealPlanning.SimpleMeal(day,slot)}).Where(text=>!string.IsNullOrWhiteSpace(text)));
     private void Render()
     {
         var body=new VerticalStackLayout {Padding=16,Spacing=16};body.Add(ShoppingUi.Text("A week worth looking forward to",28,true));
-        var filled=plan.Days.Sum(d=>Enumerable.Range(0,3).Count(s=>MealPlanning.Ids(d,s).Count>0||MealPlanning.Notes(d,s).Count>0));
+        var filled=plan.Days.Sum(d=>Enumerable.Range(0,3).Count(s=>MealPlanning.Ids(d,s).Count>0||MealPlanning.Notes(d,s).Count>0||MealPlanning.SimpleMeal(d,s).Length>0));
         body.Add(ShoppingUi.Text($"{filled} of 21 meals planned · Personal plan",14));body.Add(new ProgressBar {Progress=filled/21d,ProgressColor=Color.FromArgb("#D0A34F")});
         body.Add(ShoppingUi.Text("Week starts",12,true));var start=new DatePicker {Date=plan.WeekStart.Date,Format="ddd d MMM yyyy"};start.SetDynamicResource(DatePicker.TextColorProperty, "ThemeText");
         start.DateSelected+=async(_,e)=>await Run(async()=>{Check();plan.WeekStart=e.NewDate.Date;await RecipeService.SaveMealPlanHeader(plan);Render();});body.Add(start);
@@ -38,7 +54,7 @@ public partial class MealPlanOverviewPage : ContentPage
             var date=plan.WeekStart.AddDays(day.MealDayIndex);var card=new VerticalStackLayout {Spacing=9};card.Add(ShoppingUi.Text(date.ToString("dddd · d MMM"),21,true));
             for(var slot=0;slot<3;slot++)
             {
-                card.Add(ShoppingUi.Text(MealPlanning.Slots[slot],12,true));var text=SlotText(day,slot);card.Add(ShoppingUi.Text(text.Length==0 ? "Leave open or add a meal" : text,15));
+                card.Add(ShoppingUi.Text(MealPlanning.Slots[slot],12,true));var text=SlotText(day,slot);if(text.Length>0||MealPlanning.Notes(day,slot).Count==0)card.Add(ShoppingUi.Text(text.Length==0 ? "Leave open or add a meal" : text,15));
                 foreach(var note in MealPlanning.Notes(day,slot))card.Add(ShoppingUi.Text("↳ "+note,12));
             }
             card.Add(ShoppingUi.Button("Plan this day",async()=>{Check();await Navigation.PushAsync(new MealPlannerPage(day.MealDayIndex,account));}));
@@ -53,8 +69,8 @@ public partial class MealPlanOverviewPage : ContentPage
                 if(!await DisplayAlert("Clear this day?","Remove its meals and notes?","Clear","Keep"))return;Check();var copy=MealPlanning.Copy(day);MealPlanning.Clear(copy);await RecipeService.SaveMealPlanDay(copy,plan.Id,copy.MealDayIndex);await Load();
             }),true),1);card.Add(actions);var anchor=ShoppingUi.Card(card);anchors[day.MealDayIndex]=anchor;body.Add(anchor);
         }
-        body.Add(ShoppingUi.Button("Review shopping for this week",()=>Run(async()=>{Check();var choices=MealPlanning.ShoppingChoices(plan.Days,recipes);if(choices.Count==0)throw new InvalidOperationException("Add at least one recipe before creating a shopping list.");await Navigation.PushAsync(new ShoppingListMakerPage(choices));})));
-        body.Add(ShoppingUi.Text("Shopping uses your total planned servings for each recipe, with cupboard checks and snacks/essentials before adding items.",13));
+        body.Add(ShoppingUi.Button("Review shopping for this week",()=>Run(async()=>{Check();var choices=MealPlanning.ShoppingChoices(plan.Days,recipes);if(choices.Count==0)throw new InvalidOperationException("Typed meals do not have ingredient lists. Add their shopping items manually, or choose a saved recipe for automatic shopping.");await Navigation.PushAsync(new ShoppingListMakerPage(choices));})));
+        body.Add(ShoppingUi.Text("Shopping uses your total planned servings for saved recipes. Typed meals don't add ingredients automatically; add those shopping items yourself.",13));
         body.Add(ShoppingUi.Button("Copy weekly plan",async()=>{Check();await Clipboard.Default.SetTextAsync(string.Join("\n\n",plan.Days.Select(d=>plan.WeekStart.AddDays(d.MealDayIndex).ToString("dddd d MMM")+"\n"+string.Join("\n",Enumerable.Range(0,3).Select(s=>$"{MealPlanning.Slots[s]}: {SlotText(d,s)}"+string.Join("",MealPlanning.Notes(d,s).Select(n=>" · "+n)))))));await DisplayAlert("Copied","Your weekly plan is on the clipboard.","OK");},true));
         if(account!=null)body.Add(ShoppingUi.Button("Copy previous device plan…",()=>Run(async()=>{
             Check();var legacy=await RecipeService.GetMealPlan();if(legacy==null)throw new InvalidOperationException("There is no previous device plan to copy.");

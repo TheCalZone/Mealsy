@@ -5,12 +5,13 @@
       "codebase": "households",
       "runtime": "nodejs22",
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" test"
+        "node --test \"$RESOURCE_DIR/test/*.test.js\""
       ]
     }
   ],
   "firestore": {
-    "rules": "firebase/firestore.rules"
+    "rules": "firebase/firestore.rules",
+    "indexes": "firebase/firestore.indexes.json"
   },
   "emulators": {
     "auth": {

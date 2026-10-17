@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0-android</TargetFrameworks>
+        <TargetFrameworks Condition="'$(EnableIosTarget)' == 'true'">net8.0-android;net8.0-ios</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>RecipeApp</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -92,10 +93,12 @@
         <PackageReference Include="Plugin.Firebase.Auth" Version="2.0.7" />
         <PackageReference Include="Plugin.Firebase.Firestore" Version="2.0.6" />
         <PackageReference Include="Plugin.Firebase.Crashlytics" Version="2.0.3" />
-		<PackageReference Include="Xamarin.Firebase.iOS.Core" Version="8.10.0.3" />
+		<PackageReference Include="Xamarin.Firebase.iOS.Core" Version="8.10.0.3" Condition="'$(TargetFramework)' == 'net8.0-ios'" />
 	</ItemGroup>
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0-android'">
+        <PackageReference Include="Xamarin.Firebase.Messaging" Version="123.1.2.2" />
+        <PackageReference Include="Xamarin.Firebase.AppCheck.PlayIntegrity" Version="117.1.1.1" />
 		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.16.0.3" />
         <PackageReference Include="Xamarin.Android.Google.BillingClient" Version="8.0.0" />
         <PackageReference Include="Xamarin.GooglePlayServices.Ads" Version="124.5.0" />
@@ -183,16 +186,15 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<BundleResource Include="GoogleService-Info.plist" />
+		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" LogicalName="GoogleService-Info.plist" Condition="'$(TargetFramework)' == 'net8.0-ios'" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<GoogleServicesJson Include="Platforms\Android\google-services.json" />
+		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="'$(TargetFramework)' == 'net8.0-android'" />
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <MauiAsset Include="GoogleService-Info.plist" />
-	  <MauiAsset Include="Platforms\iOS\GoogleService-Info.plist" />
+	  <None Include="GoogleService-Info.plist" />
 	</ItemGroup>
 	
 	<ItemGroup>

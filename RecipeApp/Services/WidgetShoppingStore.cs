@@ -4,6 +4,10 @@ namespace RecipeApp.Services;
 public record WidgetListTarget(string Account,string HouseholdId,string Name)
 {
     public bool BelongsTo(string account)=>Account==account;
+    public string OpenRoute(string account) {
+        if(!BelongsTo(account))throw new InvalidOperationException("Choose a list for the account currently signed in.");
+        return HouseholdId==null?"//ShoppingListPage?OpenPersonal=True":"//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(HouseholdId);
+    }
     public string StorageKey=>HouseholdId==null ? "ShoppingList.v2"+(Account==null ? "" : ".user."+Account) : $"ShoppingList.household.{Account}.{HouseholdId}";
 }
 public static class WidgetShoppingStore

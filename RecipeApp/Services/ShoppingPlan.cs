@@ -35,29 +35,19 @@ public class ShoppingReviewItem : ObservableObject
 }
 public static class ShoppingPlan
 {
-    private static readonly HashSet<string> cupboardSuggestions=new(StringComparer.OrdinalIgnoreCase)
-    {
-        "salt","sea salt","table salt","pepper","black pepper","white pepper","olive oil","extra virgin olive oil","vegetable oil","sunflower oil","rapeseed oil",
-        "oregano","basil","thyme","rosemary","mixed herbs","bay leaf","bay leaves","cumin","paprika","smoked paprika","cinnamon","coriander","coriander leaves","chilli powder","chili powder","chilli flakes","chili flakes","garlic granules","baking powder","bicarbonate of soda"
-    };
-    public static bool SuggestCupboardCheck(string name)
-    {
-        var value=ShoppingQuantity.Identity(name);
-        foreach (var prefix in new[] {"DRIED ","GROUND ","FRESH "}) if (value.StartsWith(prefix,StringComparison.Ordinal)) value=value[prefix.Length..];
-        return cupboardSuggestions.Contains(value);
-    }
+    public static bool SuggestCupboardCheck(string name) => CupboardRules.Matches(name,CupboardRules.Defaults);
 
-    public static List<ShoppingReviewItem> Build(IEnumerable<RecipeShoppingChoice> choices, IEnumerable<Snack> snacks, IEnumerable<Staple> essentials, IEnumerable<string> cupboardNames)
+    public static List<ShoppingReviewItem> Build(IEnumerable<RecipeShoppingChoice> choices, IEnumerable<Snack> snacks, IEnumerable<Staple> essentials, IEnumerable<string> cupboardNames, IEnumerable<string> recognitionRules = null)
     {
         var sources = new List<(Ingredient Item, string Source, bool Check)>();
-        var cupboard = cupboardNames.Select(ShoppingQuantity.Identity).ToHashSet();
+        var cupboard = cupboardNames.ToList(); var rules = (recognitionRules ?? CupboardRules.Defaults).ToList();
         foreach (var choice in choices.Where(c => c.Selected))
         {
             var factor = choice.Factor();
             foreach (var original in choice.Recipe.Ingredients ?? new())
             {
                 var item = RecipeDraft.CopyIngredient(original); item.InBasket = false; item.Quantity = ShoppingQuantity.Scale(item.Quantity, factor);
-                sources.Add((item, choice.Recipe.RecipeName, !original.MainIngredient || SuggestCupboardCheck(item.Name) || cupboard.Contains(ShoppingQuantity.Identity(item.Name))));
+                sources.Add((item, choice.Recipe.RecipeName, CupboardRules.Check(original,rules,cupboard)));
             }
         }
         foreach (var s in snacks) sources.Add((new() { Name=s.Name, Quantity=s.Quantity, Tag=s.Tag, Note=s.Note }, "Snacks", false));

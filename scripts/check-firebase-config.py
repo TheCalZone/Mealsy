@@ -15,7 +15,7 @@ packages = [c['client_info']['android_client_info']['package_name'] for c in con
 errors = []
 if app_id not in packages:
     errors.append('google-services.json has no client for the MAUI application package.')
-for name in ['HouseholdService.cs', 'MonetizationConfig.cs']:
+for name in ['HouseholdService.cs', 'FoodFeedService.cs', 'MonetizationConfig.cs']:
     source = (root / 'RecipeApp/Services' / name).read_text()
     endpoints = re.findall(r'https://([a-z0-9-]+\.cloudfunctions\.net)/', source)
     if endpoints and not all(value.endswith("-" + project + ".cloudfunctions.net") for value in endpoints):

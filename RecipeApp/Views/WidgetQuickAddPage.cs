@@ -24,7 +24,7 @@ public class WidgetQuickAddPage : ContentPage
             ShoppingUi.Button("Find my household list",()=>Run(async()=>{Check();var household=await HouseholdService.StatusAsync();Check();if(household.HouseholdId==null)throw new InvalidOperationException("Create or join a household first.");if(!household.FamilyEnabled)throw new InvalidOperationException("Your household needs an active Family plan.");targets.RemoveAll(t=>t.HouseholdId!=null);targets.Add(new(account,household.HouseholdId,household.Name+" · household"));picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=targets.Count-1;}),true),
             ShoppingUi.Button("Remember this list for this widget",()=>Run(async()=>{var target=Selected();await Verify(target);Check();WidgetShoppingStore.SetTarget(WidgetId,target);UpdateWidget();status.Text="Widget list selected: "+target.Name;}),true),
             name,quantity,note,ShoppingUi.Button("Add item",()=>Run(Add)),status,
-            ShoppingUi.Button("Open selected shopping list",()=>Run(async()=>{var target=Selected();await Verify(target);Check();await Shell.Current.GoToAsync(target.HouseholdId==null?"//ShoppingListPage?OpenPersonal=True":"//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(target.HouseholdId));}),true)
+            ShoppingUi.Button("Open selected shopping list",()=>Run(async()=>{var target=Selected();await Verify(target);Check();await AppNavigation.ShoppingList(target.HouseholdId==null?"//ShoppingListPage?OpenPersonal=True":"//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(target.HouseholdId));}),true)
         }};Content=new ScrollView {Content=body};
         if(!configure)Dispatcher.Dispatch(()=>name.Focus());
     }

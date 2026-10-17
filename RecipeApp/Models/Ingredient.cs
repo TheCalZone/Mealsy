@@ -81,6 +81,10 @@ namespace RecipeApp.Models
 
         private bool mainIngredient;
 
+        // 0 follows recognition/legacy MainIngredient, 1 always buys, 2 checks cupboard.
+        [FirestoreProperty("shopping_preference")]
+        public int ShoppingPreference { get; set; }
+
         [FirestoreProperty ("main_ingredient")]
         public bool MainIngredient
         {

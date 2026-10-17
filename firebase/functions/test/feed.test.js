@@ -4,10 +4,25 @@ const {createFeedHandler, recipe, photo} = require('../feed');
 const {database} = require('./feed-database');
 function fixture() {
   const db = database(); let now = 1000000;
-  const handler = createFeedHandler(db, () => now);
-  return {db, advance: n => { now += n; }, call: (uid, data, moderator = false) => handler({auth: uid ? {uid, token: {feedModerator: moderator}} : null, data})};
+  const handler = createFeedHandler(db, () => now, async () => ({status: 'approved', provider: 'test'}));
+  return {db, advance: n => { now += n; }, call: (uid, data, moderator = false) => {
+    if (uid && ['publish','comment'].includes(data?.action)) db.docs.set(`communityProfiles/${uid}`, {username: data.authorName || uid, discriminator: '1001'});
+    return handler({auth: uid ? {uid, token: {email_verified: true, feedModerator: moderator}} : null, data});
+  }};
 }
 const content = {action: 'publish', id: 'post-1', caption: 'Dinner!', authorName: 'Chef', recipe: null, photo: ''};
+test('replies use server names, validate parents, and notify authors exactly once',async()=>{
+ const f=fixture();await f.call('alice',content);
+ await f.call('bob',{action:'comment',postId:'post-1',id:'comment1',text:'Lovely',authorName:'Bob'});f.advance(4000);
+ await f.call('carol',{action:'comment',postId:'post-1',id:'reply1',text:'Agreed',parentCommentId:'comment1',replyToName:'Forged',authorName:'Carol'});
+ await f.call('carol',{action:'comment',postId:'post-1',id:'reply1',text:'Agreed',parentCommentId:'comment1'});
+ assert.equal(f.db.docs.get('feedPosts/post-1/comments/reply1').replyToName,'Bob');
+ assert.equal([...f.db.docs.keys()].filter(k=>k.startsWith('notifications/alice/items/')).length,2);
+ assert.equal([...f.db.docs.keys()].filter(k=>k.startsWith('notifications/bob/items/')).length,1);
+ f.advance(4000);await assert.rejects(f.call('carol',{action:'comment',postId:'post-1',id:'reply2',text:'Hello',parentCommentId:'missing'}),{code:'not-found'});
+ await f.call('bob',{action:'deleteComment',postId:'post-1',commentId:'comment1'});f.advance(4000);
+ await assert.rejects(f.call('carol',{action:'comment',postId:'post-1',id:'reply2',text:'Hello',parentCommentId:'comment1'}),{code:'not-found'});
+});
 test('feed requires login and derives author ID from verified auth', async () => {
   const f = fixture(); await assert.rejects(f.call(null, {action: 'list'}), {code: 'unauthenticated'});
   await f.call('alice', {...content, authorId: 'someone-else'});
@@ -149,5 +164,5 @@ test('combined UTF-8 payload limit rejects oversized multi-byte recipes before w
   const large = {title: field(160), description: field(500), method: field(15000), servings: 2, prepMinutes: 0,
     ingredients: Array.from({length: 100}, () => ({name: field(200), quantity: field(200), category: field(100), note: field(500), section: field(100)}))};
   await assert.rejects(f.call('alice', {...content, recipe: large, photo: png.toString('base64')}), {code: 'invalid-argument'});
-  assert.equal(f.db.docs.size, 0);
+  assert.equal([...f.db.docs.keys()].filter(k => !k.startsWith('communityProfiles/')).length, 0);
 });

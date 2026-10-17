@@ -3,7 +3,7 @@ using RecipeApp.Services;
 namespace RecipeApp.Views;
 public partial class Homepage : ContentPage
 {
-    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
+    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem("Import recipe link",null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
     protected override async void OnAppearing()
     {
         base.OnAppearing();var uid=AccountSession.UserId;Content=ShoppingUi.Text("Getting your kitchen ready…");
@@ -30,7 +30,7 @@ public partial class Homepage : ContentPage
         body.Add(ShoppingUi.Text("Back to your favourites",23,true));foreach(var recipe in recipes.OrderByDescending(r=>RecipeBrowser.Tags(r).Contains("favourites")).ThenByDescending(r=>r.LastUpdated).Take(2))body.Add(RecipeCardView.Card(recipe,()=>AppNavigation.Recipe(recipe.Id)));
         if(recipes.Count==0)body.Add(ShoppingUi.Text("Save your first recipe to build a collection that's yours.",14));
         body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Text("Pull up a chair",23,true),ShoppingUi.Text("Discover what other Mealsy cooks are making, save a recipe, or share your own kitchen win.",14),ShoppingUi.Button("Visit the food community",()=>AppNavigation.Open(new FoodFeedPage()))}}));
-        body.Add(ShoppingUi.Button("AI recipe ideas · Your OpenAI key",()=>AppNavigation.Open(new ChatPage()),true));body.Add(ShoppingUi.Button("Home-screen shopping widget",()=>AppNavigation.Open(new WidgetHelpPage()),true));
+        body.Add(ShoppingUi.Button("AI recipe ideas · Your AI service key",()=>AppNavigation.Open(new ChatPage()),true));body.Add(ShoppingUi.Button("Home-screen shopping widget",()=>AppNavigation.Open(new WidgetHelpPage()),true));
         if(account==null)body.Add(ShoppingUi.Button("Sign in or create an account",()=>AppNavigation.Root("AccountPage"),true));else body.Add(ShoppingUi.Text(AccountSession.Status,12));body.Add(new RecipeApp.Controls.AdBanner());Content=new ScrollView{Content=body};
     }
 }

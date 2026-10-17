@@ -25,6 +25,8 @@ public partial class ShoppingListMakerPage : ContentPage
         var layout=new Grid { RowDefinitions=new() { new(GridLength.Auto),new(GridLength.Star),new(GridLength.Auto) } };
         layout.Add(header,0,0); layout.Add(pane,0,1); layout.Add(footer,0,2); Content=layout;
         model.Changed += UpdateSummary;
+        ToolbarItems.Add(new ToolbarItem("Open current shopping list",null,async()=>await AppNavigation.ShoppingList()));
+        ToolbarItems.Add(new ToolbarItem("Cupboard ingredients",null,async()=>await Navigation.PushAsync(new CupboardIngredientsPage())));
         ToolbarItems.Add(new ToolbarItem("Start over",null,async () => {
             if (!await DisplayAlert("Start a fresh plan?","Your saved shopping list and reusable checklists will be kept.","Start over","Keep planning")) return;
             model.Reset(); stage=0; Render();

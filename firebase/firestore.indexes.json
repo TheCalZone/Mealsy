@@ -1,0 +1,10 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {"collectionGroup":"businessEvents","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
+    {"collectionGroup":"businessInvites","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
+    {"collectionGroup":"impressionTickets","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
+    {"collectionGroup":"billableImpressions","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
+    {"collectionGroup":"items","fieldPath":"deleteAfter","ttl":true,"indexes":[]}
+  ]
+}

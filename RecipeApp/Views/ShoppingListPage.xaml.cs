@@ -19,6 +19,18 @@ public partial class ShoppingListPage : ContentPage
     private string householdId, sharedName, listAccount;
     private int generation;
     private bool syncing, conflict, visible;
+    private bool shoppingMode,previousNav,previousTabs;
+    private void SetShoppingMode(bool active){
+        if(active==shoppingMode)return;
+        if(active){previousNav=Shell.GetNavBarIsVisible(this);previousTabs=Shell.GetTabBarIsVisible(this);}
+        shoppingMode=active;ShoppingHeader.IsVisible=!active;ShoppingTools.IsVisible=!active;ShoppingFooterActions.IsVisible=!active;ShoppingModeBar.IsVisible=active;
+        AppNavigation.DismissKeyboard();
+        Shell.SetNavBarIsVisible(this,active?false:previousNav);Shell.SetTabBarIsVisible(this,active?false:previousTabs);
+        Unfocus();QuickAddEntry.Unfocus();
+    }
+    private void GoShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(true);
+    private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
+    private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
     public ShoppingListPage() => InitializeComponent();
 
@@ -107,10 +119,11 @@ public partial class ShoppingListPage : ContentPage
             else Model.StatusText = "Saved on device · " + e.Message;
             if (manual) await DisplayAlert("Shopping list sync", Model.StatusText, "OK");
         }
-        catch (Exception)
+        catch (Exception error)
         {
-            if (generation == currentGeneration) Model.StatusText = "Saved on device · Cloud unavailable. Will retry while this screen is open.";
-            if (manual) await DisplayAlert("Sync unavailable", "Your changes are saved on this device. Check your connection and make sure the Firebase household function has been deployed.", "OK");
+            var reference=AppDiagnostics.Report(error,"shopping.sync","SYNC_FAILURE");
+            if (generation == currentGeneration) Model.StatusText = "Saved on device · Cloud unavailable. Will retry while this screen is open.\nReference: "+reference;
+            if (manual) await DisplayAlert("Sync unavailable", "Your changes are saved on this device. Check your connection and try syncing again.", "OK");
         }
         finally { syncing = false; }
     }
@@ -132,7 +145,7 @@ public partial class ShoppingListPage : ContentPage
                 await SyncAsync(true);
             }
             catch (HouseholdException ex) { await DisplayAlert("Household", ex.Message, "OK"); }
-            catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and the Firebase household deployment.", "OK"); }
+            catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and try again.", "OK"); }
         }
     }
     private async void Widget_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new WidgetHelpPage());
@@ -165,6 +178,7 @@ public partial class ShoppingListPage : ContentPage
     }
     protected override void OnDisappearing()
     {
+        SetShoppingMode(false);
         _ = SyncAsync(); // Flush pending online edits when leaving; failures remain saved for retry.
         visible = false; timer?.Stop();
         // Never persist one account's visible list into another account's storage.
@@ -173,8 +187,9 @@ public partial class ShoppingListPage : ContentPage
     }
     protected override bool OnBackButtonPressed()
     {
-        if (!Model.IsEditing) return base.OnBackButtonPressed();
-        Model.CancelEditCommand.Execute(null); return true;
+        if (Model.IsEditing) { Model.CancelEditCommand.Execute(null); return true; }
+        if (shoppingMode) { SetShoppingMode(false); return true; }
+        return base.OnBackButtonPressed();
     }
     private void RemoveEditingItem_Clicked(object sender, EventArgs e) => Model.RemoveEditingItem();
 }

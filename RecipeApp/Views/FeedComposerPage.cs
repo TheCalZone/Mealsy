@@ -6,7 +6,7 @@ namespace RecipeApp.Views;
 
 public class FeedComposerPage : ContentPage
 {
-    private readonly Entry name = new() { Placeholder = "Public display name", MaxLength = 60 };
+    private readonly Entry name = new() { Placeholder = "Choose your username in Account", MaxLength = 40, IsReadOnly = true };
     private readonly Editor caption = new() { Placeholder = "What have you been cooking?", MaxLength = 2000, HeightRequest = 140 };
     private readonly Label attachment = FoodFeedPage.Text("No recipe attached");
     private readonly Label photoStatus = FoodFeedPage.Text("No photo attached");
@@ -22,7 +22,7 @@ public class FeedComposerPage : ContentPage
         name.Text = Preferences.Get(FoodFeedService.AuthorKey, "");
         var body = new VerticalStackLayout { Padding = 20, Spacing = 14, Children = {
             FoodFeedPage.Text("Something worth sharing", 27, true),
-            FoodFeedPage.Text("Visible to all signed-in Mealsy users. Choose a display name; your account email is never shown."), name, caption, attachment,
+            FoodFeedPage.Text("Your account username is shown publicly. Automated safety checks review submitted text and photos before publication. Confirm your email in Account to share."), name, caption, attachment,
             FoodFeedPage.Button("Attach a recipe from my book", async () => {
                 CheckAccount();
                 var recipes = RecipeService.Recipes.ToList();
@@ -70,6 +70,12 @@ public class FeedComposerPage : ContentPage
         }));
         if (source != null) Loaded += async (_, _) => { if (sourceLoaded) return; sourceLoaded = true; try { await Attach(source); } catch (Exception) { photoStatus.Text = "Recipe attached without a photo."; } };
     }
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        try { CheckAccount();var profile=await FoodFeedService.Profile();CheckAccount();name.Text=profile.Username??""; }
+        catch(Exception){name.Text="";}
+    }
     private async Task Attach(Recipe source)
     {
         recipe = FeedRecipe.FromRecipe(source); attachment.Text = "Attached: " + recipe.Title;
@@ -102,8 +108,8 @@ public class FeedComposerPage : ContentPage
         CheckAccount(); SaveDraft();
         Content.IsEnabled = false;
         try {
-        await FoodFeedService.Call<object>(new { action = "publish", id = postId, caption = caption.Text ?? "", authorName = name.Text.Trim(),
-            recipe = recipe == null ? (JsonElement?)null : JsonSerializer.SerializeToElement(recipe, FoodFeedService.Json), photo });
+        await HouseholdService.CallEndpointAsync<object>(FoodFeedService.Endpoint,new { action = "publish", id = postId, caption = caption.Text ?? "", authorName = name.Text.Trim(),
+            recipe = recipe == null ? (JsonElement?)null : JsonSerializer.SerializeToElement(recipe, FoodFeedService.Json), photo },true);
         published = true; Preferences.Set(DraftKey, "null"); await Navigation.PopAsync();
         } finally { Content.IsEnabled = true; }
     }

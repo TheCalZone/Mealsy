@@ -6,6 +6,47 @@ using Xunit;
 public class WidgetAndPlannerTests
 {
     [Fact]
+    public void BatchOfEightForTwoCreatesFourMealsAndShopsEightPortions()
+    {
+        var recipe=new Recipe{Id=40,Serving=8,RecipeName="Chilli"};
+        var days=Enumerable.Range(0,7).Select(i=>new MealPlanDay{MealDayIndex=i}).ToList();
+        var batch=MealPlanning.PlanBatch(days,recipe,2,0,2);
+        Assert.Equal(4,batch.Count(d=>MealPlanning.Ids(d,2).Contains(recipe.Id)));
+        Assert.All(batch.Take(4),d=>Assert.Equal(2,MealPlanning.Servings(d,2,recipe)));
+        Assert.Equal("8",Assert.Single(MealPlanning.ShoppingChoices(batch,new[]{recipe})).Servings);
+        Assert.All(days,d=>Assert.Empty(MealPlanning.Ids(d,2)));
+    }
+    [Fact]
+    public void BatchNeverOverwritesAnExistingMealAndRejectsWeekOverflow()
+    {
+        var recipe=new Recipe{Id=40,Serving=7};var days=Enumerable.Range(0,7).Select(i=>new MealPlanDay{MealDayIndex=i}).ToList();
+        MealPlanning.SetSimpleMeal(days[1],2,"Eggs");
+        Assert.Throws<InvalidOperationException>(()=>MealPlanning.PlanBatch(days,recipe,2,0,2));Assert.Equal("Eggs",MealPlanning.SimpleMeal(days[1],2));
+        Assert.Throws<InvalidOperationException>(()=>MealPlanning.PlanBatch(days,recipe,2,5,2));
+        var batch=MealPlanning.PlanBatch(days,recipe,2,0,1);Assert.Equal(1,MealPlanning.Servings(batch[3],1,recipe));Assert.Equal("7",Assert.Single(MealPlanning.ShoppingChoices(batch,new[]{recipe})).Servings);
+    }
+    [Fact]
+    public void OpeningWidgetListUsesChosenTargetAndRejectsAnotherAccount()
+    {
+        Assert.Equal("//ShoppingListPage?OpenPersonal=True",new WidgetListTarget(null,null,"Device").OpenRoute(null));
+        Assert.Equal("//ShoppingListPage?OpenHouseholdId=family-a",new WidgetListTarget("alice","family-a","Family").OpenRoute("alice"));
+        Assert.Throws<InvalidOperationException>(()=>new WidgetListTarget("alice","family-a","Family").OpenRoute("bob"));
+        Assert.Throws<InvalidOperationException>(()=>new WidgetListTarget("alice",null,"Personal").OpenRoute(null));
+    }
+    [Fact]
+    public async Task TypedMealsPersistWithoutRecipesAndSurviveDayCopyAndClear()
+    {
+        var owner="simple-meals-"+Guid.NewGuid();await RecipeService.CreateMealPlan(owner);var plan=await RecipeService.GetMealPlan(owner);
+        var day=MealPlanning.Copy(plan.Days[0]);var before=MealPlanning.State(day);
+        MealPlanning.SetSimpleMeal(day,0," Eggs ");MealPlanning.SetSimpleMeal(day,1,"Toast");MealPlanning.SetSimpleMeal(day,2,"Eating out");
+        Assert.NotEqual(before,MealPlanning.State(day));MealPlanning.Serialize(day);await RecipeService.SaveMealPlanDay(day,plan.Id,0);
+        var saved=(await RecipeService.GetMealPlan(owner)).Days[0];Assert.Equal("Eggs",MealPlanning.SimpleMeal(saved,0));Assert.Equal("Toast",MealPlanning.SimpleMeal(saved,1));Assert.Equal("Eating out",MealPlanning.SimpleMeal(saved,2));
+        Assert.Empty(MealPlanning.ShoppingChoices(new[]{saved},Array.Empty<Recipe>()));
+        var target=MealPlanning.Copy(saved,MealPlanning.Copy(plan.Days[1]));await RecipeService.SaveMealPlanDays(new[]{target},plan.Id);
+        Assert.Equal("Eggs",MealPlanning.SimpleMeal((await RecipeService.GetMealPlan(owner)).Days[1],0));
+        MealPlanning.Clear(target);Assert.Equal("",MealPlanning.SimpleMeal(target,0));Assert.Equal("Eggs",MealPlanning.SimpleMeal(saved,0));
+    }
+    [Fact]
     public void WidgetTargetsAreIndependentAndAccountBound()
     {
         WidgetShoppingStore.SetTarget(101,new("alice","family-a","Household"));WidgetShoppingStore.SetTarget(102,new("bob",null,"Personal"));

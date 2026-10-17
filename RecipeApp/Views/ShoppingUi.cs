@@ -12,7 +12,7 @@ internal static class ShoppingUi
         var button=new Button { Text=text, HeightRequest=48, MinimumWidthRequest=44, CornerRadius=12, FontSize=14, Padding=new Thickness(12,4) };
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.BackgroundColorProperty, quiet ? "ThemeSubtle" : "ThemeAccent");
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? "ThemeText" : "ThemeOnAccent");
-        button.Clicked += async (_, _) => { button.IsEnabled=false; try { await action(); } catch (Exception e) { await Shell.Current.DisplayAlert("Shopping list", e is InvalidOperationException ? e.Message : "That action couldn't finish. Your saved list has been kept. Please try again.", "OK"); } finally { button.IsEnabled=true; } };
+        button.Clicked += async (_, _) => { button.IsEnabled=false; try { await action(); } catch (Exception e) { var reference=e is HouseholdException or InvalidOperationException?null:AppDiagnostics.Report(e,"ui.action"); await Shell.Current.DisplayAlert("Couldn't complete action", e is HouseholdException or InvalidOperationException ? e.Message : "That action couldn't finish. Your saved data is kept. Please retry.\nReference: "+reference, "OK"); } finally { button.IsEnabled=true; } };
         return button;
     }
     public static Entry Entry(string text, string hint, Action<string> changed, int max=200, bool numeric=false)

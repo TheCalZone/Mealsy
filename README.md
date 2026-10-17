@@ -2,10 +2,12 @@
 
 Mealsy is a .NET 8 MAUI Android app for recipes, meal planning, and shopping lists.
 
+For the latest implementation, deployed state, test commands and remaining store/iOS work, start with the [cloud handoff](CLOUD_HANDOFF.md).
+
 ## Plans and feature inventory
 
 The free tier keeps personal cooking/planning and the food community. **Mealsy
-Family (£24/year in the UK)** unlocks household sharing and removes ads for the
+Family (£3/month or £24/year in the UK)** unlocks household sharing and removes ads for the
 owner and their household. Live billing/ads require publisher setup; see
 [monetization setup](MONETIZATION.md) and the [complete current features](FEATURES.md).
 

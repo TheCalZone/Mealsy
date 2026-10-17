@@ -32,7 +32,7 @@ public static class ThemeService
     private static void ApplyColors()
     {
         var app = Application.Current;
-        var dark = app.RequestedTheme == AppTheme.Dark;
+        var dark = AppSettings.Current.IsDark(app.RequestedTheme == AppTheme.Dark);
         var (primary, accent) = AppSettings.Current.Palette switch {
             "Ocean" => ("#164E69", "#286D89"),
             "Berry" => ("#66344F", "#914768"),

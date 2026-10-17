@@ -21,7 +21,7 @@ public class AccountAndNavigationTests
     [Fact]
     public void FirebaseAuthErrorsDistinguishSetupFailuresFromWrongCredentials()
     {
-        Assert.Contains("enable",AccountInput.Error("OperationNotAllowed"));Assert.Contains("configuration",AccountInput.Error("InvalidApiKey"));
+        Assert.Contains("unavailable",AccountInput.Error("OperationNotAllowed"));Assert.Contains("unavailable",AccountInput.Error("InvalidApiKey"));
         Assert.Equal(AccountInput.Error("WrongPassword"),AccountInput.Error("UserNotFound"));Assert.Contains("connection",AccountInput.Error("NetworkError"));
     }
     [Fact]

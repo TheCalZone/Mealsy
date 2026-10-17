@@ -4,6 +4,8 @@
 <dict>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Choose food photos for your recipes and community posts.</string>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>

@@ -5,6 +5,12 @@ using Xunit;
 public class SettingsTests
 {
     [Theory]
+    [InlineData("Light",true,false)][InlineData("Light",false,false)]
+    [InlineData("Dark",false,true)][InlineData("Dark",true,true)]
+    [InlineData("System",true,true)][InlineData("System",false,false)]
+    public void ExplicitAppearanceOverridesPhoneTheme(string appearance,bool phoneDark,bool expectedDark)
+        =>Assert.Equal(expectedDark,new SettingsOptions{Appearance=appearance}.IsDark(phoneDark));
+    [Theory]
     [InlineData("")]
     [InlineData("{broken")]
     [InlineData("null")]

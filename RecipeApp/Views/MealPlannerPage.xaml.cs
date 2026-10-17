@@ -25,10 +25,12 @@ public partial class MealPlannerPage : ContentPage
     private void Render()
     {
         Title=plan.WeekStart.AddDays(day.MealDayIndex).ToString("dddd d MMM");var body=new VerticalStackLayout {Padding=16,Spacing=16};
-        body.Add(ShoppingUi.Text("Make space for good food",27,true));body.Add(ShoppingUi.Text("Choose recipes, adjust portions, or add a note for leftovers, eating out or a flexible meal. Save when you're ready.",14));
+        body.Add(ShoppingUi.Text("Make space for good food",27,true));body.Add(ShoppingUi.Text("Choose a saved recipe or simply type a meal such as Eggs. You can use either or both. Save when you're ready.",14));
         for(var slot=0;slot<3;slot++)
         {
             var current=slot;var card=new VerticalStackLayout {Spacing=10};card.Add(ShoppingUi.Text(MealPlanning.Slots[slot],23,true));
+            card.Add(ShoppingUi.Text("Type a meal · no recipe needed",13,true));
+            card.Add(ShoppingUi.Entry(MealPlanning.SimpleMeal(day,current),"e.g. Eggs, toast, leftovers or eating out",text=>MealPlanning.SetSimpleMeal(day,current,text),200));
             foreach(var id in MealPlanning.Ids(day,slot).ToList())
             {
                 var recipe=recipes.FirstOrDefault(r=>r.Id==id);card.Add(ShoppingUi.Text(recipe?.RecipeName??"Recipe unavailable — remove or replace",18,true));
@@ -40,7 +42,7 @@ public partial class MealPlannerPage : ContentPage
                 card.Add(ShoppingUi.Text("↳ "+note));card.Add(ShoppingUi.Button("Edit / remove note",async()=>{Check();var text=await DisplayPromptAsync("Meal note","Clear the text to remove this note.",initialValue:note,maxLength:500);if(text==null)return;var notes=MealPlanning.Notes(day,current);var index=notes.IndexOf(note);if(index>=0){if(string.IsNullOrWhiteSpace(text))notes.RemoveAt(index);else notes[index]=text.Trim();}Render();},true));
             }
             card.Add(ShoppingUi.Button("+ Choose recipes",async()=>{Check();await Navigation.PushAsync(new MealRecipePickerPage(recipes,MealPlanning.Ids(day,current),ids=>{Check();var target=MealPlanning.Ids(day,current);target.Clear();target.AddRange(ids);Render();}));}));
-            card.Add(ShoppingUi.Button("+ Add note / leftovers",async()=>{Check();var text=await DisplayPromptAsync("Meal note","e.g. Leftovers, packed lunch or eating out",maxLength:500);if(!string.IsNullOrWhiteSpace(text)){MealPlanning.Notes(day,current).Add(text.Trim());Render();}},true));body.Add(ShoppingUi.Card(card));
+            card.Add(ShoppingUi.Button("+ Add a note",async()=>{Check();var text=await DisplayPromptAsync("Meal note","e.g. Use yesterday's leftovers or pack lunch early",maxLength:500);if(!string.IsNullOrWhiteSpace(text)){Check();MealPlanning.Notes(day,current).Add(text.Trim());Render();}},true));body.Add(ShoppingUi.Card(card));
         }
         body.Add(ShoppingUi.Button("Save day",()=>Run(SaveDay)));
         body.Add(ShoppingUi.Button("Cancel changes",Cancel,true));Content=new ScrollView {Content=body};

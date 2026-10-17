@@ -51,7 +51,7 @@ public class RecipeDraft
         CookTime = r.CookTime, SourceUrl = r.SourceUrl, Notes = r.Notes, Serving = r.Serving, PrepTime = r.PrepTime, Rating = r.Rating, Tags = r.Tags,
         Ingredients = (r.Ingredients ?? new()).Select(CopyIngredient).ToList() };
     public static Ingredient CopyIngredient(Ingredient i) => new() { Id = i.Id, RecipeId = i.RecipeId, FirestoreId = i.FirestoreId,
-        Name = i.Name, Quantity = i.Quantity, Tag = i.Tag, Note = i.Note, IngredientSection = i.IngredientSection, MainIngredient = i.MainIngredient, InBasket = i.InBasket };
+        Name = i.Name, Quantity = i.Quantity, Tag = i.Tag, Note = i.Note, IngredientSection = i.IngredientSection, MainIngredient = i.MainIngredient, ShoppingPreference = i.ShoppingPreference, InBasket = i.InBasket };
 
     public List<string> Validate()
     {

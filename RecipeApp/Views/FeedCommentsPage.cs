@@ -9,7 +9,8 @@ public class FeedCommentsPage : ContentPage
     private readonly bool moderator;
     private readonly VerticalStackLayout comments = new() { Spacing = 12 };
     private readonly Entry message = new() { Placeholder = "Add a kind comment…", MaxLength = 1000 };
-    private readonly Entry name = new() { Placeholder = "Public display name", MaxLength = 60 };
+    private readonly Label replying = FoodFeedPage.Text("");
+    private string parentCommentId;
     private readonly Label status = FoodFeedPage.Text("");
     private FeedCursor cursor;
     private readonly Button more;
@@ -18,25 +19,26 @@ public class FeedCommentsPage : ContentPage
     public FeedCommentsPage(string postId, bool moderator)
     {
         this.postId = postId; this.moderator = moderator; account = HouseholdService.UserId;
-        Title = "Around the table"; ShoppingUi.Theme(this); name.Text = Preferences.Get(FoodFeedService.AuthorKey, "");
+        Title = "Around the table"; ShoppingUi.Theme(this);
         more = FoodFeedPage.Button("Older comments", () => Load(false));
         Content = new ScrollView { Content = new VerticalStackLayout { Padding = 20, Spacing = 12, Children = {
-            FoodFeedPage.Text("Join the conversation", 26, true), name, message,
+            FoodFeedPage.Text("Join the conversation", 26, true), replying, message,
+            FoodFeedPage.Button("Cancel reply",()=>{parentCommentId=null;replying.Text="";pendingText=null;return Task.CompletedTask;}),
             FoodFeedPage.Button("Post comment", async () => {
                 CheckAccount();
-                if (string.IsNullOrWhiteSpace(message.Text) || string.IsNullOrWhiteSpace(name.Text)) { await DisplayAlert("Comment", "Enter a display name and a comment.", "OK"); return; }
+                if (string.IsNullOrWhiteSpace(message.Text)) { await DisplayAlert("Comment", "Enter a comment. Your public username is used automatically.", "OK"); return; }
                 if (pendingText != message.Text) { pendingId = Guid.NewGuid().ToString("N"); pendingText = message.Text; }
                 var sent = message.Text;
-                await FoodFeedService.Call<object>(new { action = "comment", postId, id = pendingId, text = sent, authorName = name.Text });
+                await FoodFeedService.Call<object>(new { action = "comment", postId, id = pendingId, text = sent, parentCommentId });
                 if (message.Text == sent) message.Text = "";
                 pendingId = Guid.NewGuid().ToString("N"); pendingText = null;
-                Preferences.Set(FoodFeedService.AuthorKey, name.Text); await Load(true);
+                parentCommentId=null;replying.Text=""; await Load(true);
             }), status, comments, more } } };
     }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        try { await Load(true); }
+        try { CheckAccount();await Load(true); }
         catch (Exception) { status.Text = "Comments unavailable. Reopen this screen to retry."; }
     }
     private void CheckAccount() { if (account == null || account != HouseholdService.UserId) throw new HouseholdException("UNAUTHENTICATED", "Your account changed. Reopen the comments."); }
@@ -51,8 +53,10 @@ public class FeedCommentsPage : ContentPage
             foreach (var comment in result.Comments)
             {
                 var item = new VerticalStackLayout { Spacing = 4 };
+                if(!string.IsNullOrEmpty(comment.ReplyToName))item.Add(FoodFeedPage.Text("Reply to "+comment.ReplyToName,12));
                 item.Add(FoodFeedPage.Text(comment.AuthorName, 16, true)); item.Add(FoodFeedPage.Text(comment.Text));
                 item.Add(FoodFeedPage.Text(DateTimeOffset.FromUnixTimeMilliseconds(comment.CreatedAt).ToLocalTime().ToString("g"), 12));
+                item.Add(FoodFeedPage.Button("Reply",()=>{parentCommentId=comment.Id;replying.Text="Replying to "+comment.AuthorName;pendingText=null;message.Focus();return Task.CompletedTask;}));
                 if (comment.AuthorId == account || moderator) item.Add(FoodFeedPage.Button("Remove comment", async () => {
                     if (!await DisplayAlert("Remove comment?", "This removes the shared comment.", "Remove", "Cancel")) return;
                     CheckAccount(); await FoodFeedService.Call<object>(new { action = "deleteComment", postId, commentId = comment.Id }); await Load(true);

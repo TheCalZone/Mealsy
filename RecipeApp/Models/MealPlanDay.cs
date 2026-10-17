@@ -40,6 +40,9 @@ namespace RecipeApp.Models
         public string LunchPortionsJson { get; set; } = "{}";
         public string DinnerPortionsJson { get; set; } = "{}";
         public string MealDay { get; set; }
+        public string BreakfastText { get; set; } = "";
+        public string LunchText { get; set; } = "";
+        public string DinnerText { get; set; } = "";
         public long MealDayIndex { get; set; }
         public long BreakfastRecipeId { get; set; }
         public long LunchRecipeId { get; set; }

@@ -531,6 +531,7 @@ namespace RecipeApp.Services
             {
                 // If the day already exists, update its properties
                 existingDay.BreakfastPortionsJson=day.BreakfastPortionsJson; existingDay.LunchPortionsJson=day.LunchPortionsJson; existingDay.DinnerPortionsJson=day.DinnerPortionsJson;
+                existingDay.BreakfastText=day.BreakfastText;existingDay.LunchText=day.LunchText;existingDay.DinnerText=day.DinnerText;
                 existingDay.Breakfast = day.Breakfast;
                 existingDay.BreakfastRecipeId = day.BreakfastRecipeId;
                 existingDay.BreakfastNotesJson = day.BreakfastNotesJson;

@@ -1,0 +1,43 @@
+# Mealsy cloud handoff — 17 October 2026
+
+Continue from branch `codex/android-runtime-fixes` in `TheCalZone/Mealsy`.
+
+## Current state
+
+The Android application and backend include business/creator workspaces, moderated recipe publishing, collections and weekly plans, team roles, analytics, campaign drafts and prepaid impression-accounting infrastructure. The latest fixes add full-screen shopping, public-name comments and replies, private activity notifications with opt-in Android push, four included household members with extra-place billing support, household batch portions, Android recipe-link sharing/import and navigation/keyboard fixes.
+
+The backend is deployed to `mealsy-b732b`. Paid promotion activation was confirmed **disabled**. Do not enable `commercialConfig/campaigns.enabled` until the store products, payment permissions/refund notifications and device verification have passed end-to-end tests. See [business/social setup](BUSINESS_AND_SOCIAL_SETUP.md), [pricing estimate](FAMILY_COST_ESTIMATE.md), [diagnostics](DIAGNOSTICS.md) and [cupboard ingredients](CUPBOARD_INGREDIENTS.md).
+
+## Checks
+
+Use Node 22 for the backend. From the repository root:
+
+```sh
+npm ci --prefix firebase/functions
+node --test firebase/functions/test/*.test.js
+dotnet test RecipeApp.Tests/RecipeApp.Tests.csproj
+```
+
+The repository pins .NET SDK 8.0.400 with feature-band roll-forward. Install a matching .NET 8 SDK for cloud tests. Native Android builds additionally need the MAUI Android workload, JDK 17 and Android SDK; see [README](README.md). iOS signing/building needs a compatible Mac/Xcode toolchain. A generic Linux cloud environment can run the platform-independent tests without building the native application.
+
+Run the database integration suite only against a demo emulator, never production:
+
+```sh
+npx --prefix firebase/functions firebase emulators:exec --project demo-mealsy --only firestore "node --test firebase/emulator.test.js"
+```
+
+The normal emulator config uses port 8080. Choose a free port through an alternate Firebase config when necessary. Firebase CLI 14.22 is pinned in backend dev dependencies; its emulator requires a compatible Java runtime. The separate `firebase/live.test.js` suite performs read-only authentication checks against the deployed project; it does not test authenticated business flows or store purchases.
+
+Latest verified results: 187 .NET tests, 103 backend tests, six Firestore emulator tests and seven live endpoint authentication checks passed. The Android Debug APK built with zero warnings/errors; APK signatures and alignment verified. APKs and signing material are local artifacts and are not committed.
+
+## Remaining external/platform work
+
+- Configure and test `mealsy_extra_places` subscriptions at the intended 50p/month per extra place, including tier changes through the store.
+- Configure and test `mealsy_promotion_credit_5`, Publisher API permissions, purchase restoration, refund/voided notifications and Play Integrity App Check before enabling live promotions.
+- Test opt-in phone-alert delivery on a real Android phone with separate accounts. The messaging APIs and deployed runtime permission have been configured.
+- iOS store purchases, APNs push and an iOS share extension are not implemented. The shared-household backend is platform-neutral.
+- Measure production traffic and billing before treating the Family cost estimate as a proven margin.
+
+## Credentials
+
+Never commit administrator service-account JSON, OAuth tokens, private signing keys, or signed build artifacts. Use environment-owned credentials/secrets for authorized deployments. The old `RecipeApp/credentials.json` and `RecipeApp/Cal.keystore` have been removed from tracking and remain local. They were present in earlier history: removing the files from the current branch does not revoke those credentials or rewrite history. Rotate the service-account key through the project administrator, and review the signing-key exposure with the app publisher before a production release.

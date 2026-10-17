@@ -1,5 +1,8 @@
 # Mealsy food community
 
+Android following, food-interest setup, personalised discovery, search, and temporary
+administrator Family access are documented in [SOCIAL.md](SOCIAL.md).
+
 The first version is a chronological feed visible to **all signed-in Mealsy users**.
 It includes captions, food photos, recipe snapshots, likes, comments, reporting,
 author deletion and moderator hide/restore controls. Android users can save a

@@ -29,7 +29,7 @@ public class HouseholdPage : ContentPage
         busy = true;
         try { await action(); }
         catch (HouseholdException e) { await DisplayAlert("Household", e.Message, "OK"); }
-        catch (Exception) { await DisplayAlert("Connection unavailable", "Could not reach the household service. Check your connection. The Firebase household function must be deployed before this feature can be used.", "OK"); }
+        catch (Exception) { await DisplayAlert("Connection unavailable", "Could not reach the household service. Check your connection and try again.", "OK"); }
         finally { busy = false; }
     }
     private void CheckAccount()
@@ -69,7 +69,7 @@ public class HouseholdPage : ContentPage
         {
             if (!household.FamilyEnabled) content.Add(ShoppingUi.Text("Family sharing is paused. The household owner needs to renew or restore their Family plan. Your household data has been kept."));
             content.Add(ShoppingUi.Text(household.Name, 24, true));
-            content.Add(ShoppingUi.Text($"{household.Members.Count} of 20 members"));
+            content.Add(ShoppingUi.Text($"{household.Members.Count} of {household.MemberLimit} people"));
             foreach (var member in household.Members)
             {
                 var owner = member.Id == household.Owner;

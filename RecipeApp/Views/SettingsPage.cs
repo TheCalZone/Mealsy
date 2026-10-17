@@ -21,6 +21,7 @@ public class SettingsPage : ContentPage
         appearance.Add(ShoppingUi.Card(new VerticalStackLayout { Spacing = 8, Children = { ShoppingUi.Text("A little taste of your theme", 20, true), ShoppingUi.Text("Colours and text update here as you choose."), ShoppingUi.Button("Theme preview", () => Task.CompletedTask) } }));
         body.Add(ShoppingUi.Card(appearance));
         var shopping = Section("Shopping", "Defaults apply when you next open a shopping list. You can still change them while shopping.");
+        shopping.Add(ShoppingUi.Button("Cupboard ingredients",()=>AppNavigation.Open(new CupboardIngredientsPage()),true));
         shopping.Add(Toggle("Hide collected by default", "Keep the remaining items in view.", AppSettings.Current.HideCollected, value => AppSettings.Current with { HideCollected = value }));
         shopping.Add(Toggle("Show quick-add details", "Open quantity, category and note fields by default.", AppSettings.Current.ShoppingDetails, value => AppSettings.Current with { ShoppingDetails = value }));
         body.Add(ShoppingUi.Card(shopping));
@@ -29,6 +30,7 @@ public class SettingsPage : ContentPage
         recipes.Add(Toggle("Keep screen awake while cooking", "Starts enabled when you open a recipe. Stops when you leave it; you can switch it off inside the recipe.", AppSettings.Current.KeepAwake, value => AppSettings.Current with { KeepAwake = value }));
         body.Add(ShoppingUi.Card(recipes));
         body.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
+        body.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
         body.Add(ShoppingUi.Button("Family plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
         body.Add(ShoppingUi.Text("These settings stay on this device. They don't change family members' preferences or your account data. Manage your profile and sync from Account.", 13));
         body.Add(ShoppingUi.Button("Reset preferences…", async () => {

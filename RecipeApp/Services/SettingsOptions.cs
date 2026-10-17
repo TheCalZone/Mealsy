@@ -12,6 +12,7 @@ public sealed record SettingsOptions
     public bool ShoppingDetails { get; init; }
     public string RecipeSort { get; init; } = "Recent";
     public bool KeepAwake { get; init; }
+    public bool IsDark(bool systemDark) => Appearance switch { "Light"=>false,"Dark"=>true,_=>systemDark };
     public static readonly string[] Palettes = { "Forest", "Ocean", "Berry", "Terracotta", "Slate" };
     public static readonly string[] Appearances = { "System", "Light", "Dark" };
     public static readonly string[] Sorts = { "Recent", "Name", "Quickest", "Top rated" };

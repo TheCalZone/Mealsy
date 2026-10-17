@@ -4,6 +4,14 @@ const {database} = require('./feed-database');
 const {createBilling, entitlementFromPurchase, accountId} = require('../billing');
 const {createHandler} = require('../application');
 const now = Date.now();
+test('extra places derive exclusively from supported store products and expire independently',async()=>{
+ const f=fixture();const p=purchase();p.lineItems[0].productId='mealsy_extra_places';p.lineItems[0].offerDetails.basePlanId='places-2';f.records.set('extra-place-token',p);
+ const plan=await f.call('owner',{action:'verify',token:'extra-place-token',extraSeats:16});assert.equal(plan.extraSeats,2);assert.equal(plan.familyEnabled,false);
+ assert.equal(f.db.docs.get('seatEntitlements/owner').extraSeats,2);assert(!f.db.docs.has('billingEntitlements/owner'));
+ await assert.rejects(f.call('other',{action:'verify',token:'extra-place-token'}),{code:'permission-denied'});
+ p.subscriptionState='SUBSCRIPTION_STATE_EXPIRED';await f.call('owner',{action:'verify',token:'extra-place-token'});assert.equal((await f.call('owner',{action:'status'})).extraSeats,0);
+ const invalid=purchase();invalid.lineItems[0].productId='mealsy_extra_places';invalid.lineItems[0].offerDetails.basePlanId='places-99';assert.throws(()=>entitlementFromPurchase(invalid,'owner',now),{code:'invalid-argument'});
+});
 const purchase = (uid = 'owner', state = 'SUBSCRIPTION_STATE_ACTIVE', expiresAt = now + 86400000) => ({
   externalAccountIdentifiers: {obfuscatedExternalAccountId: accountId(uid)}, subscriptionState: state, acknowledgementState: 'ACKNOWLEDGEMENT_STATE_PENDING',
   lineItems: [{productId: 'mealsy_family', offerDetails: {basePlanId: 'annual'}, expiryTime: new Date(expiresAt).toISOString()}]

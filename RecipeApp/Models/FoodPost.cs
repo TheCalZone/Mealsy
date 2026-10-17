@@ -22,7 +22,17 @@ public class FoodPost
     public int LikeCount { get; set; }
     public int CommentCount { get; set; }
     public bool Liked { get; set; }
+    public bool Following { get; set; }
+    public bool Promoted { get; set; }
+    public string BusinessId { get; set; }
+    public bool BusinessVerified { get; set; }
+    public string PromotionCampaignId { get; set; }
+    public List<string> Topics { get; set; } = new();
+    public Recipe PrivateCopy(string account){var copy=Recipe.ToRecipe(Photo);copy.FirebaseUID=account;copy.Notes=$"Shared by {AuthorName} on Mealsy · Public post {Id}";if(!string.IsNullOrEmpty(BusinessId))copy.CloudKey="business-copy-"+Id;return copy;}
 }
-public record FoodComment(string Id, string Text, string AuthorId, string AuthorName, long CreatedAt);
+public record FollowedCook(string Id, string Name);
+public record CommunityProfile(string Username, string Discriminator, bool EmailVerified, bool PromotionCheckoutEnabled);
+public record FeedPreferences(List<string> Interests, bool SetupComplete, List<string> Options, List<FollowedCook> Following,List<string> ExcludedIngredients=null);
+public record FoodComment(string Id, string Text, string AuthorId, string AuthorName, long CreatedAt,string ParentCommentId=null,string ReplyToName=null);
 public record FeedPage(List<FoodPost> Posts, FeedCursor Cursor, bool Moderator);
 public record CommentPage(List<FoodComment> Comments, FeedCursor Cursor);

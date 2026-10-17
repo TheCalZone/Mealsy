@@ -19,14 +19,14 @@ public static class AccountInput
     {
         "EmailAlreadyInUse"=>"An account already uses that email. Sign in or reset its password.",
         "InvalidEmail"=>"Check your email address and try again.",
-        "WeakPassword"=>"Firebase rejected this password. Use a stronger password that meets your project's password policy.",
+        "WeakPassword"=>"This password wasn't accepted. Use a stronger password.",
         "WrongPassword" or "UserNotFound" or "InvalidCredential"=>"The email or password wasn't accepted. Check both, or request a password reset.",
         "UserDisabled"=>"This account is disabled. Contact the app owner.",
-        "OperationNotAllowed"=>"Email/password sign-in isn't enabled in Firebase Authentication. The app owner needs to enable it.",
-        "InvalidApiKey" or "AppNotAuthorized"=>"Firebase rejected this app's configuration. Check the Firebase Android app and API key restrictions.",
-        "NetworkError"=>"Couldn't reach Firebase. Check your connection and try again.",
+        "OperationNotAllowed"=>"Sign-in is temporarily unavailable. Please try again later.",
+        "InvalidApiKey" or "AppNotAuthorized"=>"The account service is unavailable. Please try again later.",
+        "NetworkError"=>"Couldn't reach the account service. Check your connection and try again.",
         "TooManyRequests"=>"Too many attempts. Wait a little before trying again.",
         "UserTokenExpired" or "InvalidUserToken"=>"Your sign-in expired. Sign in again.",
-        _=>"Firebase couldn't complete this request. Check your connection; the app owner may need to check the Firebase configuration."
+        _=>"The account service couldn't complete this request. Check your connection and try again."
     };
 }

@@ -26,10 +26,11 @@ async function page(moderator = false, configured = true, hosted = false) {
   const page = await browser.newPage();
   await page.addInitScript(({moderator}) => {
     window.calls = [];
-    window.testUser = {uid: 'alice', email: 'alice@example.com', getIdTokenResult: async () => ({claims: {feedModerator: moderator}})};
+    window.testUser = {uid: 'alice', email: 'alice@example.com', getIdToken: async () => 'token', getIdTokenResult: async () => ({claims: {feedModerator: moderator}})};
     window.post = {id: 'post-1', authorName: 'Chef', authorId: 'bob', createdAt: 1000000, caption: '<img src=x onerror="window.injected=true"> Delicious dinner!', photo: '', recipe: null, likeCount: 0, commentCount: 0, liked: false};
     window.mockCall = async data => {
       window.calls.push(data);
+      if (data.action === 'profile') return {data: {username: 'Home cook', emailVerified: true}};
       if (data.action === 'list') return {data: {posts: [window.post], cursor: null}};
       if (data.action === 'moderation') return {data: {posts: [{...window.post, hidden: true, reports: [{id: 'reporter', reason: 'Please review'}]}], cursor: null}};
       if (data.action === 'like') { window.post.liked = data.liked; window.post.likeCount = data.liked ? 1 : 0; }
@@ -40,7 +41,7 @@ async function page(moderator = false, configured = true, hosted = false) {
   if (hosted) await page.route('**/__/firebase/init.json', route => route.fulfill({contentType: 'application/json', body: JSON.stringify({apiKey: 'hosted-test-key', appId: 'hosted-test-app', projectId: hosted === true ? 'mealsy-b732b' : 'another-project', authDomain: 'mealsy-b732b.firebaseapp.com'})}));
   const modules = {
     'firebase-app.js': 'export const initializeApp = config => config;',
-    'firebase-auth.js': `export const getAuth = () => ({}); export const onAuthStateChanged = (auth, callback) => {window.authChanged = callback; queueMicrotask(() => callback(window.testUser));}; export const signInWithEmailAndPassword = async () => {}; export const createUserWithEmailAndPassword = async () => {}; export const signOut = async () => window.authChanged(null);`,
+    'firebase-auth.js': `export const sendEmailVerification = async () => {}; export const reload = async () => {}; export const getAuth = () => ({}); export const onAuthStateChanged = (auth, callback) => {window.authChanged = callback; queueMicrotask(() => callback(window.testUser));}; export const signInWithEmailAndPassword = async () => {}; export const createUserWithEmailAndPassword = async () => {}; export const signOut = async () => window.authChanged(null);`,
     'firebase-functions.js': 'export const getFunctions = () => ({}); export const httpsCallable = () => data => window.mockCall(data);'
   };
   await page.route('https://www.gstatic.com/firebasejs/**', route => route.fulfill({contentType: 'text/javascript', body: modules[route.request().url().split('/').at(-1)]}));
@@ -60,7 +61,7 @@ test('desktop renders real feed UI, escapes user content and persists like actio
 });
 test('desktop publish requires explicit confirmation and sends the shared snapshot', async () => {
   const p = await page(); await p.locator('#signed-in').waitFor({state: 'visible'});
-  await p.locator('#name').fill('Home cook'); await p.locator('#caption').fill('Tonight’s pasta');
+  await p.waitForFunction(() => document.getElementById('name').value === 'Home cook'); await p.locator('#caption').fill('Tonight’s pasta');
   p.once('dialog', dialog => dialog.accept()); await p.getByRole('button', {name: 'Publish to the community', exact: true}).click();
   await p.waitForFunction(() => window.calls.some(c => c.action === 'publish'));
   const call = (await p.evaluate(() => window.calls)).find(c => c.action === 'publish');
@@ -81,7 +82,7 @@ test('desktop hides moderation for normal users and clears feed on logout', asyn
   assert.equal(await p.locator('#feed article').count(), 0); await p.close();
 });
 test('unconfigured desktop explains the missing Firebase web setup', async () => {
-  const p = await page(false, false); await p.getByRole('status').filter({hasText: 'Desktop setup:'}).waitFor(); await p.close();
+  const p = await page(false, false); await p.getByRole('status').filter({hasText: 'The account service is not configured yet.'}).waitFor(); await p.close();
 });
 
 test('desktop renders extended recipe metadata and ingredient sections safely', async () => {
@@ -106,7 +107,7 @@ test('Firebase Hosting discovers web configuration without editing public identi
 
 test('Hosting discovery refuses configuration for a different Firebase project', async () => {
   const p = await page(false, false, 'wrong-project');
-  await p.getByRole('status').filter({hasText: 'Desktop setup:'}).waitFor();
+  await p.getByRole('status').filter({hasText: 'The account service is not configured yet.'}).waitFor();
   assert.equal(await p.locator('#signed-in').isVisible(), false);
   await p.close();
 });

@@ -6,11 +6,13 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
     <PackageReference Include="Plugin.Firebase.Auth" Version="2.0.7" />
     <PackageReference Include="Plugin.Firebase.Firestore" Version="2.0.6" />
+    <PackageReference Include="Plugin.Firebase.Crashlytics" Version="2.0.3" />
     <PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
     <PackageReference Include="SQLiteNetExtensions.Async" Version="2.1.0" />
@@ -25,6 +27,7 @@
     <Compile Include="../RecipeApp/Services/NavigationCatalog.cs" Link="NavigationCatalog.cs" />
     <None Include="../RecipeApp/AppShell.xaml" Link="Navigation/AppShell.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../RecipeApp/Services/RecipeDraft.cs" Link="RecipeDraft.cs" />
+    <Compile Include="../RecipeApp/Services/WebsiteRecipe.cs" Link="WebsiteRecipe.cs" />
     <Compile Include="../RecipeApp/Services/RecipeDraftStore.cs" Link="RecipeDraftStore.cs" />
     <Compile Include="../RecipeApp/Services/RecipePresentation.cs" Link="RecipePresentation.cs" />
     <Compile Include="../RecipeApp/Services/RecipeService.cs" Link="RecipeService.cs" />
@@ -32,6 +35,9 @@
     <Compile Include="../RecipeApp/Services/WidgetShoppingStore.cs" Link="WidgetShoppingStore.cs" />
     <Compile Include="../RecipeApp/Services/MealPlanning.cs" Link="MealPlanning.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingPlan.cs" Link="ShoppingPlan.cs" />
+    <Compile Include="../RecipeApp/Services/CupboardRules.cs" Link="CupboardRules.cs" />
+    <Compile Include="../RecipeApp/Services/DiagnosticPolicy.cs" Link="DiagnosticPolicy.cs" />
+    <Compile Include="../RecipeApp/Services/AppDiagnostics.cs" Link="AppDiagnostics.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />

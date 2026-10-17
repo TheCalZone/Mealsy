@@ -1,4 +1,8 @@
 const {fail} = require('./domain');
+const {requestData} = require('./request');
+const discovery = require('./feed-discovery');
+const community = require('./community');
+const {requireRole}=require('./business-access');
 const {FieldPath} = require('firebase-admin/firestore');
 const {createHash} = require('node:crypto');
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -50,13 +54,53 @@ function cursor(value) {
   if (!Number.isSafeInteger(value.createdAt) || value.createdAt < 0) fail('invalid-argument', 'Invalid page cursor.');
   return {createdAt: value.createdAt, id: id(value.id)};
 }
-function createFeedHandler(db, clock = Date.now) {
+function createFeedHandler(db, clock = Date.now, moderate = require('./moderation').moderate) {
   return async request => {
     if (!request.auth) fail('unauthenticated', 'Sign in to explore the food feed.');
-    const uid = request.auth.uid, data = request.data || {}, moderator = request.auth.token?.feedModerator === true;
-    if (typeof data !== 'object' || Array.isArray(data) || typeof data.action !== 'string') fail('invalid-argument', 'Choose a feed action.');
+    const uid = request.auth.uid, data = requestData(request, ['profile', 'setUsername', 'requestPromotion', 'activatePromotion', 'preferences', 'savePreferences', 'follow', 'unfollow', 'list', 'moderation', 'publish', 'comments', 'delete', 'moderate', 'resolveReport', 'like', 'comment', 'deleteComment', 'report']), moderator = request.auth.token?.feedModerator === true;
+    if (data.action === 'profile') return {...(await db.doc(`communityProfiles/${uid}`).get()).data(), emailVerified: request.auth.token?.email_verified === true, promotionCheckoutEnabled: false};
+    if (data.action === 'setUsername') return community.setUsername(db, uid, data.username, moderate);
+    const accountRef = db.doc(`feedAccounts/${uid}`);
+    if (data.action === 'preferences') {
+      const account = (await accountRef.get()).data() || {};
+      return {interests: account.interests || [], setupComplete: account.setupComplete === true,
+        excludedIngredients:account.excludedIngredients||[],
+        options: Object.keys(discovery.topics), following: Object.entries(account.following || {}).map(([id, name]) => ({id, name}))};
+    }
+    if (data.action === 'savePreferences') {
+      const interests = discovery.interests(data.interests);
+      const excluded=data.excludedIngredients;
+      if(excluded!==undefined&&(!Array.isArray(excluded)||excluded.length>50||excluded.some(s=>typeof s!=='string'||!s.trim()||s.length>80)))fail('invalid-argument','Use up to 50 ingredient exclusions, each up to 80 characters.');
+      return db.runTransaction(async tx => {
+        const account = (await tx.get(accountRef)).data() || {};
+        tx.set(accountRef, {...account, interests, ...(excluded===undefined?{}:{excludedIngredients:[...new Set(excluded.map(s=>s.trim()))]}), setupComplete: true}); return {};
+      });
+    }
+    if (data.action === 'follow' || data.action === 'unfollow') {
+      if (data.action === 'follow' && typeof data.following !== 'boolean') fail('invalid-argument', 'Choose a follow state.');
+      const targetId = data.action === 'unfollow' ? id(data.authorId) : null;
+      const postRef = data.action === 'follow' ? db.doc(`feedPosts/${id(data.postId)}`) : null;
+      return db.runTransaction(async tx => {
+        const account = (await tx.get(accountRef)).data() || {};
+        const post = postRef ? (await tx.get(postRef)).data() : null;
+        if (postRef) requireVisible(post);
+        const author = postRef ? post.authorId : targetId;
+        if (author === uid) fail('invalid-argument', 'You cannot follow yourself.');
+        const following = {...account.following};
+        if (postRef && data.following) {
+          if (!Object.hasOwn(following, author) && Object.keys(following).length >= 200) fail('resource-exhausted', 'You can follow up to 200 cooks.');
+          if(!Object.hasOwn(following,author))require('./notifications').notify(tx,db,author,`follow:${uid}:${author}:${clock()}`,{type:'follow',postId:postRef.id,message:'Someone started following your recipes.'},clock());
+          following[author] = post.authorName;
+        } else delete following[author];
+        tx.set(accountRef, {...account, following}); return {};
+      });
+    }
     const posts = db.collection('feedPosts');
     if (data.action === 'list') {
+      const terms = discovery.searchTerms(data.search);
+      const mode = terms.length ? 'search' : data.mode ?? 'latest';
+      if (!['latest', 'following', 'forYou', 'search'].includes(mode)) fail('invalid-argument', 'Choose a feed.');
+      const pageSize = mode === 'latest' && terms.length === 0 ? 15 : 30;
       const next = cursor(data.cursor);
       let query = posts.orderBy('createdAt', 'desc').orderBy(FieldPath.documentId(), 'desc');
       if (next) query = query.startAfter(next.createdAt, next.id);
@@ -64,12 +108,39 @@ function createFeedHandler(db, clock = Date.now) {
       // Read visibility and like state in one consistent snapshot. A concurrent
       // hide/delete cannot leave old post content mixed with newer like reads.
       return db.runTransaction(async tx => {
-        const snapshot = await tx.get(query.limit(15));
-        const visible = snapshot.docs.filter(doc => !doc.data().hidden && !doc.data().deleted);
+        const account = (await tx.get(accountRef)).data() || {};
+        const snapshot = await tx.get(query.limit(pageSize));
+        const businessFollows=await Promise.all(snapshot.docs.map(doc=>doc.data().businessId?tx.get(db.doc(`businessFollows/${createHash('sha256').update(uid+'|'+doc.data().businessId).digest('hex')}`)):null));
+        const visible = snapshot.docs.filter((doc,index) => {
+          const post = doc.data();
+          return !post.hidden && !post.deleted && (mode !== 'following' || Object.hasOwn(account.following || {}, post.authorId)||businessFollows[index]?.exists) &&
+            !(account.excludedIngredients||[]).some(name=>(post.recipe?.ingredients||[]).some(i=>discovery.ingredientMatches(i.name,name)))&&
+            discovery.matches(post, terms);
+        });
         const likes = await Promise.all(visible.map(doc => tx.get(doc.ref.collection('likes').doc(uid))));
-        const result = visible.map((doc, i) => ({...publicPost(doc), liked: likes[i].exists}));
+        const campaigns = await Promise.all(visible.map(doc => tx.get(db.doc(`promotionCampaigns/${doc.id}`))));
+        const receipts = await Promise.all(campaigns.map(c => c.data()?.receiptId ? tx.get(db.doc(`promotionReceipts/${c.data().receiptId}`)) : null));
+        const brands=await Promise.all(visible.map(doc=>doc.data().businessId?tx.get(db.doc(`businesses/${id(doc.data().businessId)}`)):null));
+        const paid=await Promise.all(campaigns.map(c=>c.data()?.businessCampaignId?tx.get(db.doc(`businessCampaigns/${id(c.data().businessCampaignId)}`)):null));
+        const wallets=await Promise.all(paid.map(c=>c?.data()?.businessId?tx.get(db.doc(`businessWallets/${c.data().businessId}`)):null));
+        const daily=await Promise.all(paid.map(c=>c?tx.get(c.ref.collection('days').doc(new Date(clock()).toISOString().slice(0,10))):null));
+        const commercial=(await tx.get(db.doc('commercialConfig/campaigns'))).data();
+        const result = visible.map((doc, i) => ({...publicPost(doc), liked: likes[i].exists,
+          businessVerified:brands[i]?.data()?.verified===true,
+          promotionCampaignId:paid[i]?.id||null,
+          promoted: (paid[i]?commercial?.enabled===true&&campaigns[i].data()?.active===true&&require('./campaign-ledger').eligible(paid[i].data(),clock())&&(wallets[i]?.data()?.balanceMicro||0)>=1000&&(daily[i]?.data()?.spentMicro||0)+1000<=paid[i].data().dailyBudgetMinor*10000:community.promoted(campaigns[i].data(), receipts[i]?.data(), doc.data(), clock()))&&(!doc.data().businessId||brands[i]?.data()?.verified===true)&&(!(account.interests||[]).length||discovery.postTopics(doc.data()).some(t=>account.interests.includes(t))),
+          following: Object.hasOwn(account.following || {}, doc.data().authorId)||businessFollows[snapshot.docs.findIndex(d=>d.id===doc.id)]?.exists===true, topics: discovery.postTopics(doc.data()),
+          recommendationScore: discovery.score(doc.data(), account)}));
+        if (mode === 'forYou' || mode === 'search') result.sort((a, b) => b.recommendationScore - a.recommendationScore || b.createdAt - a.createdAt || b.id.localeCompare(a.id));
+        if (mode === 'forYou' || mode === 'search') {
+          const sponsored = result.findIndex(p => p.promoted);
+          if (sponsored >= 0) result.unshift(result.splice(sponsored, 1)[0]);
+        }
+        let sponsoredSeen=false;
+        // Keep the cursor chronological; cap paid exposure within this page.
+        const capped=result.filter(p=>{if(!p.promoted)return true;if(sponsoredSeen)return false;sponsoredSeen=true;return true;});
         const last = snapshot.docs.at(-1);
-        return {posts: result, cursor: snapshot.size === 15 && last ? {createdAt: last.data().createdAt, id: last.id} : null, moderator};
+        return {posts: capped, cursor: snapshot.size === pageSize && last ? {createdAt: last.data().createdAt, id: last.id} : null, moderator};
       }, {readOnly: true});
     }
     if (data.action === 'moderation') {
@@ -88,24 +159,70 @@ function createFeedHandler(db, clock = Date.now) {
     }
     if (data.action === 'publish') {
       const ref = posts.doc(id(data.id));
-      const body = {caption: text(data.caption, 2000), authorName: text(data.authorName, 60, true), recipe: recipe(data.recipe), photo: photo(data.photo)};
+      const body = {caption: text(data.caption, 2000), authorName: '', recipe: recipe(data.recipe), photo: photo(data.photo)};
       if (!body.caption && !body.recipe) fail('invalid-argument', 'Write a caption or attach a recipe.');
       if (Buffer.byteLength(JSON.stringify(body), 'utf8') > 500000) fail('invalid-argument', 'This post is too large. Shorten the recipe or choose a smaller photo.');
+      community.verified(request);
+      let businessRef;
+      if(data.businessId){if(request.businessPublishingAuthorized!==true)fail('permission-denied','Publish business recipes through the business workspace.');businessRef=db.doc(`businesses/${id(data.businessId)}`);const business=requireRole((await businessRef.get()).data(),uid,'editor',true);body.authorName=business.name;body.businessId=businessRef.id;}
+      else body.authorName = (await community.identity(db, uid)).username;
+      if (Buffer.byteLength(JSON.stringify(body), 'utf8') > 500000) fail('invalid-argument', 'This post is too large. Shorten the recipe or choose a smaller photo.');
       const digest = hash(body), limitRef = db.doc(`feedLimits/${uid}`);
+      const previous = (await ref.get()).data();
+      if (previous?.authorId === uid && previous.digest === digest) return {id: ref.id};
+      if (previous) fail('already-exists', 'That post was already published. Refresh the feed before trying a new post.');
+      const recent = (await limitRef.get()).data();
+      if (recent && clock() - (recent.postAt || 0) < 10000) fail('resource-exhausted', 'Wait a few seconds before publishing again.');
+      const checked = await moderate(body);
       return db.runTransaction(async tx => {
         const [existing, limits] = await Promise.all([tx.get(ref), tx.get(limitRef)]);
+        if(businessRef)requireRole((await tx.get(businessRef)).data(),uid,'editor',true);
         if (existing.exists) {
           if (existing.data().authorId === uid && existing.data().digest === digest) return {id: ref.id};
           fail('already-exists', 'That post was already published. Refresh the feed before trying a new post.');
         }
+        if(businessRef&&(await tx.get(posts.where('businessId','==',businessRef.id).limit(100))).size>=100)fail('resource-exhausted','This business supports 100 published recipe copies.');
         const now = clock();
         if (limits.exists && now - (limits.data().postAt || 0) < 10000) fail('resource-exhausted', 'Wait a few seconds before publishing again.');
-        tx.create(ref, {...body, authorId: uid, createdAt: now, digest, likeCount: 0, commentCount: 0, hidden: false, deleted: false});
+        tx.create(ref, {...body, moderation: {...checked, checkedAt: now}, authorId: uid, createdAt: now, digest, likeCount: 0, commentCount: 0, hidden: false, deleted: false});
         tx.set(limitRef, {...limits.data(), postAt: now});
         return {id: ref.id};
       });
     }
     const ref = posts.doc(id(data.postId));
+    if (data.action === 'requestPromotion') {
+      community.verified(request);
+      return db.runTransaction(async tx => {
+        const post = (await tx.get(ref)).data(); requireVisible(post);
+        if (post.authorId !== uid || !post.recipe || post.moderation?.status !== 'approved') fail('permission-denied', 'Only your safety-approved recipes can be promoted.');
+        tx.set(db.doc(`promotionRequests/${ref.id}`), {owner: uid, postId: ref.id, status: 'awaiting-payment-integration', requestedAt: clock()});
+        return {checkoutEnabled: false, status: 'awaiting-payment-integration'};
+      });
+    }
+    if (data.action === 'activatePromotion') {
+      if (request.auth.token?.promotionAdmin !== true) fail('permission-denied', 'Promotion administrator access is required.');
+      const receiptId = id(data.receiptId);
+      return db.runTransaction(async tx => {
+        const post = (await tx.get(ref)).data(); requireVisible(post);
+        const receipt = (await tx.get(db.doc(`promotionReceipts/${receiptId}`))).data();
+        if(post.businessId)fail('failed-precondition','Business campaign checkout must be integrated before paid activation.');
+        if (!post.recipe || post.moderation?.status !== 'approved' || receipt?.verified !== true || receipt.revoked === true || receipt.owner !== post.authorId || receipt.postId !== ref.id || !Number.isSafeInteger(receipt.expiresAt) || receipt.expiresAt <= clock()) fail('failed-precondition', 'A verified, unexpired payment for this approved recipe is required.');
+        tx.set(db.doc(`promotionCampaigns/${ref.id}`), {active: true, owner: post.authorId, postId: ref.id, receiptId, startsAt: clock(), expiresAt: receipt.expiresAt}); return {};
+      });
+    }
+    let checkedComment, commentAuthor;
+    const parentCommentId=data.action==='comment'&&data.parentCommentId?id(data.parentCommentId):null;
+    if (data.action === 'comment') {
+      requireVisible((await ref.get()).data());
+      const message = text(data.text, 1000, true);
+      commentAuthor = (await community.identity(db, uid)).username;
+      const existing = (await ref.collection('comments').doc(id(data.id)).get()).data();
+      if (existing?.authorId === uid && existing.text === message && (existing.parentCommentId||null)===parentCommentId && !existing.deleted) return {};
+      if (existing) fail('already-exists', 'This comment was already submitted.');
+      const recent = (await db.doc(`feedLimits/${uid}`).get()).data();
+      if (recent && clock() - (recent.commentAt || 0) < 3000) fail('resource-exhausted', 'Wait a moment before commenting again.');
+      checkedComment = await moderate({text: message, authorName: commentAuthor});
+    }
     if (data.action === 'comments') {
       return db.runTransaction(async tx => {
         const post = (await tx.get(ref)).data(); requireVisible(post);
@@ -142,7 +259,11 @@ function createFeedHandler(db, clock = Date.now) {
       if (data.action === 'like') {
         if (typeof data.liked !== 'boolean') fail('invalid-argument', 'Choose a like state.');
         const likeRef = ref.collection('likes').doc(uid), like = await tx.get(likeRef);
+        const account = (await tx.get(accountRef)).data() || {};
         if (data.liked !== like.exists) {
+          const affinities = {...account.affinities};
+          for (const topic of discovery.postTopics(post)) affinities[topic] = Math.max(0, Math.min(100, (affinities[topic] || 0) + (data.liked ? 1 : -1)));
+          tx.set(accountRef, {...account, affinities});
           if (data.liked) tx.create(likeRef, {createdAt: clock()}); else tx.delete(likeRef);
           tx.update(ref, {likeCount: Math.max(0, (post.likeCount || 0) + (data.liked ? 1 : -1))});
         }
@@ -150,16 +271,20 @@ function createFeedHandler(db, clock = Date.now) {
       }
       if (data.action === 'comment') {
         const commentRef = ref.collection('comments').doc(id(data.id));
-        const message = text(data.text, 1000, true), authorName = text(data.authorName, 60, true);
+        const message = text(data.text, 1000, true), authorName = commentAuthor;
         const limitRef = db.doc(`feedLimits/${uid}`);
         const [existing, limits] = await Promise.all([tx.get(commentRef), tx.get(limitRef)]);
+        const parent=parentCommentId?(await tx.get(ref.collection('comments').doc(parentCommentId))).data():null;
+        if(parentCommentId&&(!parent||parent.deleted))fail('not-found','The comment you are replying to is no longer available.');
         if (existing.exists) {
-          if (existing.data().authorId === uid && existing.data().text === message && !existing.data().deleted) return {};
+          if (existing.data().authorId === uid && existing.data().text === message && (existing.data().parentCommentId||null)===parentCommentId && !existing.data().deleted) return {};
           fail('already-exists', 'This comment was already submitted.');
         }
         const now = clock();
         if (limits.exists && now - (limits.data().commentAt || 0) < 3000) fail('resource-exhausted', 'Wait a moment before commenting again.');
-        tx.create(commentRef, {text: message, authorName, authorId: uid, createdAt: now, deleted: false});
+        tx.create(commentRef, {text: message, authorName, parentCommentId, replyToName:parent?.authorName||null, moderation: {...checkedComment, checkedAt: now}, authorId: uid, createdAt: now, deleted: false});
+        for(const recipient of new Set([post.authorId,parent?.authorId].filter(r=>r&&r!==uid)))
+          require('./notifications').notify(tx,db,recipient,`comment:${ref.id}:${commentRef.id}`,{type:recipient===parent?.authorId?'reply':'comment',postId:ref.id,message:recipient===parent?.authorId?'Someone replied to your comment.':'Someone commented on your post.'},now);
         tx.update(ref, {commentCount: (post.commentCount || 0) + 1});
         tx.set(limitRef, {...limits.data(), commentAt: now}); return {};
       }
@@ -192,6 +317,7 @@ function requireVisible(post) { if (!post || post.hidden || post.deleted) fail('
 function publicPost(doc) {
   const p = doc.data();
   return {id: doc.id, caption: p.caption, authorId: p.authorId, authorName: p.authorName, createdAt: p.createdAt,
+    ...(p.businessId?{businessId:p.businessId}:{}),
     recipe: p.recipe, photo: p.photo, likeCount: p.likeCount, commentCount: p.commentCount};
 }
 module.exports = {createFeedHandler, recipe, photo, cursor};

@@ -23,7 +23,7 @@ public class AuthFormView : ContentView
                 if(signup)await AccountSession.Register(email.Text,password.Text,confirm.Text,first.Text,last.Text,diet.Text,cuisines.Text);else await AccountSession.SignIn(email.Text,password.Text);
                 authenticated=true;password.Text="";if(confirm!=null)confirm.Text="";if(Shell.Current.Navigation.NavigationStack.Count>1)await Shell.Current.Navigation.PopToRootAsync(false);await AppNavigation.Root("AccountPage");
             }
-            catch(Exception e){status.Text=e is InvalidOperationException?e.Message:"Couldn't reach Firebase. Check your connection and try again.";}
+            catch(Exception e){status.Text=e is InvalidOperationException?e.Message:"Couldn't reach the account service. Check your connection and try again.";}
             finally{busy=false;body.IsEnabled=true;}
         }));
         if(!signup)body.Add(ShoppingUi.Button("Forgot your password?",async()=>{

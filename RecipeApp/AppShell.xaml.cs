@@ -6,6 +6,7 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
+        Navigating += (_, _) => AppNavigation.DismissKeyboard();
         // Tab roots are declared only in XAML. Registering them again creates ambiguous routes.
         var pages=new Dictionary<string,Type>{
             [nameof(SettingsPage)]=typeof(SettingsPage),

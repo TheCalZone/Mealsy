@@ -10,6 +10,7 @@ using Microsoft.Maui.Handlers;
 
 using RecipeApp.CustomViews;
 using RecipeApp.Custom_Handlers;
+using RecipeApp.Services;
 
 
 
@@ -25,6 +26,7 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        AppDiagnostics.RegisterManagedHandlers();
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<App>().ConfigureFonts(fonts =>
         {
@@ -64,8 +66,8 @@ public static class MauiProgram
                 //    ClientId = "1067194949884-pbr5bbd66ka2hqros2khfpa5ccvdp825.apps.googleusercontent.com",
                 //    GoogleAppId = "1:1067194949884:ios:42663f840336cbe6aab779"
                 //}
-                CrossFirebaseCrashlytics.Current.SetCrashlyticsCollectionEnabled(true);
-            return false;
+                AppDiagnostics.ApplyCollection();
+            return true;
             }));
 #elif ANDROID
             events.AddAndroid(android => android.OnCreate((activity, _) => 
@@ -73,10 +75,11 @@ public static class MauiProgram
                 try
                 {
                     CrossFirebase.Initialize(activity);
-                    CrossFirebaseCrashlytics.Current.SetCrashlyticsCollectionEnabled(true);
+                    AppDiagnostics.ApplyCollection();
                 }
-                catch (Exception)
+                catch (Exception error)
                 {
+                    AppDiagnostics.Report(error,"sdk.startup","SDK_STARTUP");
                     System.Diagnostics.Debug.WriteLine("Firebase initialization unavailable; local tools remain available.");
                 }
             }));

@@ -1,10 +1,22 @@
 const {isDeepStrictEqual} = require('node:util');
 class DomainError extends Error {
-  constructor(code, message) { super(message); this.code = code; }
+  constructor(code, message, details) { super(message); this.code = code; this.details = details; }
 }
-const fail = (code, message) => { throw new DomainError(code, message); };
+const fail = (code, message, details) => { throw new DomainError(code, message, details); };
 const fields = ['Name', 'Category', 'Quantity', 'Note', 'InBasket'];
 function item(value) {
+  // HttpClient's JsonContent uses camelCase, while stored lists and older clients
+  // use PascalCase. Normalize both before validation and three-way comparison.
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const normalized = {};
+    for (const field of ['Id', ...fields]) {
+      const camel = field[0].toLowerCase() + field.slice(1);
+      if (Object.hasOwn(value, field) && Object.hasOwn(value, camel) && value[field] !== value[camel])
+        fail('invalid-argument', 'Conflicting shopping item fields.');
+      normalized[field] = Object.hasOwn(value, field) ? value[field] : value[camel];
+    }
+    value = normalized;
+  }
   if (!value || typeof value !== 'object' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value.Id || '') || value.Id === '00000000-0000-0000-0000-000000000000')
     fail('invalid-argument', 'Invalid shopping item.');
   const clean = {Id: value.Id.toLowerCase()};
@@ -30,6 +42,8 @@ function applyChanges(current, changes) {
   const result = structuredClone(current || {});
   const seen = new Set();
   for (const change of changes) {
+    if (!change || typeof change !== 'object' || Array.isArray(change))
+      fail('invalid-argument', 'Invalid change.');
     const before = change.before == null ? null : item(change.before);
     const after = change.after == null ? null : item(change.after);
     const id = after?.Id || before?.Id;

@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace RecipeApp.Services;
 
-public record PlanStatus(bool OwnPlan, bool FamilyEnabled, bool AdFree, long ExpiresAt, bool Owner, string ProductId, string BasePlanId);
+public record PlanStatus(bool OwnPlan, bool FamilyEnabled, bool AdFree, long ExpiresAt, bool Owner, string ProductId, string BasePlanId,int ExtraSeats=0);
 public static class PlanService
 {
     public static event Action Changed;

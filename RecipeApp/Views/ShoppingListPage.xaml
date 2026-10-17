@@ -37,7 +37,12 @@
     </ContentPage.ToolbarItems>
 
     <Grid Padding="16,8,16,8" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
-        <Border Padding="18,16" BackgroundColor="{DynamicResource ThemePrimary}" StrokeThickness="0" StrokeShape="RoundRectangle 20">
+        <Grid x:Name="ShoppingModeBar" IsVisible="False" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <Button Text="Exit shopping" Clicked="ExitShopping_Clicked" HeightRequest="48" />
+            <Label Grid.Column="1" Text="{Binding RemainingText}" VerticalOptions="Center" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}" />
+            <Button Grid.Column="2" Text="Tools" Clicked="ShoppingTools_Clicked" Style="{StaticResource QuietButton}" />
+        </Grid>
+        <Border x:Name="ShoppingHeader" Padding="18,16" BackgroundColor="{DynamicResource ThemePrimary}" StrokeThickness="0" StrokeShape="RoundRectangle 20">
             <VerticalStackLayout Spacing="10">
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="3">
@@ -49,10 +54,11 @@
                     </Border>
                 </Grid>
                 <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
+                <Button Text="Go shopping" Clicked="GoShopping_Clicked" BackgroundColor="White" TextColor="{DynamicResource ThemePrimary}" HeightRequest="48" />
             </VerticalStackLayout>
         </Border>
 
-        <Border Grid.Row="1" Padding="12" StrokeThickness="0" StrokeShape="RoundRectangle 18"
+        <Border x:Name="ShoppingTools" Grid.Row="1" Padding="12" StrokeThickness="0" StrokeShape="RoundRectangle 18"
                 BackgroundColor="{DynamicResource ThemeSurface}">
             <VerticalStackLayout Spacing="5">
                 <Grid ColumnDefinitions="*,68,64" ColumnSpacing="7">
@@ -139,7 +145,7 @@
         </CollectionView>
 
         <VerticalStackLayout Grid.Row="3" Spacing="5">
-            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="7">
+            <Grid x:Name="ShoppingFooterActions" ColumnDefinitions="*,*,*,*" ColumnSpacing="7">
                 <Button Text="Undo" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
                 <Button Grid.Column="1" Text="Redo" Command="{Binding RedoCommand}" Style="{StaticResource QuietButton}" />
                 <Button Grid.Column="2" Text="Clear done" Command="{Binding ClearCollectedCommand}" Style="{StaticResource QuietButton}" Padding="4,0" FontSize="{DynamicResource ThemeFont12}" />

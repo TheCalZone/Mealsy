@@ -37,7 +37,8 @@ public class RecipeEditorView : ContentView
         pictures.Add(Button("Remove photo", () => { model.Draft.Recipe.RecipeImage = ""; UpdatePhoto(); model.Changed(); return Task.CompletedTask; }, true));
         pictures.Add(Text("Photos are resized for quick saving; location metadata is removed.", 12)); body.Add(Card(pictures));
         var ingredients = new VerticalStackLayout { Spacing = 10 };
-        ingredients.Add(Text("02  INGREDIENTS", 12, true)); ingredients.Add(Text("Group ingredients into sections such as Sauce or Topping. Quantities can use fractions or words. Non-main ingredients are offered as cupboard checks when planning a shop.", 14));
+        ingredients.Add(Text("02  INGREDIENTS", 12, true)); ingredients.Add(Text("Herbs, spices and saved essentials are recognised as cupboard checks. Choose Buy each time for anything you always need, or Check cupboard for your own staples. Recipe quantities stay unchanged.", 14));
+        ingredients.Add(Button("Manage cupboard ingredients",()=>Shell.Current.Navigation.PushAsync(new CupboardIngredientsPage(()=>model.Refresh())),true));
         ingredients.Add(sections);
         ingredients.Add(Button("+ Add ingredient section", async () => {
             var name = await Shell.Current.DisplayPromptAsync("New ingredient section", "What is this section called?", placeholder: "Sauce", maxLength: 100);
@@ -100,7 +101,7 @@ public class RecipeEditorView : ContentView
             finally { button.IsEnabled = true; }
         }; return button;
     }
-    private View Field(string path, string title, string hint, int max, bool multiline = false, bool numeric = false, object context = null)
+    private View Field(string path, string title, string hint, int max, bool multiline = false, bool numeric = false, object context = null, Action afterChange = null)
     {
         InputView input = multiline ? new Editor { AutoSize = EditorAutoSizeOption.TextChanges, MinimumHeightRequest = 96 } : new Entry { HeightRequest = 48, ClearButtonVisibility = ClearButtonVisibility.WhileEditing };
         input.Placeholder = hint; input.MaxLength = max; input.FontSize = 16;
@@ -109,12 +110,16 @@ public class RecipeEditorView : ContentView
         input.SetDynamicResource(BackgroundColorProperty, "ThemeBackground");
         if (numeric) input.Keyboard = Keyboard.Numeric;
         if (context != null) input.BindingContext = context;
-        input.SetBinding(InputView.TextProperty, new Binding(path, BindingMode.TwoWay)); input.TextChanged += (_, _) => model.Changed();
+        input.SetBinding(InputView.TextProperty, new Binding(path, BindingMode.TwoWay)); input.TextChanged += (_, _) => { model.Changed(); afterChange?.Invoke(); };
         return new VerticalStackLayout { Spacing = 2, Children = { Text(title, 12, true), input } };
     }
     private void Rebuild()
     {
         sections.Clear(); steps.Clear(); UpdatePhoto();
+        List<string> cupboardRules;
+        try { cupboardRules=CupboardStore.Load(model.EditorAccount); }
+        catch(InvalidOperationException e) { cupboardRules=CupboardRules.Defaults.ToList();model.Status=e.Message; }
+        var essentials=RecipeService.Staples.Where(s=>model.EditorAccount==null?string.IsNullOrEmpty(s.FirebaseUID):s.FirebaseUID==model.EditorAccount).Select(s=>s.Name).ToList();
         foreach (var section in model.Draft.Sections)
         {
             var block = new VerticalStackLayout { Spacing = 10 };
@@ -129,9 +134,17 @@ public class RecipeEditorView : ContentView
             foreach (var item in section.Items)
             {
                 var row = new VerticalStackLayout { Spacing = 7 };
+                var shoppingHint=Text("",12);
+                void UpdateShoppingHint()=>shoppingHint.Text=CupboardRules.Check(item,cupboardRules,essentials)
+                    ? (item.ShoppingPreference==0?"Recognised · Check cupboard before buying":"Check cupboard before buying")
+                    : "Added to the shop by default";
                 var first = new Grid { ColumnDefinitions = new() { new(new GridLength(90)), new(GridLength.Star) }, ColumnSpacing = 8 };
                 first.Add(Field(nameof(item.Quantity), "Quantity", "e.g. ½ tsp", 200, context: item), 0);
-                first.Add(Field(nameof(item.Name), "Ingredient", "e.g. smoked paprika", 200, context: item), 1); row.Add(first);
+                first.Add(Field(nameof(item.Name), "Ingredient", "e.g. smoked paprika", 200, context: item, afterChange:UpdateShoppingHint), 1); row.Add(first);
+                var shopping=new Picker{Title="When shopping",ItemsSource=new[]{"Automatic","Buy each time","Check cupboard"},SelectedIndex=item.ShoppingPreference is >=0 and <=2?item.ShoppingPreference:0,HeightRequest=48};
+                shopping.SetDynamicResource(Picker.TextColorProperty,"ThemeText");
+                shopping.SelectedIndexChanged+=(_,_)=>{item.ShoppingPreference=shopping.SelectedIndex;UpdateShoppingHint();model.Changed();};
+                row.Add(shopping);row.Add(shoppingHint);UpdateShoppingHint();
                 var advanced = new VerticalStackLayout { Spacing = 7, IsVisible = false };
                 var category = new Picker { Title = "Shopping category", ItemsSource = new[] { "Produce", "Dairy", "Meat", "Pantry", "Bakery", "Frozen", "Drinks", "Other" }, HeightRequest = 48 };
                 category.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
@@ -139,8 +152,6 @@ public class RecipeEditorView : ContentView
                 if (category.SelectedIndex < 0) category.SelectedItem = "Other";
                 category.SelectedIndexChanged += (_, _) => { item.Tag = category.SelectedItem?.ToString() ?? "Other"; model.Changed(); }; advanced.Add(category);
                 advanced.Add(Field(nameof(item.Note), "Ingredient note · optional", "finely chopped, room temperature…", 500, context: item));
-                var key = new CheckBox { BindingContext = item }; key.SetBinding(CheckBox.IsCheckedProperty, nameof(item.MainIngredient)); key.CheckedChanged += (_, _) => model.Changed();
-                advanced.Add(new HorizontalStackLayout { Children = { key, Text("Main ingredient", 12) } });
                 row.Add(advanced);
                 var controls = new HorizontalStackLayout { Spacing = 6 };
                 controls.Add(Button("↑", () => { Move(section.Items, item, -1); return Task.CompletedTask; }, true));

@@ -3,6 +3,26 @@ const assert = require('node:assert/strict');
 const {applyChanges, requireMember, requireOwner} = require('../domain');
 const milk = {Id: '11111111-1111-1111-1111-111111111111', Name: 'Milk', Category: 'Dairy', Quantity: '1 L', Note: '', InBasket: false};
 const rice = {...milk, Id: '22222222-2222-2222-2222-222222222222', Name: 'Rice', Category: 'Pantry'};
+const wire = item => Object.fromEntries(Object.entries(item).map(([key, value]) => [key[0].toLowerCase() + key.slice(1), value]));
+
+test('Android camelCase bread changes support add, retry, edit and delete against stored PascalCase', () => {
+  const bread = {...milk, Name: 'Bread', Category: 'Bakery', Quantity: ''};
+  const addition = [{before: null, after: wire(bread)}];
+  const stored = applyChanges({}, addition);
+  assert.deepEqual(stored[bread.Id], bread);
+  assert.deepEqual(applyChanges(stored, addition), stored);
+  const collected = {...bread, InBasket: true};
+  const updated = applyChanges(stored, [{before: wire(bread), after: wire(collected)}]);
+  assert.deepEqual(updated[bread.Id], collected);
+  assert.deepEqual(applyChanges(updated, [{before: wire(collected), after: null}]), {});
+});
+
+test('camelCase payloads preserve validation and conflict detection', () => {
+  assert.throws(() => applyChanges({}, [{after: {...wire(milk), id: 'bad'}}]), {code: 'invalid-argument'});
+  assert.throws(() => applyChanges({}, [{after: {...wire(milk), inBasket: 'true'}}]), {code: 'invalid-argument'});
+  assert.throws(() => applyChanges({}, [{after: {...wire(milk), Id: rice.Id}}]), {code: 'invalid-argument'});
+  assert.throws(() => applyChanges({[milk.Id]: {...milk, Quantity: '3 L'}}, [{before: wire(milk), after: wire({...milk, Quantity: '2 L'})}]), {code: 'aborted'});
+});
 test('concurrent additions preserve both members items', () => {
   const first = applyChanges({}, [{before: null, after: milk}]);
   const second = applyChanges(first, [{before: null, after: rice}]);

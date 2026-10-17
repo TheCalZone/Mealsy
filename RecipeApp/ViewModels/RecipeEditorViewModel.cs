@@ -25,13 +25,14 @@ public class RecipeEditorViewModel : ObservableObject
     public double Progress => ((string.IsNullOrWhiteSpace(Draft.Recipe.RecipeName) ? 0 : 1) + (Draft.IngredientCount > 0 ? 1 : 0) + (Draft.Steps.Any(s => !string.IsNullOrWhiteSpace(s.Text)) ? 1 : 0)) / 3d;
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Draft.Recipe.RecipeImage);
     private string State() => JsonSerializer.Serialize(new { Draft.Recipe, Draft.Servings, Draft.PrepMinutes, Draft.CookMinutes, Draft.Rating, Draft.Sections, Draft.Steps, Draft.PendingPaste });
-    public async Task Initialize(Recipe recipe = null)
+    public async Task Initialize(Recipe recipe = null,bool recoverDraft=true)
     {
         if (ready) return;
         Draft = recipe == null ? new() : RecipeDraft.FromRecipe(recipe); initial = State();
+        await RecipeService.GetStaplesForLocal();CheckAccount();
         try
         {
-            var recovered = await RecipeDraftStore.Load(account, recipe?.Id ?? 0);
+            var recovered = recoverDraft?await RecipeDraftStore.Load(account, recipe?.Id ?? 0):null;
             if (recovered != null) { Draft = recovered; Status = "Draft restored · Your saved recipe hasn't changed"; }
         }
         catch (JsonException) { Status = "An unreadable draft was kept as a recovery copy. A fresh editor is open."; }

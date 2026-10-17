@@ -27,14 +27,14 @@ public static class AccountSession
         var uid=UserId;if(uid==null)return null;
         if(Preferences.Get("Account.profile.pending."+uid,"")=="true")return CachedProfile;
         try{var profile=await FirestoreService.GetUserAsync(uid);Check(uid);if(Preferences.Get("Account.profile.pending."+uid,"")=="true")return CachedProfile;Preferences.Set("Account.profile."+uid,JsonSerializer.Serialize(profile));return profile;}
-        catch(Exception){Check(uid);return CachedProfile;}
+        catch(Exception error){Check(uid);AppDiagnostics.Report(error,"account.profile","SYNC_FAILURE");return CachedProfile;}
     }
     public static async Task SignIn(string email,string password)
     {
         if(UserId!=null)throw new InvalidOperationException("Sign out before signing in to another account.");
         var address=AccountInput.Email(email);if(string.IsNullOrEmpty(password))throw new InvalidOperationException("Enter your password.");
-        try{await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(address,password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AccountInput.Error(e.Reason.ToString()));}
-        catch(Exception){throw new InvalidOperationException("Firebase authentication is unavailable. Check your connection and the app configuration.");}
+        try{await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(address,password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.sign-in",e.Reason.ToString()));}
+        catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.sign-in"));}
         ClearOldPassword();_=SyncSafely();
     }
     public static async Task Register(string email,string password,string confirmation,string first,string last,string diet,string cuisines)
@@ -42,8 +42,8 @@ public static class AccountSession
         if(UserId!=null)throw new InvalidOperationException("Sign out before creating another account.");
         AccountInput.Registration(email,password,confirmation,first);
         if((last??"").Length>80||(diet??"").Length>500||(cuisines??"").Length>500)throw new InvalidOperationException("Shorten your optional profile details.");
-        try{await CrossFirebaseAuth.Current.CreateUserAsync(AccountInput.Email(email),password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AccountInput.Error(e.Reason.ToString()));}
-        catch(Exception){throw new InvalidOperationException("Firebase authentication is unavailable. Check your connection and the app configuration.");}
+        try{await CrossFirebaseAuth.Current.CreateUserAsync(AccountInput.Email(email),password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.register",e.Reason.ToString()));}
+        catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.register"));}
         // Creating the Auth account succeeded. Profile or sync failure must not suggest registering again.
         try{SaveProfile(new AppUser {FirebaseUID=UserId,Email=Email,FirstName=first.Trim(),LastName=last?.Trim()??"",DietRestrictions=diet?.Trim()??"",FavouriteCuisines=cuisines?.Trim()??""});}catch(Exception){ }
         ClearOldPassword();_=SyncSafely();
@@ -52,9 +52,15 @@ public static class AccountSession
     {
         var address=AccountInput.Email(email);
         try{await CrossFirebaseAuth.Current.SendPasswordResetEmailAsync(address);}
-        catch(FirebaseAuthException e){if(e.Reason.ToString()!="UserNotFound")throw new InvalidOperationException(AccountInput.Error(e.Reason.ToString()));}
+        catch(FirebaseAuthException e){if(e.Reason.ToString()!="UserNotFound")throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.reset",e.Reason.ToString()));}
+        catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.reset"));}
     }
-    public static async Task SignOut(){await CrossFirebaseAuth.Current.SignOutAsync();ClearOldPassword();}
+    public static async Task SignOut(){
+#if ANDROID
+        await RecipeApp.Platforms.Android.ActivityNotifications.Disable();
+#endif
+        await CrossFirebaseAuth.Current.SignOutAsync();ClearOldPassword();}
+    public static Task SendVerification() => CrossFirebaseAuth.Current.CurrentUser.SendEmailVerificationAsync();
     public static void ClearOldPassword(){try{SecureStorage.Remove("email");SecureStorage.Remove("password");}catch(Exception){}}
     public static async Task<string> SyncSafely()
     {
@@ -69,7 +75,7 @@ public static class AccountSession
             await FirestoreService.SyncRecipes();Check(uid);await FirestoreService.SyncShoppingLibrary();Check(uid);
             var text="Cloud sync completed · "+DateTime.Now.ToString("t");Preferences.Set("Account.sync."+uid,text);return text;
         }
-        catch(Exception){if(UserId==uid)Preferences.Set("Account.sync."+uid,"Signed in · Cloud sync unavailable. Your local data is kept; retry Sync account.");return UserId==uid?Status:"Account changed";}
+        catch(Exception error){var reference=UserId==uid?AppDiagnostics.Report(error,"account.sync","SYNC_FAILURE"):"";if(UserId==uid)Preferences.Set("Account.sync."+uid,"Signed in · Cloud sync unavailable. Your local data is kept; retry Sync account.\nReference: "+reference);return UserId==uid?Status:"Account changed";}
         finally{sync.Release();}
     }
 }

@@ -1,5 +1,8 @@
 # Household shopping lists
 
+See [deployment status and verification](DEPLOYMENT.md) for this desktop setup,
+the existing database details, and current test results.
+
 Household creation, invitations and shared-list access now require an active monthly or annual
 subscription held by the owner; see [monetization setup](../MONETIZATION.md).
 

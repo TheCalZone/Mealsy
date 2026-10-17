@@ -26,14 +26,14 @@ public class ShoppingQuickAddWidget : AppWidgetProvider
     {
         var views=new RemoteViews(context.PackageName,Resource.Layout.shopping_quick_add_widget);
         var target=WidgetShoppingStore.Target(id);views.SetTextViewText(Resource.Id.widget_list,target?.HouseholdId==null?"Personal shopping list":"Household shopping list");
-        PendingIntent Open(bool configure)
+        PendingIntent Open(string action)
         {
-            var intent=new Intent(context,typeof(MainActivity));intent.SetAction("com.mealsy.widget."+id+(configure?".configure":".add"));
-            intent.SetData(global::Android.Net.Uri.Parse($"mealsy://widget/{id}/{(configure?"configure":"add")}"));
-            intent.PutExtra("mealsy_widget_id",id);intent.PutExtra("mealsy_widget_configure",configure);intent.AddFlags(ActivityFlags.ClearTop|ActivityFlags.SingleTop);
+            var intent=new Intent(context,typeof(MainActivity));intent.SetAction("com.mealsy.widget."+id+"."+action);
+            intent.SetData(global::Android.Net.Uri.Parse($"mealsy://widget/{id}/{action}"));
+            intent.PutExtra("mealsy_widget_id",id);intent.PutExtra("mealsy_widget_configure",action=="configure");intent.PutExtra("mealsy_widget_open",action=="open");intent.AddFlags(ActivityFlags.ClearTop|ActivityFlags.SingleTop);
             return PendingIntent.GetActivity(context,id,intent,PendingIntentFlags.UpdateCurrent|PendingIntentFlags.Immutable);
         }
-        views.SetOnClickPendingIntent(Resource.Id.widget_add,Open(false));views.SetOnClickPendingIntent(Resource.Id.widget_choose,Open(true));
+        views.SetOnClickPendingIntent(Resource.Id.widget_add,Open("add"));views.SetOnClickPendingIntent(Resource.Id.widget_choose,Open("configure"));views.SetOnClickPendingIntent(Resource.Id.widget_open,Open("open"));
         AppWidgetManager.GetInstance(context).UpdateAppWidget(id,views);
     }
 }
@@ -47,14 +47,24 @@ internal static class WidgetNavigation
         opening=true;
         try
         {
-            var configure=intent.GetBooleanExtra("mealsy_widget_configure",false);intent.RemoveExtra("mealsy_widget_id");
+            var configure=intent.GetBooleanExtra("mealsy_widget_configure",false);var open=intent.GetBooleanExtra("mealsy_widget_open",false);intent.RemoveExtra("mealsy_widget_id");
             for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
             if(Shell.Current==null)return;
             if(!App.InitialAccountReady){await Shell.Current.DisplayAlert("Mealsy is still starting","Wait for sign-in to finish, then tap the widget again.","OK");return;}
+            if(open) {
+                var account=HouseholdService.UserId;var target=WidgetShoppingStore.Target(id);
+                if(target==null||!target.BelongsTo(account)) {await MainThread.InvokeOnMainThreadAsync(async()=>await Shell.Current.Navigation.PushAsync(new RecipeApp.Views.WidgetQuickAddPage(id,true)));return;}
+                if(target.HouseholdId!=null) {
+                    var household=await HouseholdService.StatusAsync();
+                    if(account!=HouseholdService.UserId||household.HouseholdId!=target.HouseholdId||!household.FamilyEnabled)throw new InvalidOperationException("Access to the chosen household list has ended. Tap Choose list to select another list.");
+                }
+                var route=target.OpenRoute(HouseholdService.UserId);
+                await MainThread.InvokeOnMainThreadAsync(async()=>await AppNavigation.ShoppingList(route));return;
+            }
             if(Shell.Current.CurrentPage is RecipeApp.Views.WidgetQuickAddPage existing&&existing.WidgetId==id)return;
             await MainThread.InvokeOnMainThreadAsync(async()=>await Shell.Current.Navigation.PushAsync(new RecipeApp.Views.WidgetQuickAddPage(id,configure)));
         }
-        catch(Exception){if(Shell.Current!=null)await Shell.Current.DisplayAlert("Quick add unavailable","Open Mealsy and try the widget again.","OK");}
+        catch(Exception error){if(Shell.Current!=null)await Shell.Current.DisplayAlert("Widget unavailable",error is HouseholdException or InvalidOperationException?error.Message:"Open Mealsy and try the widget again.\nReference: "+AppDiagnostics.Report(error,"ui.action"),"OK");}
         finally{opening=false;}
     }
 }
