@@ -68,6 +68,11 @@ new social backend. See [content sharing setup](CONTENT_SHARING.md).
 - Explicitly share an independent recipe snapshot to the food community.
 
 **Personal shopping list**
+- Offline ingredient autocomplete in shopping quick-add and the widget entry screen.
+  Type two or more characters for up to five suggestions from common ingredients,
+  your account's local recipes/checklists, current list and usage history. Selecting
+  a suggestion fills the name, keeps explicit quantities and suggests a section;
+  it doesn't add the item until you tap Add. No AI or Firebase calls are used.
 - Each item has a drag handle: long-press and drag above/below another item in the
   same section. Checkboxes and item taps keep working; swipe to edit/change section.
   Order saves per list/account on this device, persists through sync and filters,

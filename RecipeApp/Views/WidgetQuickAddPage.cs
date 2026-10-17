@@ -10,11 +10,13 @@ public class WidgetQuickAddPage : ContentPage
     private readonly List<WidgetListTarget> targets=new();
     private readonly Picker picker=new(){Title="Choose a shopping list",HeightRequest=48};
     private readonly Label status=ShoppingUi.Text("Personal items save offline. Household quick-add checks your access online.",13);
+    private readonly IngredientSuggestionsView suggestions=new();
     private readonly Entry name,quantity,note;private Guid pendingId=Guid.NewGuid();private bool busy;
     public WidgetQuickAddPage(int id,bool configure=false)
     {
         WidgetId=id;Title="Quick shopping add";ShoppingUi.Theme(this);
         name=ShoppingUi.Entry("","What do you need?",_=>{});quantity=ShoppingUi.Entry("","Quantity · optional",_=>{});note=ShoppingUi.Entry("","Note · optional",_=>{},500);
+        suggestions.Configure(name,quantity,()=>Array.Empty<string>());
         var saved=WidgetShoppingStore.Target(id);targets.Add(new(account,null,account==null ? "Device list" : "My personal list"));
         if(saved?.BelongsTo(account)==true&&saved.HouseholdId!=null)targets.Add(saved);
         picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=saved==null?0:saved.BelongsTo(account)?targets.FindIndex(t=>t.HouseholdId==saved.HouseholdId):-1;
@@ -23,14 +25,14 @@ public class WidgetQuickAddPage : ContentPage
         var body=new VerticalStackLayout {Padding=20,Spacing=14,Children={ShoppingUi.Text("Add it before you forget",27,true),picker,
             ShoppingUi.Button("Find my household list",()=>Run(async()=>{Check();var household=await HouseholdService.StatusAsync();Check();if(household.HouseholdId==null)throw new InvalidOperationException("Create or join a household first.");if(!household.FamilyEnabled)throw new InvalidOperationException("Your household needs an active Family plan.");targets.RemoveAll(t=>t.HouseholdId!=null);targets.Add(new(account,household.HouseholdId,household.Name+" · household"));picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=targets.Count-1;}),true),
             ShoppingUi.Button("Remember this list for this widget",()=>Run(async()=>{var target=Selected();await Verify(target);Check();WidgetShoppingStore.SetTarget(WidgetId,target);UpdateWidget();status.Text="Widget list selected: "+target.Name;}),true),
-            name,quantity,note,ShoppingUi.Button("Add item",()=>Run(Add)),status,
+            name,suggestions,quantity,note,ShoppingUi.Button("Add item",()=>Run(Add)),status,
             ShoppingUi.Button("Open selected shopping list",()=>Run(async()=>{var target=Selected();await Verify(target);Check();await AppNavigation.ShoppingList(target.HouseholdId==null?"//ShoppingListPage?OpenPersonal=True":"//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(target.HouseholdId));}),true)
         }};Content=new ScrollView {Content=body};
         if(!configure)Dispatcher.Dispatch(()=>name.Focus());
     }
     protected override async void OnAppearing()
     {
-        base.OnAppearing();if(account==HouseholdService.UserId)return;
+        base.OnAppearing();_=suggestions.Refresh();if(account==HouseholdService.UserId)return;
         Content=ShoppingUi.Text("Your account changed. Reopen quick add.");
         await DisplayAlert("Account changed","Reopen the widget to choose a list for your current account.","OK");await Navigation.PopAsync();
     }
@@ -49,7 +51,7 @@ public class WidgetQuickAddPage : ContentPage
     {
         var target=Selected();var item=new ShoppingListItem {Id=pendingId,Name=name.Text?.Trim()??"",Quantity=quantity.Text?.Trim()??"",Note=note.Text?.Trim()??"",Category="Other"};
         if(item.Name.Length==0)throw new InvalidOperationException("Enter an item name.");
-        await Verify(target);Check();var sent=WidgetShoppingStore.Add(target,account,item);WidgetShoppingStore.SetTarget(WidgetId,target);UpdateWidget();pendingId=Guid.NewGuid();name.Text=quantity.Text=note.Text="";status.Text="Added to "+target.Name+" · Saved on this device";
+        await Verify(target);Check();var sent=WidgetShoppingStore.Add(target,account,item);IngredientSuggestionStore.Remember(account,item.Name);WidgetShoppingStore.SetTarget(WidgetId,target);UpdateWidget();pendingId=Guid.NewGuid();name.Text=quantity.Text=note.Text="";status.Text="Added to "+target.Name+" · Saved on this device";
         if(account==null)return;
         try
         {

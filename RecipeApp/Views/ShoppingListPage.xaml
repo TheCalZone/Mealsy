@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:RecipeApp.Models"
              xmlns:vm="clr-namespace:RecipeApp.ViewModels"
+             xmlns:views="clr-namespace:RecipeApp.Views"
              x:Class="RecipeApp.Views.ShoppingListPage"
              x:Name="ShoppingPage" Title="Shopping list"
              BackgroundColor="{DynamicResource ThemeBackground}">
@@ -64,10 +65,11 @@
                 <Grid ColumnDefinitions="*,68,64" ColumnSpacing="7">
                     <Entry x:Name="QuickAddEntry" Style="{StaticResource Field}" Text="{Binding QuickName}" Placeholder="What do you need?"
                            ReturnType="Done" ReturnCommand="{Binding AddItemCommand}" ClearButtonVisibility="WhileEditing" SemanticProperties.Description="New shopping item" />
-                    <Entry Grid.Column="1" Style="{StaticResource Field}" Text="{Binding QuickQuantity}" Placeholder="Qty" SemanticProperties.Description="Optional quantity or unit" />
+                    <Entry x:Name="QuickQuantityEntry" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding QuickQuantity}" Placeholder="Qty" SemanticProperties.Description="Optional quantity or unit" />
                     <Button Grid.Column="2" Text="Add" Command="{Binding AddItemCommand}" BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White"
                             HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" FontAttributes="Bold" />
                 </Grid>
+                <views:IngredientSuggestionsView x:Name="QuickSuggestions" />
                 <Button Text="Reorder sections" Clicked="ReorderSections_Clicked" Style="{StaticResource QuietButton}" />
                 <Button Text="Category &amp; note" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" HorizontalOptions="Start" />
                 <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">

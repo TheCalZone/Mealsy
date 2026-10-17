@@ -1,5 +1,20 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest update: offline ingredient autocomplete
+
+Shopping quick-add and WidgetQuickAddPage show up to five ingredient chips after
+at least two typed characters. Built-in names include minced beef/lamb/pork/garlic/
+ginger; account-owned local recipe ingredients, snacks and essentials supplement
+these. Current-list names and a bounded per-account/device name-frequency history
+help rank suggestions. Own/guest sources are separated and stale async loads are
+discarded after account changes/unloading. No AI, Firebase reads or new backend.
+
+Selecting a chip fills the name, extracts a typed leading amount if the quantity
+field is blank, retains a nonempty explicit quantity and suggests an aisle while
+respecting another manually selected category. It does not submit the item.
+History is local names/counts only (up to 200), not notes or quantities. Personal
+recipe/checklist vocabulary is capped at 1,000 names. Social remains paused.
+
 ## Latest adjustment: item handles replace movement menus
 
 Shopping item rows now have a long-press drag handle instead of the ↕ action menu.

@@ -166,10 +166,12 @@ public class ShoppingListViewModel : CustomViewModelBase
     private void AddItem()
     {
         if (string.IsNullOrWhiteSpace(QuickName)) return;
+        var addedName=QuickName;
         document.Add(new() { Name = QuickName, Quantity = QuickQuantity?.Trim() ?? "", Category = SelectedCategory, Note = QuickNote?.Trim() ?? "" });
         QuickName = QuickQuantity = QuickNote = "";
         SearchText = "";
         Changed("Item added");
+        IngredientSuggestionStore.Remember(HouseholdService.UserId,addedName);
     }
 
     private void BeginEdit(ShoppingListItem item)
