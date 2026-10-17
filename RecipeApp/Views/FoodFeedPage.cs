@@ -136,6 +136,7 @@ public class FoodFeedPage : ContentPage
         });
         body.Add(like);
         body.Add(Button($"Comments · {post.CommentCount}", async () => { EnsureAccount(); await Navigation.PushAsync(new FeedCommentsPage(post.Id, moderator)); }));
+        body.Add(Button("Share post…",()=>ContentSharing.SharePost(post)));
         body.Add(Button("Post options", async () => {
             EnsureAccount();
             var owner = post.AuthorId == account;

@@ -18,7 +18,7 @@ public class BusinessPublicPage:BusinessPage
     private async Task Load(){var p=await BusinessService.Call<PublicBusiness>(new{action="publicProfile",businessId});Check();Reset(p.Business.Name);Body.Add(ProfileHeader(p.Business));_=BusinessService.Track(businessId,"profileViews");
         Body.Add(Button(p.Following?"Unfollow this creator":"Follow this creator",async()=>{await BusinessService.Call<object>(new{action="follow",businessId,following=!p.Following});await Load();}));
         if(!string.IsNullOrEmpty(p.Business.Website))Body.Add(Button("Visit website",async()=>{if(await DisplayAlert("Open website?",p.Business.Website,"Open","Cancel"))await Launcher.Default.OpenAsync(p.Business.Website);}));
-        foreach(var c in p.Collections){Body.Add(ShoppingUi.Text(c.Title,21,true));Body.Add(ShoppingUi.Text(c.Description??""));Body.Add(Button(c.Meals.Count>0?"View collection & weekly plan":"View recipe collection",()=>Navigation.PushAsync(new BusinessCollectionPage(c.Id))));}
+        foreach(var c in p.Collections){Body.Add(ShoppingUi.Text(c.Title,21,true));Body.Add(ShoppingUi.Text(c.Description??""));Body.Add(Button("Share collection / meal plan…",()=>ContentSharing.SharePlan(c.Id)));Body.Add(Button(c.Meals.Count>0?"View collection & weekly plan":"View recipe collection",()=>Navigation.PushAsync(new BusinessCollectionPage(c.Id))));}
         if(p.Collections.Count==0)Body.Add(ShoppingUi.Text("No public collections yet."));
     }
 }
@@ -49,17 +49,25 @@ public class BusinessCollectionEditorPage:BusinessPage
 
 public class BusinessCollectionPage:BusinessPage
 {
-    private readonly string collectionId;private bool imported;private List<BusinessPlanChoice> choices=new();
-    public BusinessCollectionPage(string id):base("Recipe collection"){collectionId=id;}
-    protected override async void OnAppearing(){base.OnAppearing();if(Body.Count>1)return;await Guard(Load);}
+    private readonly string collectionId;private bool imported,loaded,refreshing;private List<BusinessPlanChoice> choices=new();
+    public BusinessCollectionPage(string id):base("Recipe collection"){collectionId=id;Reset("Opening shared recipes & meal plan…");ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Guard(Refresh)));}
+    protected override async void OnAppearing(){base.OnAppearing();if(!loaded)await Guard(Refresh);}
+    private async Task Refresh(){if(refreshing)return;refreshing=true;Reset("Opening shared recipes & meal plan…");var progress=new LoadingIndicator("Loading creator recipes…");Body.Add(progress);try{await Load();loaded=true;}finally{Body.Remove(progress);refreshing=false;}}
     private async Task Load(){
-        var d=await BusinessService.Call<BusinessCollectionDetail>(new{action="collection",collectionId});Check();Reset(d.Collection.Title);Body.Add(ProfileHeader(d.Business));Body.Add(ShoppingUi.Text(d.Collection.Description??""));_=BusinessService.Track(d.Business.Id,"collectionOpens",collectionId);
+        var d=await BusinessService.Call<BusinessCollectionDetail>(new{action="collection",collectionId});Check();Reset(d.Collection.Title);Body.Add(ProfileHeader(d.Business));Body.Add(ShoppingUi.Text(d.Collection.Description??""));Body.Add(Button("Share this collection / meal plan…",()=>ContentSharing.SharePlan(collectionId)));_=BusinessService.Track(d.Business.Id,"collectionOpens",collectionId);
         foreach(var post in d.Posts){Body.Add(ShoppingUi.Text(post.Recipe.Title,20,true));Body.Add(Button("View recipe",async()=>{_=BusinessService.Track(d.Business.Id,"recipeOpens",post.Id);await Navigation.PushAsync(new FeedRecipePage(post));}));Body.Add(Button("Save a private copy",async()=>{var all=await RecipeService.GetAllRecipes();Check();var key="business-copy-"+post.Id;if(!all.Any(r=>r.FirebaseUID==Account&&r.CloudKey==key)){var recipe=post.PrivateCopy(Account);recipe.CloudKey=key;await RecipeService.AddRecipe(recipe);if(Account!=null)_=AccountSession.SyncSafely();}_=BusinessService.Track(d.Business.Id,"saves",post.Id);await DisplayAlert("Saved","A private recipe copy is in your recipe book.","OK");}));}
         if(d.Collection.Meals.Count>0){
             await RecipeService.CreateMealPlan(Account);var plan=await RecipeService.GetMealPlan(Account);Check();Body.Add(ShoppingUi.Text("Add to your weekly plan",22,true));Body.Add(ShoppingUi.Text("Select meals and adjust their days, meal slots and servings. These will be added alongside existing meals and notes.",13));
             choices=d.Collection.Meals.Select(m=>new BusinessPlanChoice{Post=d.Posts.Single(p=>p.Id==m.PostId),Day=m.Day,Slot=m.Slot,Servings=d.Posts.Single(p=>p.Id==m.PostId).Recipe.Servings.ToString()}).ToList();
             var dayNames=Enumerable.Range(0,7).Select(i=>plan.WeekStart.AddDays(i).ToString("ddd d MMM")).ToArray();
             foreach(var choice in choices){var box=new VerticalStackLayout{Spacing=7};box.Add(new HorizontalStackLayout{Children={ShoppingUi.Check(true,v=>choice.Selected=v),ShoppingUi.Text(choice.Post.Recipe.Title,17,true)}});var day=new Picker{ItemsSource=dayNames,SelectedIndex=choice.Day};day.SelectedIndexChanged+=(_,_)=>choice.Day=day.SelectedIndex;var slot=new Picker{ItemsSource=MealPlanning.Slots,SelectedIndex=choice.Slot};slot.SelectedIndexChanged+=(_,_)=>choice.Slot=slot.SelectedIndex;box.Add(day);box.Add(slot);box.Add(ShoppingUi.Entry(choice.Servings,"Servings",s=>choice.Servings=s,4,true));Body.Add(ShoppingUi.Card(box));}
+            Body.Add(Button("Save recipes & shop selected meals",async()=>{
+                var totals=CreatorPlanSelection.ShoppingServings(choices);
+                if(!await DisplayAlert("Save recipes & review shopping?","Save private recipe copies and review ingredients for the selected meals and portions? Check your cupboard before adding items. Your meal plan and current shopping list are kept.","Review shopping","Cancel"))return;
+                var copies=await BusinessPlanImport.SaveRecipes(choices,Account);Check();
+                var shopping=totals.Select(pair=>new RecipeShoppingChoice(copies[pair.Key]){Selected=true,Servings=pair.Value.ToString()}).ToList();
+                await AppNavigation.Open(new ShoppingListMakerPage(shopping));
+            }));
             Body.Add(Button("Add selected meals to my plan",async()=>{if(imported)throw new InvalidOperationException("This selection was already added. View your meal planner to make changes.");BusinessPlanImport.Validate(choices);if(!await DisplayAlert("Add meals?","Save private recipe copies and add these meals to your current week? Existing meals are kept.","Add meals","Cancel"))return;await BusinessPlanImport.Apply(choices,Account);imported=true;_=BusinessService.Track(d.Business.Id,"planSaves",collectionId);await DisplayAlert("Meals added","Open your meal planner to review the week and create a shopping list with cupboard checks.","OK");}));
         }
         if(!string.IsNullOrEmpty(d.Collection.Offer?.Url)){

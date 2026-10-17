@@ -166,3 +166,19 @@ test('combined UTF-8 payload limit rejects oversized multi-byte recipes before w
   await assert.rejects(f.call('alice', {...content, recipe: large, photo: png.toString('base64')}), {code: 'invalid-argument'});
   assert.equal([...f.db.docs.keys()].filter(k => !k.startsWith('communityProfiles/')).length, 0);
 });
+
+test('direct post links require login, sanitize fields and reflect current visibility',async()=>{
+ const f=fixture();await f.call('alice',content);
+ await assert.rejects(f.call(null,{action:'getPost',postId:'post-1'}),{code:'unauthenticated'});
+ const stored=f.db.docs.get('feedPosts/post-1');stored.privateEmail='secret@example.com';stored.digest='private';
+ const result=await f.call('bob',{action:'getPost',postId:'post-1'});
+ assert.equal(result.post.id,'post-1');assert.equal(result.post.audience,'public');assert.equal(result.post.privacyManaged,false);
+ assert(!JSON.stringify(result).includes('secret@example.com'));assert(!('digest' in result.post));
+ await f.call('bob',{action:'like',postId:'post-1',liked:true});assert.equal((await f.call('bob',{action:'getPost',postId:'post-1'})).post.liked,true);
+ for(const fields of [{hidden:true},{deleted:true},{audience:'friends'},{audience:'onlyMe'},{audience:'unknown'},{privacyManaged:true}]){
+   f.db.docs.set('feedPosts/post-1',{...stored,hidden:false,deleted:false,audience:'public',privacyManaged:false,...fields});
+   await assert.rejects(f.call('bob',{action:'getPost',postId:'post-1'}),{code:'not-found'});
+ }
+ await assert.rejects(f.call('bob',{action:'getPost',postId:'missing'}),{code:'not-found'});
+ await assert.rejects(f.call('bob',{action:'getPost',postId:'../users/alice'}),{code:'invalid-argument'});
+});

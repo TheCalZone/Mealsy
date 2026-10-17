@@ -11,6 +11,17 @@ for exact `social` and `householdMeals` contracts, legacy feed privacy migration
 authorization, media restrictions, concurrency and rollout requirements. Do not advertise
 these features as live until those services and real-device integration checks pass.
 
+## Latest content sharing work
+
+Published creator plans and social posts can be shared as identifiers-only HTTPS
+links. Recipients can save selected creator recipe copies and shop directly,
+with repeated recipe portions combined. Android handles custom links and verified
+HTTPS link intents; sign-in keeps the destination. `/share/` is the new mobile
+landing page; `/` remains the desktop studio. `foodFeed.getPost` is added in source
+for direct authenticated legacy post reads. **No changes have been deployed.**
+See [CONTENT_SHARING.md](CONTENT_SHARING.md) and the updated Firebase handoff for
+Hosting, App Signing certificate association and privacy requirements.
+
 ## Current state
 
 The Android application and backend include business/creator workspaces, moderated recipe publishing, collections and weekly plans, team roles, analytics, campaign drafts and prepaid impression-accounting infrastructure. The latest fixes add full-screen shopping, public-name comments and replies, private activity notifications with opt-in Android push, four included household members with extra-place billing support, household batch portions, Android recipe-link sharing/import and navigation/keyboard fixes.

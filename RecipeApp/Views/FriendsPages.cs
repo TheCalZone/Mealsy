@@ -24,7 +24,7 @@ public abstract class SocialPage:ContentPage
         var body=new VerticalStackLayout{Spacing=8};body.Add(ShoppingUi.Button(post.AuthorName,()=>AppNavigation.Open(new FriendProfilePage(post.AuthorId)),true));
         body.Add(ShoppingUi.Text(SocialPolicy.AudienceLabel(post.Audience),12,true));if(!string.IsNullOrWhiteSpace(post.Caption))body.Add(ShoppingUi.Text(post.Caption));
         var photo=RecipeCardView.Photo(post.Photo);if(photo!=null)body.Add(photo);if(post.Recipe!=null)body.Add(ShoppingUi.Text(post.Recipe.Title,19,true));
-        body.Add(ShoppingUi.Text($"{post.LikeCount} likes · {post.CommentCount} comments",12));body.Add(ShoppingUi.Button("Open conversation",()=>AppNavigation.Open(new FriendPostPage(post.Id))));return ShoppingUi.Card(body);
+        body.Add(ShoppingUi.Text($"{post.LikeCount} likes · {post.CommentCount} comments",12));body.Add(ShoppingUi.Button("Open conversation",()=>AppNavigation.Open(new FriendPostPage(post.Id))));body.Add(ShoppingUi.Button("Share link…",()=>ContentSharing.SharePost(post),true));return ShoppingUi.Card(body);
     }
 }
 public class FriendsPage:SocialPage

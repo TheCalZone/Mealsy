@@ -20,6 +20,8 @@
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../RecipeApp/Services/ContentLinks.cs" Link="ContentLinks.cs" />
+    <Compile Include="../RecipeApp/Services/CreatorPlanSelection.cs" Link="CreatorPlanSelection.cs" />
     <Compile Include="../RecipeApp/Models/SocialModels.cs" Link="SocialModels.cs" />
     <Compile Include="../RecipeApp/Services/SocialPolicy.cs" Link="SocialPolicy.cs" />
     <Compile Include="../RecipeApp/Services/LoadGeneration.cs" Link="LoadGeneration.cs" />

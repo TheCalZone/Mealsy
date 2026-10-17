@@ -60,7 +60,7 @@ public class BusinessWorkspacePage:BusinessPage
             Body.Add(Button("Create collection / weekly plan",()=>Navigation.PushAsync(new BusinessCollectionEditorPage(w))));
         }
         Body.Add(ShoppingUi.Text("Collections & weekly plans",22,true));
-        foreach(var c in w.Collections){Body.Add(ShoppingUi.Text(c.Title+(c.Published?" · Published":" · Draft"),17,true));if(w.Role is "owner" or "editor")Body.Add(Button("Edit collection",()=>Navigation.PushAsync(new BusinessCollectionEditorPage(w,c))));if(c.Published)Body.Add(Button("Preview public collection",()=>Navigation.PushAsync(new BusinessCollectionPage(c.Id))));}
+        foreach(var c in w.Collections){Body.Add(ShoppingUi.Text(c.Title+(c.Published?" · Published":" · Draft"),17,true));if(w.Role is "owner" or "editor")Body.Add(Button("Edit collection",()=>Navigation.PushAsync(new BusinessCollectionEditorPage(w,c))));if(c.Published){Body.Add(Button("Share published meal plan / collection…",()=>ContentSharing.SharePlan(c.Id)));Body.Add(Button("Preview public collection",()=>Navigation.PushAsync(new BusinessCollectionPage(c.Id))));}}
         Body.Add(ShoppingUi.Text("Campaigns",22,true));Body.Add(ShoppingUi.Text("Paid checkout is not enabled. Campaigns can be prepared and paused; setting a budget does not charge money or activate paid placement.",13));
         foreach(var c in w.Campaigns){Body.Add(ShoppingUi.Text($"{c.Name} · {c.Status}\n£{c.BudgetMinor/100m:0.00} total · £{c.DailyBudgetMinor/100m:0.00}/day · Spent £{c.SpentMinor/100m:0.00} · {c.Impressions} billable impressions",14));if(w.Role is "owner" or "campaignManager"){
             Body.Add(Button("Edit campaign",()=>Navigation.PushAsync(new BusinessCampaignPage(w,c))));

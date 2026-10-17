@@ -1,9 +1,10 @@
-# Firebase handoff: friends, privacy and household meal plans
+# Firebase handoff: friends, privacy, household meals and content sharing
 
-**Client branch:** `codex/android-runtime-fixes`. This change implements the client,
-DTOs and API contract only. **No Functions, rules, indexes, production resources or
-existing account data were changed.** The functions below do not exist in the
-previous deployment. New social/planner screens show a setup/connection error
+**Client branch:** `codex/android-runtime-fixes`. Friends and household meals implement
+client DTOs and API contracts only. The later content-sharing change also adds a
+`foodFeed.getPost` handler and static Hosting files **in source**. Nothing has been
+deployed and no production resources or account data were changed. The new `social`
+and `householdMeals` functions below do not exist in the previous deployment. New social/planner screens show a setup/connection error
 until they are implemented. Existing personal plans remain local and unchanged.
 
 Private posts never fall back to the existing public endpoint. Ordinary public
@@ -254,3 +255,49 @@ visibility on notification reads and on opening the destination; suppress stale
 notifications after blocking, unfriend, privacy changes or deletion. Authorize marking
 notifications read against the recipient UID. Friend notifications must be generated
 server-side and deduplicated from successful relationship transitions.
+
+## Content sharing and creator meal plans (17 October 2026)
+
+See [CONTENT_SHARING.md](CONTENT_SHARING.md) for release and Android device checks.
+
+Client URLs use `https://mealsy-b732b.web.app/share/?kind=KIND&id=ID`:
+`post` addresses the legacy public feed, `social` addresses the privacy-aware
+service, and `plan` addresses a published creator collection/weekly plan.
+The same target opens through `mealsy://content?kind=KIND&id=ID`. Links contain
+identifiers only; neither signed URLs nor caption/photo/recipe snapshots are
+embedded. They do not confer access. The static page never reads Firestore or
+fetches post content. Social network previews use generic Mealsy text/artwork.
+
+**Implemented backend delta, still requiring deployment:** `foodFeed.getPost`
+accepts `{ action: "getPost", postId }` and returns `{ post: FoodPost }`. It
+requires auth, reads visibility and the viewer's like in one transaction, rejects
+missing/hidden/deleted posts and explicitly rejects nonpublic or privacy-managed
+records. It returns only the existing public DTO fields plus explicit
+`audience: "public"`, `privacyManaged: false` and `liked`. It is never used as a
+fallback for a failed `social.getPost`. Include this action in operational logs.
+When implementing the broader social backend above, apply its block/visibility
+policy here and to all legacy reads too; the legacy implementation has no new
+friend/block database and cannot enforce a not-yet-implemented relationship model.
+
+Creator shares reuse **existing** `business.collection` reads and existing
+`saveCollection` publishing; they require signed-in users, a published collection
+and verified creator, and omit removed/hidden/unapproved recipes. There is no new
+public anonymous collection API or client direct database read. Current server
+visibility rules remain authoritative. Consider transactionally consistent reads
+when extending this service for new audience support. Do not put household or
+friends-only plans into the public business collection namespace.
+
+Recipients can save selected recipe copies and shop directly, or import selected
+meals into their personal week. Repeated recipes combine their selected portions
+before cupboard review. Existing private recipe edits and shopping items are
+preserved. Weekly template saving remains governed by its existing Premium flow;
+opening a creator's share and shopping its recipes do not add a new paywall.
+
+Deploy the static `/share/` directory using existing Hosting; keep the desktop
+studio at `/` and invitations at `/join/`. Then configure Digital Asset Links
+with the **Play App Signing** SHA-256 certificate for both HTTPS hosts. No actual
+certificate was guessed or committed. Without it, use the explicit Open Mealsy
+button on the landing page. Update store links if the package/listing changes.
+There is no Firebase Dynamic Links dependency or automatic deferred install
+attribution. After first installation users return to the share page or reopen
+its link. Friend/private shares require the new social service before release.

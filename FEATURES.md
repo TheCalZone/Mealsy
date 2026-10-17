@@ -25,6 +25,20 @@ These screens require the new Firebase endpoints; they are not deployed by this 
 See [Firebase implementation handoff](FIREBASE_HANDOFF.md) for contracts, permissions,
 privacy migration and rollout tests. Existing public feed services remain in use.
 
+## Creator plan and social sharing
+
+- Share published creator collections/weekly plans or community posts through
+  Android's share sheet (available social/messaging apps).
+- Open exact posts or plans in Mealsy; sign-in retains the shared destination.
+  Private links preserve the author's access restrictions.
+- Save selected creator recipes and shop selected meals directly, combining repeated
+  recipe portions before cupboard review. Importing to a personal week is optional.
+- Mobile download/open-app landing page and generic social preview artwork.
+
+Code is ready; Hosting, `foodFeed.getPost` deployment, Play availability and Android
+App Links certificate association are required. Private links also depend on the
+new social backend. See [content sharing setup](CONTENT_SHARING.md).
+
 ## Free personal features
 
 **Recipe book**

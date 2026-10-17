@@ -22,7 +22,7 @@ public class AuthFormView : ContentView
             try
             {
                 if(signup)await AccountSession.Register(email.Text,password.Text,confirm.Text,first.Text,last.Text,diet.Text,cuisines.Text);else await AccountSession.SignIn(email.Text,password.Text);
-                authenticated=true;password.Text="";if(confirm!=null)confirm.Text="";progress.Message="Opening your account…";if(signedIn!=null)await signedIn();else{if(Shell.Current.Navigation.NavigationStack.Count>1)await Shell.Current.Navigation.PopToRootAsync(false);await AppNavigation.Root("AccountPage");}if(signup||OnboardingState.PendingCode.Length>0)await AppNavigation.Open(new OnboardingPage(startAt:OnboardingState.PendingCode.Length>0?2:0));
+                authenticated=true;password.Text="";if(confirm!=null)confirm.Text="";progress.Message="Opening your account…";if(signedIn!=null)await signedIn();else{if(Shell.Current.Navigation.NavigationStack.Count>1)await Shell.Current.Navigation.PopToRootAsync(false);await AppNavigation.Root("AccountPage");}if(signup||OnboardingState.PendingCode.Length>0)await AppNavigation.Open(new OnboardingPage(startAt:OnboardingState.PendingCode.Length>0?2:0));await ContentSharing.Resume();
             }
             catch(Exception e){status.Text=e is InvalidOperationException?e.Message:"Couldn't reach the account service. Check your connection and try again.";}
             finally{busy=false;body.IsEnabled=true;progress.IsBusy=false;}

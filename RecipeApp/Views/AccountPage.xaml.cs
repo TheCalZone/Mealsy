@@ -44,6 +44,7 @@ public partial class AccountPage : ContentPage
         if(AccountSession.UserId==null){Content=new AuthFormView(false,SignedIn);return;}
         var profile=AccountSession.CachedProfile;var status=ShoppingUi.Text(AccountSession.Status,13);var body=new VerticalStackLayout{Padding=20,Spacing=16};
         body.Add(ShoppingUi.Text("Your place at the table",28,true));body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Text(string.IsNullOrWhiteSpace(profile.FirstName)?"Welcome to Mealsy":profile.FirstName+" "+profile.LastName,23,true),ShoppingUi.Text(AccountSession.Email??"",14),ShoppingUi.Text("Private account · Each family member uses their own login",13)}}));
+        if(ContentSharing.HasPending)body.Add(ShoppingUi.Button("Open saved shared post or plan",ContentSharing.Resume));
         if(loading)body.Add(new LoadingIndicator("Updating profile, community name and account permissions…"));
         if(loadWarning!=null){body.Add(ShoppingUi.Text(loadWarning,13));body.Add(ShoppingUi.Button("Retry account details",RefreshAccountAsync,true));}
         body.Add(ShoppingUi.Text("Your community username",22,true));

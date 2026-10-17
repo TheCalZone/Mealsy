@@ -14,12 +14,16 @@ namespace RecipeApp;
 [IntentFilter(new[]{Intent.ActionSend},Categories=new[]{Intent.CategoryDefault},DataMimeType="text/plain")]
 [IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="join")]
 [IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="welcome")]
+[IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="content")]
+[IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="https",DataHost="mealsy-b732b.web.app",DataPathPrefix="/share/",AutoVerify=true)]
+[IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="https",DataHost="mealsy-b732b.firebaseapp.com",DataPathPrefix="/share/",AutoVerify=true)]
 public class MainActivity : MauiAppCompatActivity
 {
     protected override void OnCreate(Bundle savedInstanceState)
         {
         base.OnCreate(savedInstanceState);
         Platforms.Android.WidgetNavigation.FromIntent(Intent);
+        OpenContent(Intent);
         OpenInvitation(Intent);
         OpenSharedRecipe(Intent);
         OpenActivity(Intent);
@@ -31,9 +35,20 @@ public class MainActivity : MauiAppCompatActivity
 
     protected override void OnNewIntent(global::Android.Content.Intent intent)
     {
-        base.OnNewIntent(intent); Intent=intent; Platforms.Android.WidgetNavigation.FromIntent(intent);OpenInvitation(intent);OpenSharedRecipe(intent);OpenActivity(intent);
+        base.OnNewIntent(intent); Intent=intent; Platforms.Android.WidgetNavigation.FromIntent(intent);OpenContent(intent);OpenInvitation(intent);OpenSharedRecipe(intent);OpenActivity(intent);
     }
 
+    private static bool openingContent;
+    private static async void OpenContent(Intent intent)
+    {
+        if(intent?.Action!=Intent.ActionView||openingContent)return;
+        Services.ContentTarget target;try{target=Services.ContentLinks.Parse(intent.DataString);}catch(InvalidOperationException){return;}
+        intent.SetData(null);openingContent=true;
+        try{
+            for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
+            if(App.InitialAccountReady&&Shell.Current!=null)await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>Services.ContentSharing.Open(target));
+        }catch(Exception error){Services.AppDiagnostics.Report(error,"ui.action");}finally{openingContent=false;}
+    }
     private static bool openingInvitation;
     private static async void OpenInvitation(Intent intent)
     {
@@ -54,6 +69,12 @@ public class MainActivity : MauiAppCompatActivity
         if(intent?.Action!=Intent.ActionSend||openingShare)return;
         var text=intent.GetStringExtra(Intent.ExtraText);intent.RemoveExtra(Intent.ExtraText);if(string.IsNullOrWhiteSpace(text)||text.Length>10000)return;
         var match=System.Text.RegularExpressions.Regex.Match(text,@"https://[^\s<>""']+");if(!match.Success)return;
+        try{
+            var content=Services.ContentLinks.Parse(match.Value);
+            openingShare=true;
+            try{for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);if(App.InitialAccountReady&&Shell.Current!=null)await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>Services.ContentSharing.Open(content));}
+            finally{openingShare=false;}return;
+        }catch(InvalidOperationException){ }
         openingShare=true;
         try{for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
             if(!App.InitialAccountReady||Shell.Current==null)return;
