@@ -53,3 +53,14 @@ Public plan name is Mealsy Premium, including Family sharing. Product/base-plan 
 ## Invitations and onboarding update
 
 `ONBOARDING_AND_INVITES.md` covers the new optional Get started guide, shared Android download/household-code landing page, native `mealsy://join` and `mealsy://welcome` links, and the complimentary-Premium admin shortcut. The admin UI uses the existing audited `setFamilyGrant` API; no live grant or server deployment was performed. Deploy Hosting to activate `/join/` and distribute an updated app. Google Play listing/test eligibility remains required; fresh installs may need code paste and native link handling needs phone verification. Validation: 213 .NET tests, 103 backend tests and 10 browser tests passed. No signed artifacts or signing material are committed.
+
+## iOS client branch
+
+Continue iOS client preparation on `codex/ios-client-support`; see `IOS_SETUP.md`.
+This branch leaves all backend and Hosting source unchanged. It prepares project
+configuration, safe areas, native invitation routing and platform-aware controls.
+Native iOS compilation is blocked in Linux by NETSDK1178, so Mac/iPhone validation
+is required. StoreKit/backend Apple receipt verification, APNs, iOS ads, WidgetKit
+and a share extension remain separate unfinished platform work. The existing
+.NET 8/MAUI 8/native Firebase versions also need a supported-toolchain migration
+before claiming App Store readiness. Paid campaigns remain disabled.

@@ -18,6 +18,7 @@ public class ActivityPage:ContentPage
         var inbox=await HouseholdService.CallEndpointAsync<ActivityInbox>(Endpoint,new{action="list"});AccountSession.Check(account);body.Clear();
         body.Add(ShoppingUi.Text("Comments, replies & follows",24,true));
         body.Add(ShoppingUi.Text("Your latest 50 notifications. Refresh to check for new activity.",13));
+        if(!ClientPlatform.PhonePushAvailable)body.Add(ShoppingUi.Text("Activity is available here. Background phone alerts are not configured for this iOS build.",13));
         if(inbox.Items.Count==0)body.Add(ShoppingUi.Text("You're all caught up."));
         foreach(var item in inbox.Items){var card=new VerticalStackLayout{Spacing=6};card.Add(ShoppingUi.Text((item.Read?"":"● ")+item.Message,16,true));card.Add(ShoppingUi.Text(DateTimeOffset.FromUnixTimeMilliseconds(item.CreatedAt).ToLocalTime().ToString("g"),12));
             card.Add(ShoppingUi.Button("Open conversation",async()=>{AccountSession.Check(account);await HouseholdService.CallEndpointAsync<object>(Endpoint,new{action="read",id=item.Id});await Navigation.PushAsync(new FeedCommentsPage(item.PostId,false));}));body.Add(ShoppingUi.Card(card));}

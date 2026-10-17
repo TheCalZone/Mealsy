@@ -57,16 +57,16 @@ public static class MauiProgram
         builder.ConfigureLifecycleEvents(events => {
 #if IOS
             events.AddiOS(iOS => iOS.FinishedLaunching((_, __) => {
-             CrossFirebase.Initialize();
-                //"Mealsy" ,new Firebase.Core.Options("1:1067194949884:ios:42663f840336cbe6aab779", "1067194949884")
-                //{
-                //    ApiKey = "AIzaSyD-9tSrZ0wZ2j8Q9x5hU4JGzr3f3cQb3d8",
-                //    ProjectId = "mealsy-b732b",
-                //    BundleId = "com.companyname.recipeapp",
-                //    ClientId = "1067194949884-pbr5bbd66ka2hqros2khfpa5ccvdp825.apps.googleusercontent.com",
-                //    GoogleAppId = "1:1067194949884:ios:42663f840336cbe6aab779"
-                //}
-                AppDiagnostics.ApplyCollection();
+                try
+                {
+                    CrossFirebase.Initialize();
+                    AppDiagnostics.ApplyCollection();
+                }
+                catch(Exception error)
+                {
+                    AppDiagnostics.Report(error,"sdk.startup","SDK_STARTUP");
+                    System.Diagnostics.Debug.WriteLine("Firebase initialization unavailable; local tools remain available.");
+                }
             return true;
             }));
 #elif ANDROID

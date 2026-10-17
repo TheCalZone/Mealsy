@@ -1,3 +1,6 @@
+#if IOS
+using nfloat = System.Runtime.InteropServices.NFloat;
+#endif
 namespace RecipeApp.Services;
 
 /// <summary>Small JPEG copies keep the feed bounded and strip location/EXIF metadata.</summary>

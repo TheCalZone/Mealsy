@@ -28,6 +28,9 @@ internal static class ShoppingUi
     }
     public static void Theme(ContentPage page)
     {
+#if IOS
+        Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific.Page.SetUseSafeArea(page,true);
+#endif
         page.Padding=0; page.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeBackground");
     }
 }

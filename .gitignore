@@ -376,3 +376,10 @@ credentials.json
 .env
 .env.*
 !.env.example
+
+# Apple signing/provisioning and local archives
+*.mobileprovision
+*.provisionprofile
+*.p8
+*.ipa
+*.xcarchive/

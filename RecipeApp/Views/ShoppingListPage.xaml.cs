@@ -32,7 +32,7 @@ public partial class ShoppingListPage : ContentPage
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
     private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();if(!ClientPlatform.HomeScreenWidgetAvailable){var widget=ToolbarItems.FirstOrDefault(t=>t.Text=="Home-screen quick add");if(widget!=null)ToolbarItems.Remove(widget);}ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
     protected override async void OnAppearing()
     {
