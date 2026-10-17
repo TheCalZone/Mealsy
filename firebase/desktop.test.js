@@ -9,12 +9,12 @@ let server, browser, origin;
 before(async () => {
   server = http.createServer((req, res) => {
     const path = req.url === '/' ? '/index.html' : req.url === '/join/' ? '/join/index.html' : req.url;
-    if (!['/index.html','/app.js','/style.css','/firebase-config.js','/join/index.html','/join/invite.js'].includes(path)) { res.writeHead(404).end(); return; }
+    if (!['/index.html','/app.js','/style.css','/firebase-config.js','/join/index.html','/join/invite.js','/product-features.js','/studio-loader.js'].includes(path)) { res.writeHead(404).end(); return; }
     for (const rule of JSON.parse(readFileSync(`${__dirname}/../firebase.json`, 'utf8')).hosting.headers || []) {
       if (rule.source === '**') for (const header of rule.headers) res.setHeader(header.key, header.value);
     }
     res.setHeader('Content-Type', path.endsWith('.js') ? 'text/javascript' : path.endsWith('.css') ? 'text/css' : 'text/html');
-    res.end(readFileSync(`${__dirname}/desktop${path}`));
+    res.end(path==='/product-features.js'?'window.MealsyRelease={socialEnabled:true};':readFileSync(`${__dirname}/desktop${path}`));
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); origin = `http://127.0.0.1:${server.address().port}`;
   const executablePath = process.env.CHROMIUM_PATH || '/usr/bin/chromium';

@@ -1,5 +1,14 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Current priority: social features paused
+
+The user has paused all social/creator work. Android hides the entry points and
+blocks their navigation, incoming content links and social notifications. The web
+release also hides the community studio and creator links. Keep the retained code
+disabled unless the user explicitly resumes it. Personal/household shopping and
+meal planning remain available. See [SOCIAL_PAUSE.md](SOCIAL_PAUSE.md). No Firebase
+backend or production deployment changes were made for this pause.
+
 Continue from branch `codex/android-runtime-fixes` in `TheCalZone/Mealsy`.
 
 ## Latest frontend work: friends, privacy and shared meal plans

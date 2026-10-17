@@ -1,5 +1,9 @@
 # Mealsy content sharing
 
+**Release pause:** Social posts and creator-plan sharing are currently disabled.
+The retained implementation below is for future use. Generic app sharing, download
+guidance and household invitation links remain available. See [SOCIAL_PAUSE.md](SOCIAL_PAUSE.md).
+
 Android source branch: `codex/android-runtime-fixes`.
 
 Creators: Business & creators → workspace → create/edit a collection and optional

@@ -10,7 +10,7 @@ public class AuthFormView : ContentView
     public AuthFormView(bool signup,Func<Task> signedIn=null)
     {
         body.Add(ShoppingUi.Text(signup?"A little less planning. A lot more good food.":"Welcome back to your kitchen",29,true));
-        body.Add(ShoppingUi.Text(signup?"Create your own Mealsy account. Keep your recipes and personal shopping separate, and join a family when you're ready.":"Sign in to sync your personal recipes and checklists, join your household and share with the food community.",15));
+        body.Add(ShoppingUi.Text(signup?"Create your own Mealsy account. Keep your recipes and personal shopping separate, and join a family when you're ready.":"Sign in to sync your personal recipes and checklists, and share shopping with your household.",15));
         Entry Field(string title,string hint,int max=200,bool secret=false,Keyboard keyboard=null){body.Add(ShoppingUi.Text(title,12,true));var input=ShoppingUi.Entry("",hint,_=>{},max);input.IsPassword=secret;input.Keyboard=keyboard??Keyboard.Default;input.IsTextPredictionEnabled=!secret;body.Add(input);return input;}
         if(signup){first=Field("First name","What should we call you?",80);last=Field("Last name · optional","Last name",80);}
         email=Field("Email address","you@example.com",254,keyboard:Keyboard.Email);password=Field(signup?"Password · 8+ characters":"Password","Your password",128,true);

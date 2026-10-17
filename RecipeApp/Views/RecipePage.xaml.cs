@@ -13,8 +13,8 @@ public partial class RecipePage : ContentPage
     }
     private void Render()
     {
-        var header=new VerticalStackLayout{Padding=16,Spacing=10};header.Add(ShoppingUi.Text("Keep the meals you love",28,true));header.Add(ShoppingUi.Text(account==null?"Your device recipe book. Sign in for a separate synced collection.":"Your private recipe book · Cook, collect and share when you choose.",14));
-        var actions=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};actions.Add(ShoppingUi.Button("+ Create recipe",()=>AppNavigation.Open(new AddRecipePage())),0);actions.Add(ShoppingUi.Button("Food community",()=>AppNavigation.Open(new FoodFeedPage()),true),1);header.Add(actions);
+        var header=new VerticalStackLayout{Padding=16,Spacing=10};header.Add(ShoppingUi.Text("Keep the meals you love",28,true));header.Add(ShoppingUi.Text(account==null?"Your device recipe book. Sign in for a separate synced collection.":"Your private recipe book · Save, plan and cook your favourites.",14));
+        var actions=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};var create=ShoppingUi.Button("+ Create recipe",()=>AppNavigation.Open(new AddRecipePage()));actions.Add(create,0);if(!ProductFeatures.SocialEnabled)Grid.SetColumnSpan(create,2);if(ProductFeatures.SocialEnabled)actions.Add(ShoppingUi.Button("Food community",()=>AppNavigation.Open(new FoodFeedPage()),true),1);header.Add(actions);
         var find=new SearchBar{Placeholder="Search names, descriptions or tags",Text=search};find.TextChanged+=(_,e)=>{search=e.NewTextValue??"";Filter();};header.Add(find);
         var filters=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=10};var tags=new List<string>{"All"};tags.AddRange(all.SelectMany(RecipeBrowser.Tags).Distinct(StringComparer.OrdinalIgnoreCase).Order());if(!tags.Contains(tag))tag="All";
         var tagPicker=new Picker{Title="Tags",ItemsSource=tags,SelectedItem=tag,HeightRequest=48};var sortPicker=new Picker{Title="Sort",ItemsSource=new[]{"Recent","Name","Quickest","Top rated"},SelectedItem=sort,HeightRequest=48};

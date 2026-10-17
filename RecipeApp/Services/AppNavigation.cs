@@ -23,6 +23,7 @@ public static class AppNavigation
     public static async Task Open(Page page)
     {
         DismissKeyboard();
+        if(!ProductFeatures.PageAvailable(page.GetType().Name))return;
         if(!await navigation.WaitAsync(0))return;try{await Shell.Current.Navigation.PushAsync(page);}finally{navigation.Release();}
     }
     public static Task Recipe(long id)=>Open(new RecipeDetailsPage{RecipeId=id.ToString()});

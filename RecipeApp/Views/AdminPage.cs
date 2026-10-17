@@ -16,16 +16,16 @@ public class AdminPage : ContentPage
     private readonly bool premiumOnly;
     public AdminPage(bool premium=false)
     {
-        premiumOnly=premium;Title = premium?"Complimentary Premium":"Administrator"; ShoppingUi.Theme(this);
+        premiumOnly=premium||!ProductFeatures.SocialEnabled;Title = premiumOnly?"Complimentary Premium":"Administrator"; ShoppingUi.Theme(this);
         var body = new VerticalStackLayout { Padding = 20, Spacing = 14 };
         body.Add(ShoppingUi.Text("Mealsy administration",26,true));
-        body.Add(ShoppingUi.Text("Automatic safety checks remain active. Changes here are recorded in the administrator activity log.",13));
-        body.Add(Action("Community posts & reports", () => Load("posts",true)));
+        body.Add(ShoppingUi.Text("Changes here are recorded in the administrator activity log.",13));
+        if(ProductFeatures.SocialEnabled)body.Add(Action("Community posts & reports", () => Load("posts",true)));
         body.Add(ShoppingUi.Text("Complimentary Premium access",21,true));
         body.Add(ShoppingUi.Text("Find an existing account by email, then grant 30, 90 or 365 days without a purchase. A reason is required and every change is audited. This does not create an app-store subscription or grant administrator rights.",13));
         body.Add(email); body.Add(Action("Find account / manage Premium", FindUser));
         body.Add(Action("Administrator activity", () => Load("audit",true)));
-        body.Add(Action("Verify businesses & creators",()=>Navigation.PushAsync(new BusinessVerificationPage())));
+        if(ProductFeatures.SocialEnabled)body.Add(Action("Verify businesses & creators",()=>Navigation.PushAsync(new BusinessVerificationPage())));
         body.Add(status); body.Add(results);
         more = Action("Load more", () => Load(section,false)); more.IsVisible = false; body.Add(more);
         Content = new ScrollView { Content = body };
@@ -51,7 +51,7 @@ public class AdminPage : ContentPage
     }
     private async Task Load(string which, bool reset)
     {
-        Check(); if(busy)return; busy=true;
+        Check(); if(which=="posts"&&!ProductFeatures.SocialEnabled)return;if(busy)return; busy=true;
         try {
             var next = reset ? null : cursor;
             if(reset){results.Clear();cursor=null;section=which;} more.IsVisible=false;

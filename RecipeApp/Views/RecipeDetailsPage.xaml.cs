@@ -12,7 +12,7 @@ public partial class RecipeDetailsPage : ContentPage
             var tags=RecipeBrowser.Tags(Recipe).ToList();if(tags.Contains("favourites",StringComparer.OrdinalIgnoreCase))tags.RemoveAll(t=>t.Equals("favourites",StringComparison.OrdinalIgnoreCase));else tags.Add("favourites");Recipe.Tags=string.Join(',',tags.Append("all"));await RecipeService.UpdateRecipeFavouriteState(Recipe);favourite.Text=tags.Contains("favourites")?"★ Saved favourite":"☆ Favourite";
             if(account!=null)try{await FirestoreService.UpdateRecipe(Recipe);}catch(Exception){await DisplayAlert("Saved locally","Your favourite is saved. Retry account sync when connected.","OK");}
         }));ToolbarItems.Add(favourite);
-        ToolbarItems.Add(new ToolbarItem("Share to food community",null,async()=>await Run(()=>AppNavigation.Open(new FeedComposerPage(Recipe)))){Order=ToolbarItemOrder.Secondary});
+        if(ProductFeatures.SocialEnabled)ToolbarItems.Add(new ToolbarItem("Share to food community",null,async()=>await Run(()=>AppNavigation.Open(new FeedComposerPage(Recipe)))){Order=ToolbarItemOrder.Secondary});
         ToolbarItems.Add(new ToolbarItem("Copy recipe text",null,async()=>await Run(async()=>{await Clipboard.Default.SetTextAsync(RecipePresentation.PlainText(RecipeBrowser.ForServings(Recipe,read.CurrentServings)));await DisplayAlert("Copied","Recipe text copied. Private notes and source links are excluded.","OK");})){Order=ToolbarItemOrder.Secondary});
         ToolbarItems.Add(new ToolbarItem("Delete recipe",null,async()=>await Run(async()=>{
             if(!await DisplayAlert("Delete this recipe?","Remove it from your recipe book? Planned meals referring to it will need a replacement.","Delete","Keep"))return;

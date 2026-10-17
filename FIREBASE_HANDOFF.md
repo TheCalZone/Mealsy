@@ -1,5 +1,10 @@
 # Firebase handoff: friends, privacy, household meals and content sharing
 
+**Social work is currently paused.** The client hides and blocks social/creator
+features; keep these contracts for later rather than implementing/enabling them
+unless the user resumes that work. Household shopping and meal planning remain
+in scope. See [SOCIAL_PAUSE.md](SOCIAL_PAUSE.md).
+
 **Client branch:** `codex/android-runtime-fixes`. Friends and household meals implement
 client DTOs and API contracts only. The later content-sharing change also adds a
 `foodFeed.getPost` handler and static Hosting files **in source**. Nothing has been

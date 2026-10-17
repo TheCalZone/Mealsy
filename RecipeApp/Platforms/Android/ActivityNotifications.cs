@@ -12,6 +12,7 @@ public class ActivityNotificationService:FirebaseMessagingService
 {
     public override void OnNewToken(string token){base.OnNewToken(token);_=ActivityNotifications.Refresh();}
     public override void OnMessageReceived(RemoteMessage message){
+        if(!ProductFeatures.SocialEnabled)return;
         if(!Preferences.Get("Mealsy.push.enabled",false)||!message.Data.TryGetValue("recipient",out var recipient)||Preferences.Get("Mealsy.push.account","")!=recipient)return;
         if(!message.Data.TryGetValue("eventId",out var eventId)||!System.Text.RegularExpressions.Regex.IsMatch(eventId,@"^[a-f0-9]{64}$"))return;
         var key="Mealsy.push.seen."+recipient;var seen=Preferences.Get(key,"").Split('|',StringSplitOptions.RemoveEmptyEntries).ToList();if(seen.Contains(eventId))return;
@@ -32,6 +33,7 @@ public static class ActivityNotifications
         public void OnComplete(global::Android.Gms.Tasks.Task task){if(task.IsSuccessful)Completion.TrySetResult(task.Result?.ToString());else Completion.TrySetException(new InvalidOperationException("Notification registration is unavailable. Retry shortly."));}
     }
     public static async System.Threading.Tasks.Task Enable(){
+        if(!ProductFeatures.SocialEnabled)return;
         if(HouseholdService.UserId==null)throw new InvalidOperationException("Sign in before enabling notifications.");
         if(await Permissions.RequestAsync<NotificationPermission>()!=PermissionStatus.Granted)throw new InvalidOperationException("Allow notifications in your phone settings to receive activity alerts.");
         Preferences.Set("Mealsy.push.enabled",true);FirebaseMessaging.Instance.AutoInitEnabled=true;await Register();
@@ -43,7 +45,7 @@ public static class ActivityNotifications
         await HouseholdService.CallEndpointAsync<object>(Endpoint,new{action="registerDevice",token});AccountSession.Check(account);
         Preferences.Set("Mealsy.push.token",token);Preferences.Set("Mealsy.push.account",account);
     }
-    public static async System.Threading.Tasks.Task Refresh(){try{if(Preferences.Get("Mealsy.push.enabled",false))await Register();}catch{/* Next app open retries; the Activity inbox remains available. */}}
+    public static async System.Threading.Tasks.Task Refresh(){try{if(!ProductFeatures.SocialEnabled){FirebaseMessaging.Instance.AutoInitEnabled=false;NotificationManagerCompat.From(global::Android.App.Application.Context).Cancel(731);if(Preferences.Get("Mealsy.push.enabled",false))await Disable();return;}if(Preferences.Get("Mealsy.push.enabled",false))await Register();}catch{/* Next app open retries; the Activity inbox remains available. */}}
     public static async System.Threading.Tasks.Task Disable(){
         var token=Preferences.Get("Mealsy.push.token","");Preferences.Set("Mealsy.push.account","");Preferences.Set("Mealsy.push.enabled",false);
         NotificationManagerCompat.From(global::Android.App.Application.Context).Cancel(731);

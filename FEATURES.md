@@ -1,5 +1,10 @@
 # Current Mealsy features
 
+**Current release:** Social, friends, creator tools and post/creator-plan sharing are
+paused and inaccessible through the app UI. Their code remains below as an inventory
+of retained work. Shopping, private recipes, essentials and household tools remain
+available. See [social pause](SOCIAL_PAUSE.md).
+
 This inventory describes implemented code, not confirmation that every remote service
 has been deployed. Firebase, Google Play, AdMob and OpenAI require the configuration
 noted below. The active app target is Android; iOS/Windows are not active build targets.
