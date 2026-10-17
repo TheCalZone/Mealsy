@@ -59,10 +59,10 @@ public class HouseholdPage : ContentPage
                 CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "create", name }); await Refresh();
             }));
             content.Add(Action("Join with invitation code", async () => {
-                var code = await DisplayPromptAsync("Join your family", "Paste the invitation code sent by the household owner.", maxLength: 48);
+                var code = await DisplayPromptAsync("Join your family", "Paste the invitation code or Mealsy invitation link sent by the household owner.", maxLength: 2000);
                 if (string.IsNullOrWhiteSpace(code)) return;
                 if (!await DisplayAlert("Join household?", "Your account email will be visible to the household owner and other members. Your personal list stays private.", "Join", "Cancel")) return;
-                CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "join", code }); await Refresh();
+                CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "join", code=InvitationLinks.Code(code) }); await Refresh();
             }));
         }
         else
@@ -89,7 +89,7 @@ public class HouseholdPage : ContentPage
                     // Keep the code visible even if the share sheet is dismissed.
                     var choice = await DisplayActionSheet("Invitation ready · expires in 7 days", "Cancel", null, "Share invitation", "Copy code");
                     if (choice == "Copy code") { await Clipboard.Default.SetTextAsync(code); status.Text = "Invitation code copied. Each code can be used once."; }
-                    else if (choice == "Share invitation") await Share.Default.RequestAsync(new ShareTextRequest { Title = "Join my Mealsy household", Text = $"Join {household.Name} on Mealsy! Sign in with your own account, open Shopping list → Household → Join with invitation code, and paste:\n\n{code}\n\nThis code is single-use and expires in 7 days. Only share it with the person you want to invite." });
+                    else if (choice == "Share invitation") await Share.Default.RequestAsync(new ShareTextRequest { Title = "Join my Mealsy household", Text = InvitationLinks.ShareHousehold(household.Name,code) });
                 }));
                 content.Add(Action("Delete household", async () => {
                     if (!await DisplayAlert("Delete household permanently?", "This deletes the shared shopping list and removes access for every member. Everyone keeps their personal list. This cannot be undone.", "Delete household", "Cancel")) return;

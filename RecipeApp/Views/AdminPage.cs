@@ -13,14 +13,17 @@ public class AdminPage : ContentPage
     private string section = "posts";
     private bool busy;
     private Button more;
-    public AdminPage()
+    private readonly bool premiumOnly;
+    public AdminPage(bool premium=false)
     {
-        Title = "Administrator"; ShoppingUi.Theme(this);
+        premiumOnly=premium;Title = premium?"Complimentary Premium":"Administrator"; ShoppingUi.Theme(this);
         var body = new VerticalStackLayout { Padding = 20, Spacing = 14 };
         body.Add(ShoppingUi.Text("Mealsy administration",26,true));
         body.Add(ShoppingUi.Text("Automatic safety checks remain active. Changes here are recorded in the administrator activity log.",13));
         body.Add(Action("Community posts & reports", () => Load("posts",true)));
-        body.Add(email); body.Add(Action("Find account", FindUser));
+        body.Add(ShoppingUi.Text("Complimentary Premium access",21,true));
+        body.Add(ShoppingUi.Text("Find an existing account by email, then grant 30, 90 or 365 days without a purchase. A reason is required and every change is audited. This does not create an app-store subscription or grant administrator rights.",13));
+        body.Add(email); body.Add(Action("Find account / manage Premium", FindUser));
         body.Add(Action("Administrator activity", () => Load("audit",true)));
         body.Add(Action("Verify businesses & creators",()=>Navigation.PushAsync(new BusinessVerificationPage())));
         body.Add(status); body.Add(results);
@@ -30,7 +33,7 @@ public class AdminPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing(); results.Clear(); more.IsVisible = false;
-        try { Check(); var role = await AdminService.Status(); Check(); if (!role.Admin) throw new HouseholdException("PERMISSION_DENIED","Administrator access is required."); await Load("posts",true); }
+        try { Check(); var role = await AdminService.Status(); Check(); if (!role.Admin) throw new HouseholdException("PERMISSION_DENIED","Administrator access is required."); if(premiumOnly){status.Text="Enter the recipient’s registered email to manage complimentary Premium.";email.Focus();}else await Load("posts",true); }
         catch (Exception e) { status.Text = e is HouseholdException ? e.Message : "Administration unavailable. Reopen this screen to retry."; }
     }
     private void Check() { if(account == null || account != AccountSession.UserId) throw new HouseholdException("UNAUTHENTICATED","Your account changed. Close administration and reopen Account."); }
@@ -106,18 +109,27 @@ public class AdminPage : ContentPage
             body.Add(ShoppingUi.Text(user.Username.Length>0?user.Username:user.Email,20,true));body.Add(ShoppingUi.Text(user.Email));
             body.Add(ShoppingUi.Text($"Account: {user.Uid}\nEmail {(user.EmailVerified?"confirmed":"unconfirmed")} · {(user.Admin?"Administrator":"Member")}{(user.Disabled?" · Disabled":"")}",13));
             string Expiry(long value)=>value>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()?DateTimeOffset.FromUnixTimeMilliseconds(value).ToLocalTime().ToString("g"):"None active";
-            body.Add(ShoppingUi.Text("Family grant: "+Expiry(user.GrantExpiresAt)+"\nSubscription: "+Expiry(user.SubscriptionExpiresAt),13));
-            body.Add(ShoppingUi.Text("Grants cover this account's household if they are its owner. Revoking a grant does not cancel a paid subscription.",13));
-            body.Add(Action("Grant temporary Family access",async()=>{
-                var input=await DisplayPromptAsync("Family access","Number of days (1–365)","Next","Cancel",initialValue:"30",maxLength:3,keyboard:Keyboard.Numeric);Check();if(input==null)return;
+            body.Add(ShoppingUi.Text("Complimentary Premium: "+Expiry(user.GrantExpiresAt)+"\nSubscription: "+Expiry(user.SubscriptionExpiresAt),13));
+            body.Add(ShoppingUi.Text("Complimentary access includes personal Premium tools. It covers the household if this account owns it. No payment is taken. Revoking a grant does not cancel a paid subscription.",13));
+            foreach(var days in new[]{30,90,365})body.Add(Action($"Give {days} days of Premium free",()=>Grant(user,days)));
+            body.Add(Action("Choose another duration…",async()=>{
+                var input=await DisplayPromptAsync("Complimentary Premium","Number of days (1–365)","Next","Cancel",initialValue:"30",maxLength:3,keyboard:Keyboard.Numeric);Check();if(input==null)return;
                 if(!int.TryParse(input,out var days)||days<1||days>365)throw new HouseholdException("INVALID_ARGUMENT","Choose between 1 and 365 days.");
-                var reason=await Reason("Grant access to "+user.Email+"?");if(reason==null)return;
-                await AdminService.Call<object>(new{action="setFamilyGrant",uid=user.Uid,days,reason});await FindUser();
+                await Grant(user,days);
             }));
-            body.Add(Action("Revoke temporary Family grant",async()=>{
-                var reason=await Reason("Revoke grant for "+user.Email+"?");if(reason==null)return;
-                await AdminService.Call<object>(new{action="setFamilyGrant",uid=user.Uid,days=0,reason});await FindUser();
-            }));results.Add(ShoppingUi.Card(body));
+            body.Add(Action("Revoke complimentary Premium…",()=>Grant(user,0)));results.Add(ShoppingUi.Card(body));
         } finally {busy=false;}
     }
+    private async Task Grant(AdminUser user,int days)
+    {
+        if(busy)return;busy=true;var changed=false;
+        try{
+            Check();var message=days==0?$"Remove complimentary Premium from {user.Email}? Paid subscriptions remain active until their own expiry.":$"Give {user.Email} complimentary Premium for {days} days from now? This replaces any previous complimentary expiry with {DateTimeOffset.Now.AddDays(days):d}. No charge or store subscription is created.";
+            if(!await DisplayAlert("Confirm Premium change",message,days==0?"Revoke access":"Grant free Premium","Cancel"))return;
+            var reason=await Reason("Reason for this Premium change");if(reason==null)return;Check();
+            await AdminService.Call<object>(new{action="setFamilyGrant",uid=user.Uid,days,reason});Check();email.Text=user.Email;changed=true;
+        }finally{busy=false;}
+        if(changed){await FindUser();await DisplayAlert("Premium updated",days==0?"The complimentary grant was revoked. This does not cancel a paid subscription. Cached offline access may last up to one hour.":"Complimentary Premium is active. Ask the recipient to open Account → Premium or use Restore purchases to refresh access. No payment was taken.","OK");}
+    }
+
 }

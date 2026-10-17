@@ -8,6 +8,8 @@ public class SettingsPage : ContentPage
     {
         var body = new VerticalStackLayout { Padding = 16, Spacing = 18 };
         body.Add(ShoppingUi.Text("Make Mealsy yours", 28, true));
+        body.Add(ShoppingUi.Button("Get started guide",()=>AppNavigation.Open(new OnboardingPage()),true));
+        body.Add(ShoppingUi.Button("Share Mealsy",OnboardingState.ShareApp,true));
         body.Add(ShoppingUi.Text("Saved automatically on this device, for signed-in and device mode alike.", 14));
         var appearance = Section("Appearance", "Changes apply straight away, including screens you've already opened.");
         appearance.Add(Choice("Colour theme", SettingsOptions.Palettes, AppSettings.Current.Palette, value => AppSettings.Current with { Palette = value }));

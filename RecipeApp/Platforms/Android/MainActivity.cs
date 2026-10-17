@@ -12,12 +12,15 @@ namespace RecipeApp;
 
 [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 [IntentFilter(new[]{Intent.ActionSend},Categories=new[]{Intent.CategoryDefault},DataMimeType="text/plain")]
+[IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="join")]
+[IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="welcome")]
 public class MainActivity : MauiAppCompatActivity
 {
     protected override void OnCreate(Bundle savedInstanceState)
         {
         base.OnCreate(savedInstanceState);
         Platforms.Android.WidgetNavigation.FromIntent(Intent);
+        OpenInvitation(Intent);
         OpenSharedRecipe(Intent);
         OpenActivity(Intent);
         var manager=global::Android.Appwidget.AppWidgetManager.GetInstance(this);
@@ -28,9 +31,22 @@ public class MainActivity : MauiAppCompatActivity
 
     protected override void OnNewIntent(global::Android.Content.Intent intent)
     {
-        base.OnNewIntent(intent); Intent=intent; Platforms.Android.WidgetNavigation.FromIntent(intent);OpenSharedRecipe(intent);OpenActivity(intent);
+        base.OnNewIntent(intent); Intent=intent; Platforms.Android.WidgetNavigation.FromIntent(intent);OpenInvitation(intent);OpenSharedRecipe(intent);OpenActivity(intent);
     }
 
+    private static bool openingInvitation;
+    private static async void OpenInvitation(Intent intent)
+    {
+        if(intent?.Action!=Intent.ActionView||openingInvitation)return;
+        var raw=intent.DataString;if(string.IsNullOrWhiteSpace(raw)||raw.Length>2000)return;
+        string code=null;
+        try{if(raw.StartsWith("mealsy://join",StringComparison.OrdinalIgnoreCase)){code=Services.InvitationLinks.Code(raw);Services.OnboardingState.Remember(code);}else if(raw!="mealsy://welcome")return;}catch(InvalidOperationException){return;}
+        intent.SetData(null);openingInvitation=true;
+        try{for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
+            if(!App.InitialAccountReady||Shell.Current==null)return;
+            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>Services.AppNavigation.Open(new Views.OnboardingPage(code,startAt:code==null?0:2)));
+        }catch(Exception error){Services.AppDiagnostics.Report(error,"navigation.invitation","OPEN_FAILURE");}finally{openingInvitation=false;}
+    }
     private static bool openingShare;
     protected override void OnResume(){base.OnResume();_=Platforms.Android.ActivityNotifications.Refresh();}
     private static async void OpenActivity(Intent intent){if(intent?.GetBooleanExtra("mealsy_activity",false)!=true)return;intent.RemoveExtra("mealsy_activity");for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);if(App.InitialAccountReady&&Shell.Current!=null&&RecipeApp.Services.HouseholdService.UserId!=null)await RecipeApp.Services.AppNavigation.Open(new RecipeApp.Views.ActivityPage());}

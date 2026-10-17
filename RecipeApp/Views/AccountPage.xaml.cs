@@ -5,7 +5,7 @@ public partial class AccountPage : ContentPage
     private string account;
     private RecipeApp.Models.CommunityProfile community;
     private bool administrator;
-    public AccountPage(){InitializeComponent();Title="Your account";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
+    public AccountPage(){InitializeComponent();Title="Your account";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Get started",null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem("Share Mealsy",null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
     protected override async void OnAppearing()
     {
         base.OnAppearing();administrator=false;if(account!=AccountSession.UserId)community=null;account=AccountSession.UserId;Render();if(account==null)return;
@@ -37,7 +37,7 @@ public partial class AccountPage : ContentPage
         body.Add(ShoppingUi.Button("My recipes",()=>AppNavigation.Root("RecipePage"),true));
         body.Add(ShoppingUi.Button("My household",()=>AppNavigation.Open(new HouseholdPage()),true));
         body.Add(FoodFeedPage.Button("Mealsy Business & creators",()=>AppNavigation.Open(new BusinessHubPage())));
-        if(administrator)body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));
+        if(administrator){body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));body.Add(FoodFeedPage.Button("Give complimentary Premium",()=>AppNavigation.Open(new AdminPage(true))));}
         body.Add(ShoppingUi.Button("Weekly templates · Premium",PremiumAccess.OpenWeeks,true));
         body.Add(ShoppingUi.Button("Saved shopping trips · Premium",PremiumAccess.OpenShopping,true));
         body.Add(ShoppingUi.Button("Premium · "+SubscriptionPricing.Summary,()=>AppNavigation.Open(new PlanPage())));

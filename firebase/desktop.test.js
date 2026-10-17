@@ -8,8 +8,8 @@ const {chromium} = localRequire('playwright-core');
 let server, browser, origin;
 before(async () => {
   server = http.createServer((req, res) => {
-    const path = req.url === '/' ? '/index.html' : req.url;
-    if (!['/index.html','/app.js','/style.css','/firebase-config.js'].includes(path)) { res.writeHead(404).end(); return; }
+    const path = req.url === '/' ? '/index.html' : req.url === '/join/' ? '/join/index.html' : req.url;
+    if (!['/index.html','/app.js','/style.css','/firebase-config.js','/join/index.html','/join/invite.js'].includes(path)) { res.writeHead(404).end(); return; }
     for (const rule of JSON.parse(readFileSync(`${__dirname}/../firebase.json`, 'utf8')).hosting.headers || []) {
       if (rule.source === '**') for (const header of rule.headers) res.setHeader(header.key, header.value);
     }
@@ -109,5 +109,29 @@ test('Hosting discovery refuses configuration for a different Firebase project',
   const p = await page(false, false, 'wrong-project');
   await p.getByRole('status').filter({hasText: 'The account service is not configured yet.'}).waitFor();
   assert.equal(await p.locator('#signed-in').isVisible(), false);
+  await p.close();
+});
+
+test('invitation landing page safely shows a household code and Android install/open links', async () => {
+  const p = await browser.newPage(); const code = 'ab'.repeat(24);
+  await p.goto(origin + '/join/#code=' + code);
+  await p.locator('#invite').waitFor({state:'visible'});
+  assert.equal(await p.locator('#code').textContent(), code);
+  assert.equal(await p.locator('#open').getAttribute('href'), 'mealsy://join?code=' + code);
+  assert.match(await p.locator('#download').getAttribute('href'), /^https:\/\/play\.google\.com\/store\/apps\/details/);
+  await p.context().grantPermissions(['clipboard-read','clipboard-write']);
+  await p.getByRole('button',{name:'Copy household code'}).click();
+  assert.equal(await p.evaluate(()=>navigator.clipboard.readText()),code);
+  await p.close();
+});
+test('invalid invitation content is never rendered or executed and generic sharing still works', async () => {
+  const p = await browser.newPage();
+  await p.goto(origin + '/join/#code=' + encodeURIComponent('<img src=x onerror="window.injected=true">'));
+  assert.equal(await p.locator('#invite').isVisible(),false);
+  assert.equal(await p.evaluate(()=>window.injected),undefined);
+  assert.match(await p.locator('#status').textContent(),/invalid/);
+  await p.goto(origin + '/join/');
+  assert.equal(await p.locator('#open').getAttribute('href'),'mealsy://welcome');
+  assert.equal(await p.locator('#invite').isVisible(),false);
   await p.close();
 });

@@ -49,3 +49,7 @@ UK reference pricing is now £5.99/month or £49.99/year, with £0.99/month for 
 ## Solo Premium tools
 
 Public plan name is Mealsy Premium, including Family sharing. Product/base-plan IDs stay unchanged. Supported website imports now require paid access; manual recipes/paste and existing recipes stay free. New private device-local libraries provide reusable weekly templates and saved personal shopping trips (100 entries each per account). These use existing server-verified paid status and the short cached entitlement grace; no backend deployment is needed. Libraries remain retained/readable/deletable after expiry. Paid promotions remain disabled. Do not commit APKs or signing material.
+
+## Invitations and onboarding update
+
+`ONBOARDING_AND_INVITES.md` covers the new optional Get started guide, shared Android download/household-code landing page, native `mealsy://join` and `mealsy://welcome` links, and the complimentary-Premium admin shortcut. The admin UI uses the existing audited `setFamilyGrant` API; no live grant or server deployment was performed. Deploy Hosting to activate `/join/` and distribute an updated app. Google Play listing/test eligibility remains required; fresh installs may need code paste and native link handling needs phone verification. Validation: 213 .NET tests, 103 backend tests and 10 browser tests passed. No signed artifacts or signing material are committed.
