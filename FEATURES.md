@@ -68,9 +68,10 @@ new social backend. See [content sharing setup](CONTENT_SHARING.md).
 - Explicitly share an independent recipe snapshot to the food community.
 
 **Personal shopping list**
-- Each item has a small ↕ control for moving up/down within its section, or editing
-  and changing section. Order saves per list/account on this device, persists through
-  sync and filters, and is used in copy/share exports.
+- Each item has a drag handle: long-press and drag above/below another item in the
+  same section. Checkboxes and item taps keep working; swipe to edit/change section.
+  Order saves per list/account on this device, persists through sync and filters,
+  and is used in copy/share exports.
 - New uncategorized items are placed automatically using local ingredient rules:
   `500g minced beef` → Meat; fresh produce, dairy, pantry, frozen, drinks, bakery,
   household/pet products and chilled alternatives are recognized. Assigned categories

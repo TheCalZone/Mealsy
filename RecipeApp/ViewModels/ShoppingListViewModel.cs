@@ -21,10 +21,11 @@ public class ShoppingListViewModel : CustomViewModelBase
     public string CurrentJson => document.Serialize();
     public string SectionOrderContext=>StorageKey;
     private string ItemOrderKey=>StorageKey+".itemOrder";
-    public void MoveItem(ShoppingListItem item,int direction)
+    public bool CanDropItem(Guid source,Guid target)=>!IsEditing&&Groups.Any(group=>group.Any(item=>item.Id==source)&&group.Any(item=>item.Id==target));
+    public void DropItem(Guid source,Guid target,bool after)
     {
-        if(IsEditing||item==null)return;
-        var order=ShoppingItemOrder.Move(document.Items,ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]")),item.Id,direction,document.Visible(SearchText,HideCollected).Select(i=>i.Id));
+        if(!CanDropItem(source,target))return;
+        var order=ShoppingItemOrder.Drop(document.Items,ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]")),source,target,after,document.Visible(SearchText,HideCollected).Select(item=>item.Id));
         Preferences.Set(ItemOrderKey,JsonSerializer.Serialize(order));RefreshGroups();StatusText="Item order saved on this device";
     }
     private string SectionOrderKey=>StorageKey+".sectionOrder";

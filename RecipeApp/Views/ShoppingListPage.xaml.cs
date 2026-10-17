@@ -20,6 +20,8 @@ public partial class ShoppingListPage : ContentPage
     private int generation;
     private bool syncing, conflict, visible;
     private ShoppingSectionDrag sectionDrag;
+    private ShoppingItemDrag itemDrag;
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<View,object> itemDragViews=new();
     private readonly System.Runtime.CompilerServices.ConditionalWeakTable<View,object> sectionHeaders=new();
     private bool shoppingMode,previousNav,previousTabs;
     private void SetShoppingMode(bool active){
@@ -43,17 +45,16 @@ public partial class ShoppingListPage : ContentPage
         sectionDrag??=new ShoppingSectionDrag(Model.SectionNames,Model.SaveSectionOrder,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
         sectionDrag.Attach(header,()=>(header.BindingContext as ShoppingListGroup)?.Title);
     }
-    private async void MoveItem_Clicked(object sender,EventArgs e)
+    private ShoppingItemDrag ItemDrag=>itemDrag??=new ShoppingItemDrag(Model,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
+    private void ItemHandle_Loaded(object sender,EventArgs e)
     {
-        if(sender is not BindableObject { BindingContext:RecipeApp.Models.ShoppingListItem item }||Model.IsEditing)return;
-        var uid=AccountSession.UserId;var context=Model.SectionOrderContext;
-        var group=Model.Groups.FirstOrDefault(g=>g.Contains(item));if(group==null)return;var index=group.IndexOf(item);var options=new List<string>();
-        if(index>0)options.Add("Move up");if(index<group.Count-1)options.Add("Move down");options.Add("Edit item / change section");
-        var choice=await DisplayActionSheet("Move "+item.Name+" within "+item.Category,"Cancel",null,options.ToArray());
-        try{
-            AccountSession.Check(uid);if(context!=Model.SectionOrderContext)return;
-            if(choice=="Move up")Model.MoveItem(item,-1);else if(choice=="Move down")Model.MoveItem(item,1);else if(choice=="Edit item / change section")Model.EditItemCommand.Execute(item);
-        }catch(Exception error){await DisplayAlert("Item order",error is InvalidOperationException?error.Message:"Couldn't save the item order. Please try again.","OK");}
+        if(sender is not View handle||itemDragViews.TryGetValue(handle,out _))return;
+        itemDragViews.Add(handle,new object());ItemDrag.AttachHandle(handle);
+    }
+    private void ItemRow_Loaded(object sender,EventArgs e)
+    {
+        if(sender is not View row||itemDragViews.TryGetValue(row,out _))return;
+        itemDragViews.Add(row,new object());ItemDrag.AttachRow(row);
     }
     private async Task OpenSectionOrder()
     {
@@ -95,7 +96,7 @@ public partial class ShoppingListPage : ContentPage
     }
     private void SelectPersonal()
     {
-        sectionDrag?.Cancel();
+        sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++; householdId = sharedName = null; conflict = false;
         listAccount = HouseholdService.UserId;
         Model.SelectList(null); ListSelector.Text = listAccount == null ? "Device list ▾" : "Personal list ▾";
@@ -111,7 +112,7 @@ public partial class ShoppingListPage : ContentPage
     {
         if (!visible) return;
         if (HouseholdService.UserId != listAccount) { SelectPersonal(); Model.Load(true, null); }
-        if (syncing || conflict || Model.IsEditing || sectionDrag?.IsDragging==true || listAccount == null) return;
+        if (syncing || conflict || Model.IsEditing || sectionDrag?.IsDragging==true || itemDrag?.IsDragging==true || listAccount == null) return;
         syncing = true;
         var currentGeneration = generation;
         var uid = listAccount;
@@ -212,7 +213,7 @@ public partial class ShoppingListPage : ContentPage
         visible = false; timer?.Stop();
         // Never persist one account's visible list into another account's storage.
         if (listAccount == HouseholdService.UserId) Model.Persist();
-        sectionDrag?.Cancel();
+        sectionDrag?.Cancel();itemDrag?.Cancel();
         base.OnDisappearing();
     }
     protected override bool OnBackButtonPressed()

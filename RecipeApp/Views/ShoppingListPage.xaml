@@ -112,7 +112,7 @@
                                 <SwipeItem Text="Remove" BackgroundColor="#9A4840" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveItemCommand}" CommandParameter="{Binding .}" />
                             </SwipeItems>
                         </SwipeView.RightItems>
-                        <Border Margin="0,0,0,7" Padding="8,10,10,10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                        <Border Loaded="ItemRow_Loaded" Margin="0,0,0,7" Padding="8,10,10,10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
                                 BackgroundColor="{DynamicResource ThemeSurface}">
                             <Grid ColumnDefinitions="48,*,Auto,48" ColumnSpacing="5" MinimumHeightRequest="48">
                                 <CheckBox IsChecked="{Binding InBasket, Mode=TwoWay}" Color="{DynamicResource ThemeAccent}" VerticalOptions="Center"
@@ -135,9 +135,10 @@
                                         StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource ThemeBackground}" MaximumWidthRequest="100">
                                     <Label Text="{Binding Quantity}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </Border>
-                                <Button Grid.Column="3" Text="↕" Padding="2,0" FontSize="{DynamicResource ThemeFont12}" BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource ThemeText}" HeightRequest="48" Margin="0"
-                                        Clicked="MoveItem_Clicked" SemanticProperties.Description="{Binding Name, StringFormat='Move {0} up or down'}" />
+                                <Label Grid.Column="3" Text="☰" FontSize="20" TextColor="{DynamicResource ThemeText}"
+                                       HeightRequest="48" WidthRequest="48" VerticalTextAlignment="Center" HorizontalTextAlignment="Center"
+                                       Loaded="ItemHandle_Loaded" SemanticProperties.Description="{Binding Name, StringFormat='Drag handle for {0}'}"
+                                       SemanticProperties.Hint="Long press and drag up or down within this section. Swipe the item to edit." />
                             </Grid>
                         </Border>
                     </SwipeView>

@@ -1,5 +1,15 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest adjustment: item handles replace movement menus
+
+Shopping item rows now have a long-press drag handle instead of the ↕ action menu.
+Only handles initiate item drags; the full item row accepts drops above/below its
+midpoint. Drops reorder visible items within their existing section, preserving
+hidden/collected item positions, other sections, IDs and item details. External,
+cross-section and stale-account/list drags are rejected. Sync waits during item
+drags; cancellation doesn't change saved order. Swipe-to-edit remains available.
+Native gestures still need phone verification; this change adds no backend fields.
+
 ## Latest shopping update: item moves and category recognition
 
 The item-row ↕ icon opens available up/down actions within the visible section;

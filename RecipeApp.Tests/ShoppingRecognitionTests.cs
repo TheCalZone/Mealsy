@@ -34,3 +34,17 @@ public class ShoppingRecognitionTests
         Assert.Empty(ShoppingItemOrder.Read("invalid"));
     }
 }
+
+public class ShoppingItemDragTests
+{
+    [Fact]
+    public void HandleDropsReinsertVisibleItemsWithoutMovingHiddenOrOtherSectionItems()
+    {
+        var a=new ShoppingListItem{Name="A",Category="Produce"};var hidden=new ShoppingListItem{Name="Hidden",Category="Produce",InBasket=true};var b=new ShoppingListItem{Name="B",Category="Produce"};var c=new ShoppingListItem{Name="C",Category="Produce"};var milk=new ShoppingListItem{Name="Milk",Category="Dairy"};var items=new[]{a,hidden,b,c,milk};var shown=new[]{a.Id,b.Id,c.Id,milk.Id};
+        Assert.Equal(new[]{b.Id,hidden.Id,c.Id,a.Id,milk.Id},ShoppingItemOrder.Drop(items,null,a.Id,c.Id,true,shown));
+        Assert.Equal(new[]{c.Id,hidden.Id,a.Id,b.Id,milk.Id},ShoppingItemOrder.Drop(items,null,c.Id,a.Id,false,shown));
+        Assert.Equal(items.Select(item=>item.Id),ShoppingItemOrder.Drop(items,null,a.Id,milk.Id,true,shown));
+        Assert.Equal(items.Select(item=>item.Id),ShoppingItemOrder.Drop(items,null,hidden.Id,a.Id,true,shown));
+        Assert.True(hidden.InBasket);Assert.Equal("A",a.Name);
+    }
+}
