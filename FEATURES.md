@@ -68,6 +68,12 @@ new social backend. See [content sharing setup](CONTENT_SHARING.md).
 - Explicitly share an independent recipe snapshot to the food community.
 
 **Personal shopping list**
+- Reorder category sections using Shopping → Reorder sections (also in shopping
+  tools). Move sections up/down, including custom categories, and restore default
+  alphabetical order with Other last. The layout saves per list/account on this
+  device, including household lists, without changing another member's layout.
+  Search, collected filters, sync and new shops retain the layout; copy/share uses
+  the selected order too.
 - Quick-add an item, quantity, category and optional note; edit or remove items.
 - Category groups, collected checkboxes, crossed-out collected names, progress and
   remaining-item counts, search and Hide collected.

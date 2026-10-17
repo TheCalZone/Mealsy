@@ -32,7 +32,14 @@ public partial class ShoppingListPage : ContentPage
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
     private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();ToolbarItems.Add(new ToolbarItem("Reorder sections",null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+
+    private async Task OpenSectionOrder()
+    {
+        if(Model.IsEditing){await DisplayAlert("Finish editing","Save or cancel your item edit before rearranging sections.","OK");return;}
+        await AppNavigation.Open(new ShoppingSectionOrderPage(Model));
+    }
+    private async void ReorderSections_Clicked(object sender,EventArgs e)=>await OpenSectionOrder();
 
     protected override async void OnAppearing()
     {

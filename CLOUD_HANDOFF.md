@@ -1,5 +1,16 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest shopping change: reorderable sections
+
+Shopping has a Reorder sections toolbar/tools action with accessible up/down
+controls, immediate persistence and restore defaults. Category order is a local
+per-list/account preference (`<list storage key>.sectionOrder`); household members
+can each choose their own store route. It is separate from item JSON and Firebase
+sync, so it does not require backend changes or change shopping items/checkmarks.
+Copy/share exports follow this order. Tests cover ordering, aliases, malformed
+preferences, new/missing sections, boundaries and exports. Android build and
+274 app tests passed; phone interaction verification remains.
+
 ## Current priority: social features paused
 
 The user has paused all social/creator work. Android hides the entry points and

@@ -68,6 +68,7 @@
                     <Button Grid.Column="2" Text="Add" Command="{Binding AddItemCommand}" BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White"
                             HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" FontAttributes="Bold" />
                 </Grid>
+                <Button Text="Reorder sections" Clicked="ReorderSections_Clicked" Style="{StaticResource QuietButton}" />
                 <Button Text="Category &amp; note" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" HorizontalOptions="Start" />
                 <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">
                     <Picker Title="Category" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"

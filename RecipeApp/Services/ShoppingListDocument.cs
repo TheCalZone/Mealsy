@@ -220,10 +220,12 @@ public class ShoppingListDocument
         Replace(parsed);
     }
 
-    public string PlainText(bool includeDetails = true, bool remainingOnly = false)
+    public string PlainText(bool includeDetails = true, bool remainingOnly = false, IEnumerable<string> sectionOrder = null)
     {
         var builder = new StringBuilder();
-        foreach (var group in items.Where(i => !remainingOnly || !i.InBasket).GroupBy(i => i.Category).OrderBy(g => g.Key))
+        var groups=items.Where(i=>!remainingOnly||!i.InBasket).GroupBy(i=>i.Category).ToList();
+        var order=sectionOrder==null?null:ShoppingSectionOrder.Sort(groups.Select(g=>g.Key),sectionOrder);
+        foreach (var group in groups.OrderBy(g=>order==null?0:order.FindIndex(name=>name.Equals(g.Key,StringComparison.OrdinalIgnoreCase))).ThenBy(g=>g.Key))
         {
             builder.AppendLine($"[{group.Key}]");
             foreach (var item in group)
