@@ -10,6 +10,21 @@ and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setu
 See [account/navigation changes and Firebase recovery](FIREBASE_RECOVERY_AND_NAVIGATION.md)
 for the latest sign-in, dashboard and recipe-screen upgrade.
 
+## Friends and household meals — frontend ready, backend required
+
+- Search people, view/edit profiles and bios, manage friend requests, remove friends,
+  block/unblock accounts and report profiles or posts.
+- Friends-only feed, profile posts, likes, comments/replies and saving recipe copies.
+- Choose Everyone, Friends only or Only me when posting; drafts retain privacy.
+  Protected publishing requires the new privacy service and never falls back to public.
+- Shared household week with breakfast/lunch/dinner, servings, notes, recipe snapshots,
+  editing and conflict review. Personal plans remain separate. Family entitlement applies.
+- Activity can open friend profiles and privacy-managed conversations.
+
+These screens require the new Firebase endpoints; they are not deployed by this change.
+See [Firebase implementation handoff](FIREBASE_HANDOFF.md) for contracts, permissions,
+privacy migration and rollout tests. Existing public feed services remain in use.
+
 ## Free personal features
 
 **Recipe book**

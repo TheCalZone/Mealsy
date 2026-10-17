@@ -61,6 +61,8 @@ public partial class AccountPage : ContentPage
         body.Add(ShoppingUi.Button("Copy device recipes into this account…",async()=>{
             var uid=account;AccountSession.Check(uid);if(!await DisplayAlert("Copy your device recipes?","Copy recipes created in device mode into this private account? The device originals are kept. Existing imports won't be duplicated.","Copy recipes","Cancel"))return;AccountSession.Check(uid);var count=await RecipeService.CopyDeviceRecipes(uid);AccountSession.Check(uid);_=AccountSession.SyncSafely();await DisplayAlert("Recipes copied",$"{count} recipes copied. Device originals are unchanged.","OK");
         },true));
+        body.Add(ShoppingUi.Button("Friends & public profile",()=>AppNavigation.Open(new FriendsPage()),true));
+        body.Add(ShoppingUi.Button("Household meal plan",()=>AppNavigation.Open(new HouseholdMealsPage()),true));
         body.Add(ShoppingUi.Button("My recipes",()=>AppNavigation.Root("RecipePage"),true));
         body.Add(ShoppingUi.Button("My household",()=>AppNavigation.Open(new HouseholdPage()),true));
         body.Add(FoodFeedPage.Button("Mealsy Business & creators",()=>AppNavigation.Open(new BusinessHubPage())));

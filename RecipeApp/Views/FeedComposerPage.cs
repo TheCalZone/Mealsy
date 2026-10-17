@@ -10,6 +10,7 @@ public class FeedComposerPage : ContentPage
     private readonly Editor caption = new() { Placeholder = "What have you been cooking?", MaxLength = 2000, HeightRequest = 140 };
     private readonly Label attachment = FoodFeedPage.Text("No recipe attached");
     private readonly Label photoStatus = FoodFeedPage.Text("No photo attached");
+    private readonly Picker audience=new(){Title="Who can see this?",ItemsSource=SocialPolicy.AudienceLabels,SelectedIndex=1,HeightRequest=48};
     private readonly string account;
     private FeedRecipe recipe;
     private string photo = "", postId = Guid.NewGuid().ToString("N");
@@ -22,10 +23,10 @@ public class FeedComposerPage : ContentPage
         name.Text = Preferences.Get(FoodFeedService.AuthorKey, "");
         var body = new VerticalStackLayout { Padding = 20, Spacing = 14, Children = {
             FoodFeedPage.Text("Something worth sharing", 27, true),
-            FoodFeedPage.Text("Your account username is shown publicly. Automated safety checks review submitted text and photos before publication. Confirm your email in Account to share."), name, caption, attachment,
+            FoodFeedPage.Text("Your account username is used for authorship. Automated safety checks review submitted text and photos before publication. Confirm your email in Account to share."), name, audience, FoodFeedPage.Text("Choose an audience before posting. Friends and Only me require the privacy-aware server. They will never silently publish publicly.",13),caption, attachment,
             FoodFeedPage.Button("Attach a recipe from my book", async () => {
                 CheckAccount();
-                var recipes = RecipeService.Recipes.ToList();
+                var recipes = RecipeBrowser.Visible(RecipeService.Recipes,account).ToList();
                 if (recipes.Count == 0) { await DisplayAlert("No recipes yet", "Create a recipe in your recipe book first.", "OK"); return; }
                 var picker = new Picker { Title = "Choose recipe", ItemsSource = recipes, ItemDisplayBinding = new Binding(nameof(Recipe.RecipeName)) };
                 var chooser = new ContentPage { Title = "Choose a recipe" };
@@ -44,7 +45,7 @@ public class FeedComposerPage : ContentPage
                 finally { preparingPhotos--; }
             }),
             FoodFeedPage.Button("Remove photo", () => { photo = ""; photoStatus.Text = "No photo attached"; SaveDraft(); return Task.CompletedTask; }),
-            FoodFeedPage.Button("Publish to the community", Publish),
+            FoodFeedPage.Button("Publish post", Publish),
             FoodFeedPage.Text("Only share recipes and photos you have permission to publish. Please keep comments kind and avoid sharing personal details.", 12)
         } };
         Content = new ScrollView { Content = body };
@@ -54,7 +55,7 @@ public class FeedComposerPage : ContentPage
             if (account != null && source == null)
             {
                 var draft = JsonSerializer.Deserialize<FeedDraft>(Preferences.Get(DraftKey, "null"));
-                if (draft != null) { postId = draft.Id; caption.Text = draft.Caption; recipe = draft.Recipe; photo = draft.Photo ?? ""; }
+                if (draft != null) { postId = draft.Id; caption.Text = draft.Caption; recipe = draft.Recipe; photo = draft.Photo ?? "";audience.SelectedIndex=Array.IndexOf(SocialPolicy.Audiences,draft.Audience??"friends");if(audience.SelectedIndex<0)audience.SelectedIndex=1; }
             }
             if (source != null) { recipe = FeedRecipe.FromRecipe(source); caption.Text = "I've been cooking " + source.RecipeName + "."; }
             attachment.Text = recipe == null ? "No recipe attached" : "Attached: " + recipe.Title;
@@ -62,6 +63,7 @@ public class FeedComposerPage : ContentPage
         }
         catch (JsonException) { attachment.Text = "Previous draft could not be read. A new draft is open."; }
         finally { loading = false; }
+        audience.SelectedIndexChanged+=(_,_)=>SaveDraft();
         caption.TextChanged += (_, _) => SaveDraft(); name.TextChanged += (_, _) => SaveDraft();
         ToolbarItems.Add(new ToolbarItem("Discard draft", null, async () => {
             if (!await DisplayAlert("Discard this draft?", "This removes the unpublished draft from this device.", "Discard", "Keep editing")) return;
@@ -95,7 +97,7 @@ public class FeedComposerPage : ContentPage
     private void SaveDraft()
     {
         if (loading || published || account == null || account != HouseholdService.UserId) return;
-        Preferences.Set(DraftKey, JsonSerializer.Serialize(new FeedDraft(postId, caption.Text ?? "", recipe, photo)));
+        Preferences.Set(DraftKey, JsonSerializer.Serialize(new FeedDraft(postId, caption.Text ?? "", recipe, photo,SocialPolicy.Audiences[audience.SelectedIndex < 0 ? 1 : audience.SelectedIndex])));
         Preferences.Set(FoodFeedService.AuthorKey, name.Text ?? "");
     }
     private async Task Publish()
@@ -104,15 +106,17 @@ public class FeedComposerPage : ContentPage
         if (preparingPhotos > 0) { await DisplayAlert("Preparing photo", "Wait for the photo to finish before publishing.", "OK"); return; }
         if (string.IsNullOrWhiteSpace(name.Text) || (string.IsNullOrWhiteSpace(caption.Text) && recipe == null))
         { await DisplayAlert("Add a little more", "Choose a public display name and write a caption or attach a recipe.", "OK"); return; }
-        if (!await DisplayAlert("Publish to the community?", "All signed-in Mealsy users will be able to see this post and any attached recipe/photo.", "Publish", "Keep editing")) return;
+        var visibility=SocialPolicy.Audience(SocialPolicy.Audiences[audience.SelectedIndex < 0 ? 1 : audience.SelectedIndex]);
+        if (!await DisplayAlert("Confirm post audience", "Audience: "+SocialPolicy.AudienceLabel(visibility)+". This includes any attached photo and recipe snapshot. Previously delivered content cannot be recalled.", "Publish", "Keep editing")) return;
         CheckAccount(); SaveDraft();
         Content.IsEnabled = false;
         try {
-        await HouseholdService.CallEndpointAsync<object>(FoodFeedService.Endpoint,new { action = "publish", id = postId, caption = caption.Text ?? "", authorName = name.Text.Trim(),
-            recipe = recipe == null ? (JsonElement?)null : JsonSerializer.SerializeToElement(recipe, FoodFeedService.Json), photo },true);
+        if(SocialPolicy.NeedsPrivacyService(visibility))await SocialService.Publish(postId,caption.Text??"",recipe,photo,visibility);
+        else await HouseholdService.CallEndpointAsync<object>(FoodFeedService.Endpoint,new { action = "publish", id = postId, caption = caption.Text ?? "", authorName = name.Text.Trim(),
+            recipe = recipe == null ? (JsonElement?)null : JsonSerializer.SerializeToElement(recipe, FoodFeedService.Json), photo,audience=visibility },true);
         published = true; Preferences.Set(DraftKey, "null"); await Navigation.PopAsync();
         } finally { Content.IsEnabled = true; }
     }
     protected override void OnDisappearing() { SaveDraft(); base.OnDisappearing(); }
-    private record FeedDraft(string Id, string Caption, FeedRecipe Recipe, string Photo);
+    private record FeedDraft(string Id, string Caption, FeedRecipe Recipe, string Photo,string Audience="friends");
 }

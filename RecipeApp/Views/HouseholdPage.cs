@@ -67,6 +67,7 @@ public class HouseholdPage : ContentPage
         }
         else
         {
+            content.Add(Action("What’s for dinner? · Shared meal plan",()=>AppNavigation.Open(new HouseholdMealsPage())));
             if (!household.FamilyEnabled) content.Add(ShoppingUi.Text("Family sharing is paused. The household owner needs to renew or restore their Family plan. Your household data has been kept."));
             content.Add(ShoppingUi.Text(household.Name, 24, true));
             content.Add(ShoppingUi.Text($"{household.Members.Count} of {household.MemberLimit} people"));

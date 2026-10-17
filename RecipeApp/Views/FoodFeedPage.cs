@@ -32,6 +32,8 @@ public class FoodFeedPage : ContentPage
                 Button("For you",()=>{mode="forYou";return Load(true);}),
                 Button("Following",()=>{mode="following";return Load(true);}),
                 Button("Latest",()=>{mode="latest";return Load(true);})}}, search,
+            Button("Friends feed",()=>AppNavigation.Open(new FriendsPage("feed"))),
+            Button("Friends & requests",()=>AppNavigation.Open(new FriendsPage())),
             Button("Search all posts", SearchPosts),
             Button("Businesses & recipe creators",()=>Navigation.PushAsync(new BusinessDirectoryPage())),
             status, loading, new RecipeApp.Controls.AdBanner() } };
@@ -104,9 +106,10 @@ public class FoodFeedPage : ContentPage
     }
     private View Card(FoodPost post)
     {
+        if(post.PrivacyManaged)return SocialPage.Post(post);
         var body = new VerticalStackLayout { Spacing = 10 };
         if(post.Promoted)body.Add(Text("Promoted",13,true));
-        body.Add(Text(post.AuthorName, 17, true));
+        body.Add(Button(post.AuthorName+" · View profile",()=>AppNavigation.Open(new FriendProfilePage(post.AuthorId))));
         if(!string.IsNullOrEmpty(post.BusinessId)) {
             body.Add(Text(post.BusinessVerified?"Verified business / creator":"Business / creator",13,true));
             body.Add(Button("View creator profile",()=>Navigation.PushAsync(new BusinessPublicPage(post.BusinessId))));

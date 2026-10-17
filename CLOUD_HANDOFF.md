@@ -2,6 +2,15 @@
 
 Continue from branch `codex/android-runtime-fixes` in `TheCalZone/Mealsy`.
 
+## Latest frontend work: friends, privacy and shared meal plans
+
+The Android branch now includes friends/search/requests, profiles, privacy-aware posting,
+friend conversations and shared household meal planning. **The new backend services have
+not been implemented or deployed by this change.** Follow [FIREBASE_HANDOFF.md](FIREBASE_HANDOFF.md)
+for exact `social` and `householdMeals` contracts, legacy feed privacy migration,
+authorization, media restrictions, concurrency and rollout requirements. Do not advertise
+these features as live until those services and real-device integration checks pass.
+
 ## Current state
 
 The Android application and backend include business/creator workspaces, moderated recipe publishing, collections and weekly plans, team roles, analytics, campaign drafts and prepaid impression-accounting infrastructure. The latest fixes add full-screen shopping, public-name comments and replies, private activity notifications with opt-in Android push, four included household members with extra-place billing support, household batch portions, Android recipe-link sharing/import and navigation/keyboard fixes.
