@@ -31,7 +31,7 @@ public class SettingsPage : ContentPage
         body.Add(ShoppingUi.Card(recipes));
         body.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
         body.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
-        body.Add(ShoppingUi.Button("Family plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
+        body.Add(ShoppingUi.Button("Premium plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
         body.Add(ShoppingUi.Text("These settings stay on this device. They don't change family members' preferences or your account data. Manage your profile and sync from Account.", 13));
         body.Add(ShoppingUi.Button("Reset preferences…", async () => {
             if (!await DisplayAlert("Reset preferences?", "Restore Forest, system display mode and the original preferences? Recipes, shopping lists, drafts, accounts and meal plans are kept.", "Reset preferences", "Cancel")) return;

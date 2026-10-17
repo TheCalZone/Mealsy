@@ -28,11 +28,11 @@ npx --prefix firebase/functions firebase emulators:exec --project demo-mealsy --
 
 The normal emulator config uses port 8080. Choose a free port through an alternate Firebase config when necessary. Firebase CLI 14.22 is pinned in backend dev dependencies; its emulator requires a compatible Java runtime. The separate `firebase/live.test.js` suite performs read-only authentication checks against the deployed project; it does not test authenticated business flows or store purchases.
 
-Latest verified results: 187 .NET tests, 103 backend tests, six Firestore emulator tests and seven live endpoint authentication checks passed. The Android Debug APK built with zero warnings/errors; APK signatures and alignment verified. APKs and signing material are local artifacts and are not committed.
+Pricing/Premium update validation: 201 .NET tests passed and the Android Debug build succeeded with zero warnings/errors. Earlier local handoff verification reported 103 backend tests, six Firestore emulator tests and seven live authentication checks passing, plus APK signature/alignment checks. Those backend/live checks were not rerun for this client-only update. APKs and signing material remain local artifacts and are not committed.
 
 ## Remaining external/platform work
 
-- Configure and test `mealsy_extra_places` subscriptions at the intended 50p/month per extra place, including tier changes through the store.
+- Configure and test `mealsy_extra_places` subscriptions at the intended £0.99/month per extra place, including tier changes through the store.
 - Configure and test `mealsy_promotion_credit_5`, Publisher API permissions, purchase restoration, refund/voided notifications and Play Integrity App Check before enabling live promotions.
 - Test opt-in phone-alert delivery on a real Android phone with separate accounts. The messaging APIs and deployed runtime permission have been configured.
 - iOS store purchases, APNs push and an iOS share extension are not implemented. The shared-household backend is platform-neutral.
@@ -41,3 +41,11 @@ Latest verified results: 187 .NET tests, 103 backend tests, six Firestore emulat
 ## Credentials
 
 Never commit administrator service-account JSON, OAuth tokens, private signing keys, or signed build artifacts. Use environment-owned credentials/secrets for authorized deployments. The old `RecipeApp/credentials.json` and `RecipeApp/Cal.keystore` have been removed from tracking and remain local. They were present in earlier history: removing the files from the current branch does not revoke those credentials or rewrite history. Rotate the service-account key through the project administrator, and review the signing-key exposure with the app publisher before a production release.
+
+## Pricing update
+
+UK reference pricing is now £5.99/month or £49.99/year, with £0.99/month for each extra household place. The existing product and base-plan IDs are unchanged. These code/documentation changes do not update Play Console prices or existing subscribers. Store-provided local prices remain authoritative.
+
+## Solo Premium tools
+
+Public plan name is Mealsy Premium, including Family sharing. Product/base-plan IDs stay unchanged. Supported website imports now require paid access; manual recipes/paste and existing recipes stay free. New private device-local libraries provide reusable weekly templates and saved personal shopping trips (100 entries each per account). These use existing server-verified paid status and the short cached entitlement grace; no backend deployment is needed. Libraries remain retained/readable/deletable after expiry. Paid promotions remain disabled. Do not commit APKs or signing material.

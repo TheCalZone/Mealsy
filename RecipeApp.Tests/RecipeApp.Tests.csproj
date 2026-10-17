@@ -21,6 +21,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../RecipeApp/Services/PastedListText.cs" Link="PastedListText.cs" />
+    <Compile Include="../RecipeApp/Services/PlanStatus.cs" Link="PlanStatus.cs" />
+    <Compile Include="../RecipeApp/Services/PremiumLibrary.cs" Link="PremiumLibrary.cs" />
+    <Compile Include="../RecipeApp/Services/SubscriptionPricing.cs" Link="SubscriptionPricing.cs" />
     <Compile Include="../RecipeApp/Services/SettingsOptions.cs" Link="SettingsOptions.cs" />
     <Compile Include="../RecipeApp/Services/AccountInput.cs" Link="AccountInput.cs" />
     <Compile Include="../RecipeApp/Services/RecipeBrowser.cs" Link="RecipeBrowser.cs" />

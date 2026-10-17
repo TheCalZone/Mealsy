@@ -8,18 +8,18 @@ public class PlanPage : ContentPage
     private bool busy;
     public PlanPage()
     {
-        Title="Mealsy Family"; ShoppingUi.Theme(this);
+        Title="Mealsy Premium"; ShoppingUi.Theme(this);
         monthly=ShoppingUi.Button("Check monthly price",()=>Subscribe(MonetizationConfig.MonthlyBasePlanId));
         annual=ShoppingUi.Button("Check annual price",()=>Subscribe(MonetizationConfig.BasePlanId));
         monthly.IsEnabled=annual.IsEnabled=false;
         var body=new VerticalStackLayout {Padding=20,Spacing=16,Children={
-            ShoppingUi.Text("Make room for everyone",29,true),
-            ShoppingUi.Text("One owner subscription. Family shopping and an ad-free household.",17),
-            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text("MONTHLY",12,true),ShoppingUi.Text("£3 per month",25,true),ShoppingUi.Text("UK price · billed monthly",13),monthly}}),
-            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text("ANNUAL · BEST VALUE",12,true),ShoppingUi.Text("£24 per year",25,true),ShoppingUi.Text("£2/month equivalent, billed annually. Save £12/year versus twelve £3 monthly payments at these UK prices.",13),annual}}),
-            ShoppingUi.Text("Both options include exactly the same Family features. The app store confirms your actual local price and billing period before payment.",13),
+            ShoppingUi.Text("Your kitchen, on repeat",29,true),
+            ShoppingUi.Text("Save time cooking for one or sharing with others. One subscription includes Premium tools and Family sharing.",17),
+            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text("MONTHLY",12,true),ShoppingUi.Text(SubscriptionPricing.Pounds(SubscriptionPricing.Monthly)+" per month",25,true),ShoppingUi.Text("UK reference price · billed monthly",13),monthly}}),
+            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text("ANNUAL · BEST VALUE",12,true),ShoppingUi.Text(SubscriptionPricing.Pounds(SubscriptionPricing.Annual)+" per year",25,true),ShoppingUi.Text(SubscriptionPricing.AnnualDetails,13),annual}}),
+            ShoppingUi.Text("Both options include exactly the same Premium features. The app store confirms your actual local price and billing period before payment.",13),
             ShoppingUi.Button("See everything included",async()=>await Navigation.PushAsync(new UpgradeFeaturesPage())),status,
-            ShoppingUi.Button("Extra household places · 50p/month each",async()=>await Navigation.PushAsync(new ExtraPlacesPage())),
+            ShoppingUi.Button("Extra household places · "+SubscriptionPricing.Pounds(SubscriptionPricing.ExtraPlaceMonthly)+"/month each",async()=>await Navigation.PushAsync(new ExtraPlacesPage())),
             ShoppingUi.Button("Restore purchases",()=>Run(async()=>{
 #if ANDROID
                 await RecipeApp.Platforms.Android.PlayBillingService.Instance.Restore();
@@ -53,9 +53,9 @@ public class PlanPage : ContentPage
         monthly.IsEnabled=annual.IsEnabled=false;
         if(HouseholdService.UserId==null){status.Text="Sign in on the Account tab before subscribing.";return;}
         var plan=await PlanService.RefreshAsync();
-        status.Text=plan.FamilyEnabled ? plan.OwnPlan ? plan.BasePlanId=="admin" ? "Your administrator-granted Family access is active." : $"Your {(plan.BasePlanId=="monthly" ? "monthly" : "annual")} Family plan is active." : "Your household owner's plan covers you. No second subscription is needed."
-            : !plan.Owner ? "Your household owner needs to renew or restore their plan." : "Free plan · Choose monthly or annual to unlock Family.";
-        monthly.IsVisible=annual.IsVisible=!plan.OwnPlan && !plan.FamilyEnabled && plan.Owner;
+        status.Text=(plan.OwnPlan||plan.FamilyEnabled) ? plan.OwnPlan ? plan.BasePlanId=="admin" ? "Your administrator-granted Premium access is active." : $"Your {(plan.BasePlanId=="monthly" ? "monthly" : "annual")} Premium plan is active." : "Your household owner's plan covers you. No second subscription is needed."
+            : !plan.Owner ? "Subscribe for personal Premium tools, or ask your household owner to renew their plan." : "Free plan · Choose monthly or annual to unlock Premium.";
+        monthly.IsVisible=annual.IsVisible=!plan.OwnPlan && !plan.FamilyEnabled;
         if(!monthly.IsVisible)return;
 #if ANDROID
         foreach(var option in new[]{(monthly,MonetizationConfig.MonthlyBasePlanId,"month"),(annual,MonetizationConfig.BasePlanId,"year")})
@@ -79,16 +79,19 @@ public class UpgradeFeaturesPage : ContentPage
     {
         Title="What's included";ShoppingUi.Theme(this);
         var body=new VerticalStackLayout {Padding=20,Spacing=16};
-        body.Add(ShoppingUi.Text("Your food life, together",29,true));
-        body.Add(ShoppingUi.Text("Family · £3/month or £24/year in the UK. Same benefits on both plans; one subscription held by the household owner.",16));
+        body.Add(ShoppingUi.Text("More useful every week",29,true));
+        body.Add(ShoppingUi.Text("Premium · "+SubscriptionPricing.Summary+" in the UK. Same benefits on both plans; one subscription for a solo cook or a household owner.",16));
         void Card(string title,string detail)=>body.Add(ShoppingUi.Card(new VerticalStackLayout {Spacing=7,Children={ShoppingUi.Text(title,20,true),ShoppingUi.Text(detail)}}));
-        Card("One shared household shopping list","Four people, including the owner, can add, edit, remove and collect items. Extra places are planned at 50p/month each and become available once their app-store purchase is configured. Foreground sync, offline pending edits and conflict recovery keep everyone working from the same list.");
+        Card("Import recipes from supported websites","Bring a recipe link straight into the editor for review. Keep ingredients, portions and method in your private recipe book. Some sources block imports; manual entry and ingredient paste remain free.");
+        Card("Reusable weekly meal-plan templates","Save favourite weeks with meals, portions and notes. Reapply a template to your current week after confirming replacement. Your templates are private to your account on this device.");
+        Card("Saved shopping trips","Save named personal shopping lists and add them again with quantities and notes. Items reset to uncollected; existing items remain and compatible amounts combine. Saved trips stay private on this device.");
+        Card("One shared household shopping list","Four people, including the owner, can add, edit, remove and collect items. Extra places are planned at £0.99/month each and become available once their app-store purchase is configured. Foreground sync, offline pending edits and conflict recovery keep everyone working from the same list.");
         Card("Invite your family","Create a household, send single-use invitation codes, revoke invitations and manage members. Each person has their own secure login.");
         Card("Ad-free for your household","The subscriber and members covered by the owner's active plan use Mealsy without banner advertisements.");
         Card("Keep your personal space","Every member keeps their own personal shopping list, recipes and local meal plan. Joining a household doesn't publish private recipes or notes.");
-        Card("All your free tools remain included","Recipe book and editor, photos, drafts, ingredient parsing, cooking view, shopping creator, cupboard checks, snacks and essentials, quantity totals, meal planning, Android quick-add widget, food feed, likes/comments, and saving shared recipes.");
+        Card("Your everyday free tools remain included","Recipe book and editor, photos, drafts, ingredient parsing, cooking view, shopping creator, cupboard checks, snacks and essentials, quantity totals, meal planning, Android quick-add widget, food feed, likes/comments, and saving shared recipes.");
         Card("Restore and manage your plan","Restore the app store purchases and manage renewal or cancellation in the app store. Paid access continues to the end of a cancelled subscription's paid period.");
-        body.Add(ShoppingUi.Text("Free accounts keep all personal tools and the signed-in food community, with advertising. Family adds household sharing and ad removal. Meal plans and recipe books aren't shared household workspaces. AI suggestions use your own AI service key and are billed separately by that service. Household quick-add requires active Family access; personal widget use is free.",13));
+        body.Add(ShoppingUi.Text("Free accounts keep basic personal tools and the signed-in food community, with advertising. Premium adds recipe-link imports, weekly templates, saved shopping trips, household sharing and ad removal. You do not need to create a household to use Premium. Meal plans and recipe books aren't shared household workspaces. AI suggestions use your own AI service key and are billed separately by that service. Household quick-add requires active Family access; personal widget use is free.",13));
         body.Add(ShoppingUi.Button("View subscription options",async()=>await Navigation.PushAsync(new PlanPage())));
         Content=new ScrollView {Content=body};
     }

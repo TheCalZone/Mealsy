@@ -28,7 +28,7 @@ start and keyboard behaviour still require real-device testing.
 
 ## Monthly and annual Family
 
-Monthly **£3/month** and annual **£24/year** are two auto-renewing base plans of the
+Monthly **£5.99/month** and annual **£49.99/year** are two auto-renewing base plans of the
 same `mealsy_family` Google Play subscription (`monthly` and `annual`). Both cover
 the owner and their household with identical shared-shopping and ad-free benefits.
 Google Play supplies the actual local price and confirmation. Existing subscribers

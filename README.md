@@ -7,7 +7,7 @@ For the latest implementation, deployed state, test commands and remaining store
 ## Plans and feature inventory
 
 The free tier keeps personal cooking/planning and the food community. **Mealsy
-Family (£3/month or £24/year in the UK)** unlocks household sharing and removes ads for the
+Premium (£5.99/month or £49.99/year in the UK)** adds recipe-link imports, saved weekly templates and reusable shopping trips, plus household sharing and ad removal for the
 owner and their household. Live billing/ads require publisher setup; see
 [monetization setup](MONETIZATION.md) and the [complete current features](FEATURES.md).
 

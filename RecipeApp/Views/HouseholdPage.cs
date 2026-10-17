@@ -47,7 +47,7 @@ public class HouseholdPage : ContentPage
         try { plan = await PlanService.RefreshAsync(); }
         catch (Exception) { plan = PlanService.Cached ?? new PlanStatus(false, false, false, 0, true, "", ""); }
         // Membership cleanup must remain available even if Play's API is unavailable.
-        content.Add(Action(plan.FamilyEnabled ? "Mealsy Family · Manage plan" : "Unlock Family · £3/month or £24/year", async () => await Navigation.PushAsync(new PlanPage())));
+        content.Add(Action(plan.FamilyEnabled ? "Mealsy Family · Manage plan" : "Unlock Premium · "+SubscriptionPricing.Summary, async () => await Navigation.PushAsync(new PlanPage())));
         var household = await HouseholdService.StatusAsync();
         CheckAccount();
         if (household.HouseholdId == null)

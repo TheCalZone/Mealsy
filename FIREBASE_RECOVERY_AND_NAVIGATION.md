@@ -90,7 +90,7 @@ and Firebase project `mealsy-b732b`.
    ```
 
    Billing still needs Play Console/API/RTDN setup described in MONETIZATION.md;
-   a Firebase deployment doesn't create the £3/month or £24/year Play base plans.
+   a Firebase deployment doesn't create the £5.99/month or £49.99/year Play base plans.
 7. From the repository run:
 
    ```sh

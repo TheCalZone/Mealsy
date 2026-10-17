@@ -84,7 +84,7 @@ for the latest sign-in, dashboard and recipe-screen upgrade.
 - Include the signed-in profile's dietary restrictions and favourite cuisines.
 - Review the generated ingredients/method and save the result to the recipe book.
 - Uses the user's own OpenAI API key, saved in device secure storage. OpenAI usage
-  is separate from the £24/year plan and is not included as a paid AI allowance.
+  is separate from the £49.99/year plan and is not included as a paid AI allowance.
 
 **Account**
 - Redesigned email/password registration/sign-in, password visibility/confirmation,
@@ -113,10 +113,10 @@ for the latest sign-in, dashboard and recipe-screen upgrade.
   and mark reports reviewed. Moderator rights are server-issued custom claims.
 - No follows, direct messages, push notifications or recommendation algorithm yet.
 
-## Mealsy Family — £3/month or £24/year in the UK
+## Mealsy Premium including Family — £5.99/month or £49.99/year in the UK
 
 - Monthly and annual options unlock the same benefits; Google Play supplies local
-  prices. One owner subscription covers the whole household, up to 20 members.
+  prices. One owner subscription covers four people; extra places cost £0.99/month each at the UK reference price, up to 20 total.
 - An upgrade features page explains Family benefits, free tools and separate AI costs.
 - Create a household, invite members using random single-use codes valid for seven
   days, revoke invitations, remove members, leave or delete a household.
@@ -169,3 +169,7 @@ Recipe ingredients, pasted method steps and shopping-list paste clean common Uni
 ### Firebase social backend and hosting
 
 The existing authenticated food feed backend supports posts, bounded photos, recipe snapshots, likes, comments, reports and moderator controls. Hosting can discover its public web app configuration automatically in the same Firebase project; manual public config remains available for other static hosts. Hosting applies a Content Security Policy and browser security headers. Feed visibility/likes use a consistent read-only database snapshot, reports have account-level throttling and safe retries, and combined post sizes and recipe servings are validated before writing. A documented combined deploy script and backend-test predeploy hook are included. Live Firebase activation still requires desktop authentication, a registered web app, the existing Firestore database and Blaze billing; see [firebase/FEED.md](firebase/FEED.md#deploying-the-current-version).
+
+### Premium for solo cooks and households
+
+The same Premium plan includes supported recipe-link importing, saved weekly meal-plan templates and explicitly saved shopping trips. Find templates in Meals or Account, and saved trips in Shopping or Account. Templates preserve recipes, portions, typed meals and notes; reuse confirms replacing the current week, keeps the date and refuses missing recipes. Shopping trip reuse resets checks and adds fresh item IDs with quantities/notes to the existing personal list, combining compatible amounts. Each library holds up to 100 named entries privately on this device for the signed-in account. Libraries are retained after expiry; saving/reusing needs verified paid access, with the existing short offline entitlement grace. Basic manual recipes, ingredient/method paste, personal shopping, cooking and weekly planning remain free. Existing recipes imported before upgrading remain usable.

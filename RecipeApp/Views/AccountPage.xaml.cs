@@ -38,7 +38,9 @@ public partial class AccountPage : ContentPage
         body.Add(ShoppingUi.Button("My household",()=>AppNavigation.Open(new HouseholdPage()),true));
         body.Add(FoodFeedPage.Button("Mealsy Business & creators",()=>AppNavigation.Open(new BusinessHubPage())));
         if(administrator)body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));
-        body.Add(ShoppingUi.Button("Family · £3/month or £24/year",()=>AppNavigation.Open(new PlanPage())));
+        body.Add(ShoppingUi.Button("Weekly templates · Premium",PremiumAccess.OpenWeeks,true));
+        body.Add(ShoppingUi.Button("Saved shopping trips · Premium",PremiumAccess.OpenShopping,true));
+        body.Add(ShoppingUi.Button("Premium · "+SubscriptionPricing.Summary,()=>AppNavigation.Open(new PlanPage())));
         body.Add(ShoppingUi.Button("See everything included",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
         body.Add(ShoppingUi.Text("Your recipes and shopping checklists sync when connected to the account service. Meal plans and editor drafts are device-local. Signing in doesn't automatically upload recipes created in device mode.",13));
         body.Add(ShoppingUi.Button("Sign out",async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.","Sign out","Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();account=null;community=null;administrator=false;Render();},true));

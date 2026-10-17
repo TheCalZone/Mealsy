@@ -1,4 +1,4 @@
-# Advertising and Mealsy Family
+# Advertising and Mealsy Premium
 
 ## Product decision
 
@@ -7,16 +7,15 @@ recipe generation with the user's own OpenAI key, and the signed-in food communi
 Banner advertisements can appear on Home and Food feed after the advertising
 privacy/age flow permits them. No interstitial or rewarded ads are included.
 
-**Mealsy Family:** **£3 per month or £24 per year in the UK**, automatically renewing. One subscription
-held by the household owner unlocks household creation, invitations and shared
-shopping-list reading/editing, and removes ads for the owner and all current household
-members (up to 20 total). Invitees do not each need to buy a plan. Google Play displays
+**Mealsy Premium (including Family):** **£5.99 per month or £49.99 per year in the UK**, automatically renewing. One subscription
+unlocks supported recipe-link imports, reusable weekly templates and saved personal shopping trips for solo cooks as well as households. It also unlocks household creation, invitations and shared
+shopping-list reading/editing, and removes ads for the subscriber and covered household members. Four people are included; up to 16 extra places are sold separately at £0.99/person/month UK reference pricing. Invitees do not each need to buy a plan. Google Play displays
 localized prices and the actual renewal terms before confirmation. There is no trial.
 
-A member's separate personal subscription removes ads for that member but does not
+A member's separate personal subscription unlocks personal Premium tools and removes ads for that member but does not
 pay for another owner's household. To become the paying household owner they can
 leave that household and create their own. Shared meal plans/recipe books are not
-implemented; the paid family feature is the existing shared shopping-list system.
+implemented; Family sharing is the shared shopping-list system. Templates and saved trips remain private, per account and device. Importing a link is paid; manual entry, ingredient/method paste and editing previously imported recipes remain free.
 
 Expired plans pause sharing and invitations but **do not delete household data**.
 Members can still leave, and owners can remove members, revoke invitations or delete
@@ -173,8 +172,8 @@ The complete current feature inventory is in [FEATURES.md](FEATURES.md).
 
 ## Monthly option and upgrade features
 
-The upgrade screen now offers £3/month and £24/year UK options. The annual option
-is £2/month equivalent billed annually; twelve monthly payments cost £36 at those
+The upgrade screen now offers £5.99/month and £49.99/year UK options. The annual option
+is £4.17/month equivalent billed annually; twelve monthly payments cost £71.88 at those
 UK prices. Google Play always supplies the actual local price before purchase.
 A separate **What's included** page lists every Family benefit and distinguishes
 free personal tools, optional OpenAI costs and personal/local meal planning.
@@ -190,3 +189,15 @@ No Play product creation, live Firebase deployment or real purchase was performe
 in the cloud workspace. The existing target-SDK/production publishing requirements
 above still apply. Test both base plans, cancellation, restore and invited-member
 ad removal with Google Play license-test accounts on the internal track.
+
+## Premium tools and updated pricing
+
+The public paid plan is named **Mealsy Premium**, for solo cooks and households. Existing Google Play product `mealsy_family` and base-plan IDs `monthly`/`annual` are retained; update the store display name and prices rather than creating duplicate products. Selected UK prices are £5.99/month, £49.99/year, and £0.99/month per extra member. Annual saves £21.89 against twelve monthly payments (about 30.5%).
+
+In Play Console, update the actual base-plan prices and all extra-place tiers. App reference prices do not change Google Play charges or existing subscriber prices. Follow Play's existing-subscriber notice/consent rules for any price migration. This change performs no live store update or Firebase deployment. Prices from the store remain authoritative at checkout.
+
+Supported website imports are guarded when Import & review is pressed, including Android shared links. A declined upgrade keeps the link; saved recipes and drafts remain editable. Weekly templates are reached from Meals or Account; saved shopping trips from Shopping's menu or Account. Both allow up to 100 named entries per account on the device, stored atomically with separate hashed account paths. Saving and reusing require a server-verified active plan; all covered household members get the same Premium tools. When offline, the existing verified ad-free entitlement cache permits a grace of up to one hour, bounded by plan expiry. No client purchase flag grants access. After expiry the saved libraries are retained and can be read/deleted; saving/reusing requires renewed access. They are not cloud backups or shared household libraries.
+
+Shopping snapshots are saved explicitly, rather than silently recording every purchase. Reuse keeps item quantities/notes, resets collected state, creates new item IDs and merges into the personal list without replacing existing items. Weekly templates replace the current week's meals only after confirmation, preserve its week date, and reject missing recipe references. Neither feature deletes existing recipes. Basic manual recipes, paste, lists, cooking view and weekly planning remain free.
+
+Phone checks: verify free/paid/expired accounts, an invited paid-household member, account switching while forms are open, offline expiry, template confirmation/cancel and saved-trip quantities. On a Play-installed test build, check the new localized prices, annual renewal period, extra-place tier totals and restore using existing product IDs.

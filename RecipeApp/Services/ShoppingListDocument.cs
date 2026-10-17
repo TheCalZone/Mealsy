@@ -192,6 +192,12 @@ public class ShoppingListDocument
         }
         target.Add(item);
     }
+    public void AppendReusableItems(IEnumerable<ShoppingListItem> source)
+    {
+        foreach(var item in source) MergeItem(items,new ShoppingListItem { Name=item.Name, Category=CategoryName(item.Category), Quantity=item.Quantity, Note=item.Note, InBasket=false });
+        Commit();
+    }
+
     public void AppendIngredients(IEnumerable<Ingredient> ingredients)
     {
         foreach (var item in FromIngredients(ingredients)) { item.InBasket = false; MergeItem(items, item); }
