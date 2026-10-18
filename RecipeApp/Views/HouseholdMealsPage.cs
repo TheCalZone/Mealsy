@@ -6,7 +6,7 @@ public class HouseholdMealsPage:SocialPage
 {
     private DateTime weekStart=DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek+6)%7));
     private HouseholdWeek week;private HouseholdInfo household;
-    public HouseholdMealsPage():base("Household meal plan"){Body.Add(ShoppingUi.Text("What’s for dinner?",28,true));Body.Add(ShoppingUi.Text("Share meals, portions, recipe snapshots and notes with your household. This needs the new shared-planning service; your personal plan stays separate."));ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Run(Load)));}
+    public HouseholdMealsPage():base("Household meal plan"){Body.Add(ShoppingUi.Text("What’s for dinner?",28,true));Body.Add(ShoppingUi.Text("Share meals, portions, recipe snapshots and notes with your household. Your personal plan stays separate."));ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Run(Load)));}
     protected override async void OnAppearing(){base.OnAppearing();await Run(Load);}
     private async Task Load()
     {

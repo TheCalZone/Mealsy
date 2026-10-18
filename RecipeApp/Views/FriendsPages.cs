@@ -13,7 +13,7 @@ public abstract class SocialPage:ContentPage
     protected async Task Run(Func<Task> action)
     {
         if(busy)return;busy=true;progress.IsBusy=true;
-        try{if(Account==null)throw new InvalidOperationException("Sign in to use friends and profiles.");Check();await action();Check();}
+        try{if(Account==null)throw new InvalidOperationException("Sign in to use your account tools.");Check();await action();Check();}
         catch(Exception e){if(Account!=AccountSession.UserId || e is HouseholdException { Code: "UNAUTHENTICATED" or "PERMISSION_DENIED" or "NOT_FOUND" })Body.Clear();Body.Add(ShoppingUi.Text(e is InvalidOperationException or HouseholdException?e.Message:"This couldn't finish. Check your connection and retry.",14));}
         finally{progress.IsBusy=false;busy=false;}
     }

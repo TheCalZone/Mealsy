@@ -39,23 +39,33 @@ public class PlanPage : ContentPage
             },true),
             ShoppingUi.Button("Store terms",async()=>await Launcher.Default.OpenAsync(MonetizationConfig.TermsUrl),true)
         }};
+        if(!ClientPlatform.StorePurchasesAvailable)
+        {
+            // Keep price/feature information and verified status, but no inert purchase actions.
+            foreach(var child in body.Children.ToList())if(child is Button button &&
+                (button.Text.StartsWith("Extra household")||button.Text=="Restore purchases"||button.Text.StartsWith("Manage or cancel")||button.Text=="Ad privacy choices"||button.Text=="Store terms"))body.Remove(child);
+            monthly.IsVisible=annual.IsVisible=false;
+            body.Insert(2,ShoppingUi.Card(ShoppingUi.Text(ClientPlatform.IosPurchaseNotice,14)));
+            body.Add(ShoppingUi.Button("Refresh my access",()=>Run(Refresh),true));
+        }
         Content=new ScrollView {Content=body};
     }
     protected override async void OnAppearing(){base.OnAppearing();await Run(Refresh);}
     private async Task Run(Func<Task> action)
     {
         if(busy)return;busy=true;var uid=HouseholdService.UserId;var previousMonthly=monthly.IsEnabled;var previousAnnual=annual.IsEnabled;monthly.IsEnabled=annual.IsEnabled=false;
-        try{await action();}catch(Exception e){status.Text=e is InvalidOperationException or HouseholdException ? e.Message : "Your plan couldn't be checked. Connect and try Restore purchases.";if(uid==HouseholdService.UserId){monthly.IsEnabled=previousMonthly;annual.IsEnabled=previousAnnual;}}
+        try{await action();}catch(Exception e){status.Text=e is InvalidOperationException or HouseholdException ? e.Message : "Your plan couldn't be checked. Connect and refresh your access.";if(uid==HouseholdService.UserId){monthly.IsEnabled=previousMonthly;annual.IsEnabled=previousAnnual;}}
         finally{busy=false;}
     }
     private async Task Refresh()
     {
         monthly.IsEnabled=annual.IsEnabled=false;
-        if(HouseholdService.UserId==null){status.Text="Sign in on the Account tab before subscribing.";return;}
+        if(HouseholdService.UserId==null){status.Text=ClientPlatform.StorePurchasesAvailable?"Sign in on the Account tab before subscribing.":"Sign in on the Account tab to check your existing access.";return;}
         var plan=await PlanService.RefreshAsync();
         status.Text=(plan.OwnPlan||plan.FamilyEnabled) ? plan.OwnPlan ? plan.BasePlanId=="admin" ? "Your administrator-granted Premium access is active." : $"Your {(plan.BasePlanId=="monthly" ? "monthly" : "annual")} Premium plan is active." : "Your household owner's plan covers you. No second subscription is needed."
             : !plan.Owner ? "Subscribe for personal Premium tools, or ask your household owner to renew their plan." : "Free plan · Choose monthly or annual to unlock Premium.";
         monthly.IsVisible=annual.IsVisible=!plan.OwnPlan && !plan.FamilyEnabled;
+        if(!ClientPlatform.StorePurchasesAvailable){monthly.IsVisible=annual.IsVisible=false;if(!plan.OwnPlan&&!plan.FamilyEnabled)status.Text="Free account · App Store subscriptions are not available in this build.";return;}
         if(!monthly.IsVisible)return;
 #if ANDROID
         foreach(var option in new[]{(monthly,MonetizationConfig.MonthlyBasePlanId,"month"),(annual,MonetizationConfig.BasePlanId,"year")})
@@ -80,6 +90,7 @@ public class UpgradeFeaturesPage : ContentPage
         Title="What's included";ShoppingUi.Theme(this);
         var body=new VerticalStackLayout {Padding=20,Spacing=16};
         body.Add(ShoppingUi.Text("More useful every week",29,true));
+        if(!ClientPlatform.StorePurchasesAvailable)body.Add(ShoppingUi.Text(ClientPlatform.IosPurchaseNotice,14));
         body.Add(ShoppingUi.Text("Premium · "+SubscriptionPricing.Summary+" in the UK. Same benefits on both plans; one subscription for a solo cook or a household owner.",16));
         void Card(string title,string detail)=>body.Add(ShoppingUi.Card(new VerticalStackLayout {Spacing=7,Children={ShoppingUi.Text(title,20,true),ShoppingUi.Text(detail)}}));
         Card("Import recipes from supported websites","Bring a recipe link straight into the editor for review. Keep ingredients, portions and method in your private recipe book. Some sources block imports; manual entry and ingredient paste remain free.");
@@ -90,7 +101,7 @@ public class UpgradeFeaturesPage : ContentPage
         Card("Ad-free for your household","The subscriber and members covered by the owner's active plan use Mealsy without banner advertisements.");
         Card("Keep your personal space","Every member keeps their own personal shopping list, recipes and local meal plan. Joining a household doesn't publish private recipes or notes.");
         Card("Your everyday free tools remain included","Recipe book and editor, photos, drafts, ingredient parsing, cooking view, shopping creator, cupboard checks, snacks and essentials, quantity totals, meal planning, Android quick-add widget and household shopping widgets.");
-        Card("Restore and manage your plan","Restore the app store purchases and manage renewal or cancellation in the app store. Paid access continues to the end of a cancelled subscription's paid period.");
+        if(ClientPlatform.StorePurchasesAvailable)Card("Restore and manage your plan","Restore the app store purchases and manage renewal or cancellation in the app store. Paid access continues to the end of a cancelled subscription's paid period.");
         body.Add(ShoppingUi.Text("Free accounts keep basic personal tools, with advertising. Premium adds recipe-link imports, weekly templates, saved shopping trips, household sharing and ad removal. You do not need to create a household to use Premium. Meal plans and recipe books aren't shared household workspaces. AI suggestions use your own AI service key and are billed separately by that service. Household quick-add requires active Family access; personal widget use is free.",13));
         body.Add(ShoppingUi.Button("View subscription options",async()=>await Navigation.PushAsync(new PlanPage())));
         Content=new ScrollView {Content=body};

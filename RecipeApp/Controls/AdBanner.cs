@@ -1,7 +1,7 @@
 namespace RecipeApp.Controls;
 
 /// <summary>Optional banner; hidden until consent and ad loading succeed.</summary>
-public class AdBanner : View
+public class AdBanner : ContentView
 {
     private ContentPage page;
     public AdBanner()

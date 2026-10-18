@@ -6,13 +6,18 @@ const {createHandler} = require('./application');
 initializeApp();
 const handle = createHandler(getFirestore());
 const {protect}=require('./callable-errors');
+const {socialHandler,socialEnabled}=require('./product-features');
+exports.householdMeals=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./household-meals').createHouseholdMeals(getFirestore(),require('firebase-admin/auth').getAuth()),'householdMeals'));
 const business=require('./business').createBusiness(getFirestore(),require('firebase-admin/auth').getAuth());
-exports.business=onCall({region:'us-central1',maxInstances:10,timeoutSeconds:60},protect(business,'business'));
-exports.notifications=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./notifications').createNotifications(getFirestore()),'notifications'));
-exports.promotions=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./campaign-ledger').createCampaignLedger(getFirestore()),'promotions'));
-const {onDocumentCreated}=require('firebase-functions/v2/firestore');
+exports.business=onCall({region:'us-central1',maxInstances:10,timeoutSeconds:60},protect(socialHandler(business),'business'));
+exports.notifications=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(socialHandler(require('./notifications').createNotifications(getFirestore())),'notifications'));
+exports.promotions=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(socialHandler(require('./campaign-ledger').createCampaignLedger(getFirestore())),'promotions'));
+const {onDocumentCreated,onDocumentDeleted}=require('firebase-functions/v2/firestore');
+exports.cleanupHousehold=onDocumentDeleted({document:'households/{householdId}',region:'europe-west1',retry:true,maxInstances:3},async event=>{
+  await getFirestore().recursiveDelete(getFirestore().doc(`households/${event.params.householdId}`));
+});
 exports.deliverActivity=onDocumentCreated({document:'notifications/{uid}/items/{itemId}',region:'europe-west1',retry:true,maxInstances:5},async event=>{
-  if(!event.data||Date.now()-(event.data.data().createdAt||0)>3600000)return; // Stale alerts remain in the inbox; stop push retries after an hour.
+  if(!socialEnabled||!event.data||Date.now()-(event.data.data().createdAt||0)>3600000)return; // Paused/stale alerts do not query devices or send push.
   const db=getFirestore(),devices=await db.collection('notificationDevices').where('uid','==',event.params.uid).limit(10).get();
   await Promise.all(devices.docs.map(async doc=>{
     const device=doc.data();if(Date.now()-device.updatedAt>90*86400000)return;
@@ -26,7 +31,7 @@ exports.household = onCall({region: 'us-central1', maxInstances: 10, timeoutSeco
 const feed = require('./feed').createFeedHandler(getFirestore());
 const administration = require('./administration').createAdministration(getFirestore(), require('firebase-admin/auth').getAuth());
 exports.administration = onCall({region:'us-central1',maxInstances:5,timeoutSeconds:60},protect(administration,'administration'));
-exports.foodFeed = onCall({region: 'us-central1', maxInstances: 10, timeoutSeconds: 60},protect(feed,'foodFeed'));
+exports.foodFeed = onCall({region: 'us-central1', maxInstances: 10, timeoutSeconds: 60},protect(socialHandler(feed),'foodFeed'));
 
 const billing = require('./billing').createBilling(getFirestore());
 exports.billing = onCall({region: 'us-central1', maxInstances: 10, timeoutSeconds: 60},protect(billing.handle,'billing'));

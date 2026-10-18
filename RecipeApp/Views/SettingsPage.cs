@@ -31,7 +31,7 @@ public class SettingsPage : ContentPage
         recipes.Add(Choice("Default recipe order", SettingsOptions.Sorts, AppSettings.Current.RecipeSort, value => AppSettings.Current with { RecipeSort = value }));
         recipes.Add(Toggle("Keep screen awake while cooking", "Starts enabled when you open a recipe. Stops when you leave it; you can switch it off inside the recipe.", AppSettings.Current.KeepAwake, value => AppSettings.Current with { KeepAwake = value }));
         body.Add(ShoppingUi.Card(recipes));
-        body.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
+        if(ClientPlatform.HomeScreenWidgetAvailable)body.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
         body.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
         body.Add(ShoppingUi.Button("Premium plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
         body.Add(ShoppingUi.Text("These settings stay on this device. They don't change family members' preferences or your account data. Manage your profile and sync from Account.", 13));

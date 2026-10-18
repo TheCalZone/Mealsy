@@ -1,5 +1,27 @@
 # Mealsy backend deployment
 
+## Latest deployment — 18 October 2026
+
+Functions and the paused Hosting release are deployed to `mealsy-b732b`.
+`householdMeals` now supports authenticated shared-week reads and versioned meal
+edits/deletes; `cleanupHousehold` recursively removes retained household weeks.
+The server social release flag pauses `foodFeed`, `business`, `notifications` and
+`promotions`; `deliverActivity` does not send social alerts while paused. The
+`administration`, household shopping, billing and reconciliation services continue.
+No new friends/privacy service or paid campaigns have been enabled.
+
+Eight callable endpoints passed unsigned-request authentication checks; the ninth
+live check verified the paused website flag and invitation/share landing pages.
+112 backend unit tests, seven real Firestore emulator tests, 14 browser tests,
+321 shared app tests and the Android build passed. Physical two-phone/iOS tests
+remain outstanding. The current database is still Standard/default in `eur3`;
+no rule relaxation, database migration or new index is required for embedded week
+documents. Callable endpoints are in `us-central1`; Firestore event handlers are
+in `europe-west1`.
+
+See `FIREBASE_HANDOFF.md` and `IOS_SETUP.md` in the repository root for current
+scope and platform limitations. The following notes describe the older baseline.
+
 Target project: `mealsy-b732b` (also the default in `.firebaserc`).
 The existing `(default)` Firestore database is **Standard edition**, native mode,
 in `eur3`. Functions retain `us-central1` to match the installed Android client.

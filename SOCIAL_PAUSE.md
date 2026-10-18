@@ -1,5 +1,21 @@
 # Social features paused
 
+## Server enforcement — 18 October 2026
+
+The pause now covers the deployed backend and iOS preparation as well as Android
+and Hosting. `firebase/functions/product-features.js` disables public feed,
+business/creator, promotion and social-notification callables after authentication
+but before database/moderation/payment actions. Social push delivery returns before
+device queries or sending. Existing data is retained; subscription verification,
+refund reconciliation, administration and household shopping/planning continue.
+This avoids new social moderation and delivery work; it does not eliminate storage,
+ordinary function invocation or unrelated infrastructure costs.
+
+The client/website-only description below records the initial pause. The server
+pause was subsequently deployed on 18 October; it is no longer a frontend-only
+release switch. Re-enabling later requires reviewing the unfinished privacy API
+and updating server, Android/iOS and website flags together, with tests and deploys.
+
 The current Android release focuses on personal recipes, quick shopping, cupboard
 checks/essentials, household shopping and meal planning. Social and creator code
 is retained for possible future use, with no user-facing switch to turn it on.

@@ -1,5 +1,28 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest integration — 18 October 2026
+
+The current branch incorporates iOS preparation commit `bfdd79e` with the newest
+shopping drag/autocomplete and loading changes preserved. Social/creator features
+remain deliberately paused; the server now enforces that pause too, including
+publishing, moderation-heavy calls and social push delivery. The friend/privacy
+backend was not implemented or re-enabled.
+
+Shared household meal planning now has an authenticated `householdMeals` service,
+idempotent versioned edits, conflict handling, safe recipe snapshots, membership/
+owner-Premium checks and recursive household cleanup. See `FIREBASE_HANDOFF.md`.
+The website release uses the paused community flag and shopping/invitation pages.
+
+Current local validation: 321 app tests, 112 backend tests, seven Firestore emulator
+tests, 14 browser tests, the iOS metadata checker and Android Debug build passed.
+Functions and the paused Hosting release were deployed successfully on 18 October.
+Nine live read-only checks passed, including the new household-meals endpoint,
+the paused website flag and invitation/share landing pages.
+No native iOS build or IPA is verified: the Mac is not connected to this session.
+`IOS_SETUP.md` documents the .NET/MAUI/Firebase migration and matching Xcode workload
+needed before a current iPhone release. Run `python3 scripts/ios-preflight.py` on
+the Mac to collect its toolchain state without installing or changing anything.
+
 ## Latest update: offline ingredient autocomplete
 
 Shopping quick-add and WidgetQuickAddPage show up to five ingredient chips after

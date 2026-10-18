@@ -39,7 +39,7 @@ public static class AppDiagnostics
                 if(error.Data["Mealsy.DiagnosticReference"] is string known)return known;
                 reference=DiagnosticPolicy.Reference(reference);error.Data["Mealsy.DiagnosticReference"]=reference;
                 // Only fixed operation names, codes and reason categories leave the device.
-                var parts=operation.Split('.',2);operation=parts.Length==2 && new[]{"household","foodFeed","billing","administration","business","notifications","promotions"}.Contains(parts[0])?DiagnosticPolicy.Operation(parts[0],parts[1]):DiagnosticPolicy.LocalOperation(operation);
+                var parts=operation.Split('.',2);operation=parts.Length==2 && new[]{"householdMeals","household","foodFeed","billing","administration","business","notifications","promotions"}.Contains(parts[0])?DiagnosticPolicy.Operation(parts[0],parts[1]):DiagnosticPolicy.LocalOperation(operation);
                 code=DiagnosticPolicy.Code(code);reason=DiagnosticPolicy.Reason(reason);
                 var entry=new DiagnosticEntry(reference,operation,code,reason,DateTimeOffset.UtcNow);
                 var history=History();history.Insert(0,entry);Preferences.Set(HistoryKey,JsonSerializer.Serialize(history.Take(20)));

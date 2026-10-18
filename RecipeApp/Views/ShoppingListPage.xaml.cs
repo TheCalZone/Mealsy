@@ -36,7 +36,7 @@ public partial class ShoppingListPage : ContentPage
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
     private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Reorder sections",null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Reorder sections",null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
     {

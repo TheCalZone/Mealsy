@@ -1,5 +1,38 @@
 # Firebase handoff: friends, privacy, household meals and content sharing
 
+## Applied scope — 18 October 2026
+
+The user reconfirmed that social/creator work stays paused for cost and scope control.
+The friends/privacy API below remains a future contract, not an enabled service.
+
+Implemented `householdMeals` with version-1 capability discovery, server-derived
+actors, current membership/owner entitlement checks, strict date and safe-snapshot
+validation, per-entry versions, idempotent writes/deletes and tombstones. Shared
+weeks are bounded documents at `households/{id}/mealWeeks/{weekStart}`. There is no
+collection scan or continuous planner polling. A week permits 100 visible meals,
+500 retained entry IDs and a 750 KB map; oversized writes fail without partial saves.
+Personal device plans and recipe books are not migrated or published.
+
+The household-deletion trigger recursively removes its remaining shared weeks.
+Access stops as soon as the household/membership is removed, independently of
+asynchronous cleanup. Existing default-deny rules still prohibit direct SDK access.
+
+`firebase/functions/product-features.js` now enforces the pause on deployed public
+feed, business, promotion and social-inbox callables, before database/moderation
+work. Authentication is still checked first. The social push trigger returns before
+querying devices or sending. Subscription verification, household shopping, shared
+meals, administrator support and required payment/refund reconciliation remain
+available. Stored posts, profiles and receipts are retained; no paid campaigns
+are enabled. The browser release flag also remains false.
+
+The content-sharing public read delta stays in source behind the server pause.
+The invitation/share landing pages are the paused, shopping-focused versions.
+Functions and Hosting were deployed to `mealsy-b732b` on 18 October 2026. Nine
+read-only production checks passed. This is not a claim of an authenticated
+two-phone or iOS integration test; those device checks remain outstanding.
+Store price configuration, Apple purchases/APNs and physical-device verification
+remain external work. See `IOS_SETUP.md` for the current iOS assessment.
+
 **Social work is currently paused.** The client hides and blocks social/creator
 features; keep these contracts for later rather than implementing/enabling them
 unless the user resumes that work. Household shopping and meal planning remain
