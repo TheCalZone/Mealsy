@@ -9,7 +9,7 @@ internal static class ShoppingUi
     public static View Card(View view) => RecipeEditorView.Card(view);
     public static Button Button(string text, Func<Task> action, bool quiet=false)
     {
-        var button=new Button { Text=text, MinimumHeightRequest=48, LineBreakMode=LineBreakMode.WordWrap, MinimumWidthRequest=44, CornerRadius=12, FontSize=14, Padding=new Thickness(12,4) };
+        var button=new Button { Text=text, HeightRequest=-1, MinimumHeightRequest=48, LineBreakMode=LineBreakMode.WordWrap, MinimumWidthRequest=44, CornerRadius=12, FontSize=14, Padding=new Thickness(12,4) };
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.BackgroundColorProperty, quiet ? "ThemeSubtle" : "ThemeAccent");
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? "ThemeText" : "ThemeOnAccent");
         button.Clicked += async (_, _) => { button.IsEnabled=false; try { await ActionProgress.Run(button,action); } catch (Exception e) { var reference=e is HouseholdException or InvalidOperationException?null:AppDiagnostics.Report(e,"ui.action"); await Shell.Current.DisplayAlert("Couldn't complete action", e is HouseholdException or InvalidOperationException ? e.Message : "That action couldn't finish. Your saved data is kept. Please retry.\nReference: "+reference, AppLocalization.Text("OK")); } finally { button.IsEnabled=true; } };

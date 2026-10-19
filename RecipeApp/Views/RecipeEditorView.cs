@@ -96,7 +96,7 @@ public class RecipeEditorView : ContentView
     }
     private Button Button(string name, Func<Task> action, bool quiet = false)
     {
-        var button = new Button { Text = name, MinimumHeightRequest = 46, LineBreakMode = LineBreakMode.WordWrap, MinimumWidthRequest = 44, CornerRadius = 12, Padding = new Thickness(12, 4), FontSize = 14 };
+        var button = new Button { Text = name, HeightRequest = -1, MinimumHeightRequest = 46, LineBreakMode = LineBreakMode.WordWrap, MinimumWidthRequest = 44, CornerRadius = 12, Padding = new Thickness(12, 4), FontSize = 14 };
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.BackgroundColorProperty, quiet ? "ThemeSubtle" : "ThemeAccent");
         button.SetDynamicResource(Microsoft.Maui.Controls.Button.TextColorProperty, quiet ? "ThemeText" : "ThemeOnAccent");
         button.Clicked += async (_, _) => {
