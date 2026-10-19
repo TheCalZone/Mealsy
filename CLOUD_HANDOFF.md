@@ -1,5 +1,17 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest UI adjustment: one Options control in page toolbars
+
+Application PageAppearing groups each page's existing toolbar actions under a
+single `⚙ Options` control. Android uses a popup anchored to that control; other
+platforms (or a missing native anchor) use the standard Options action sheet.
+Actions retain their existing Clicked handlers, live labels, command bindings and
+CanExecute states. Shopping Paste/Clear remain bound to the current page model;
+recipe favourite labels refresh when opening the menu. Back navigation is unchanged.
+The helper also covers recipe editor Save/Preview and household planner actions.
+No new social entry points or backend changes. Verify menu placement/selection and
+startup/status-bar colours on a phone with the updated APK.
+
 ## Latest integration — 18 October 2026
 
 The current branch incorporates iOS preparation commit `bfdd79e` with the newest
