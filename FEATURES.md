@@ -15,6 +15,15 @@ and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setu
 See [account/navigation changes and Firebase recovery](FIREBASE_RECOVERY_AND_NAVIGATION.md)
 for the latest sign-in, dashboard and recipe-screen upgrade.
 
+## Recent usability improvements
+
+- Android forms resize above the keyboard; recipe Preview and Save stay in a fixed footer.
+- Recipe-link importing offers an optional photo checkbox. Available photos are saved
+  as compressed copies; a missing or blocked photo does not stop the recipe import.
+- Import a recipe link directly from a personal meal slot or household meal editor.
+  Review/save the recipe to attach it, then save the meal plan. Household attachments
+  require confirmation before sharing their recipe snapshot. Importing remains Premium.
+
 ## Friends and household meals — frontend ready, backend required
 
 - Search people, view/edit profiles and bios, manage friend requests, remove friends,

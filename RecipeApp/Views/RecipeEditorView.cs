@@ -72,12 +72,16 @@ public class RecipeEditorView : ContentView
         extra.Add(Field("Draft.Recipe.Notes", "Cooking notes · private, optional", "Substitutions, storage tips, or what you would change next time…", 5000, true));
         extra.Add(Text("Your source link and private cooking notes aren't included in community posts.", 12)); body.Add(Card(extra));
         var errors = Text("", 14); errors.TextColor = Color.FromArgb("#BA3C32"); errors.SetBinding(Label.TextProperty, nameof(model.Error)); body.Add(errors);
-        body.Add(Button("Preview recipe", model.Preview, true)); body.Add(Button("Save recipe", model.Save));
-        var saved = Text("", 12); saved.SetBinding(Label.TextProperty, nameof(model.Status)); body.Add(saved);
+        var actions=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};
+        actions.Add(Button("Preview recipe",model.Preview,true),0);actions.Add(Button("Save recipe",model.Save),1);
+        var saved=Text("",12);saved.SetBinding(Label.TextProperty,nameof(model.Status));
+        var footer=new VerticalStackLayout{Padding=new Thickness(16,8),Spacing=4,Children={actions,saved}};
+        footer.SetDynamicResource(VisualElement.BackgroundColorProperty,"ThemeSurface");
         body.Add(Button("Discard draft / changes", model.Discard, true));
-        Content = new ScrollView { Content = body };
+        var layout=new Grid{RowDefinitions=new(){new(GridLength.Star),new(GridLength.Auto)}};
+        layout.Add(new ScrollView{Content=body},0,0);layout.Add(footer,0,1);Content=layout;
         model.StructureChanged += Rebuild;
-        model.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(model.Busy)) {body.IsEnabled = !model.Busy;busyIndicator.IsBusy=model.Busy;} };
+        model.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(model.Busy)) {body.IsEnabled = !model.Busy;footer.IsEnabled=!model.Busy;busyIndicator.IsBusy=model.Busy;} };
         Rebuild();
     }
     internal static Label Text(string value, int size = 15, bool bold = false)

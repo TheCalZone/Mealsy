@@ -44,7 +44,32 @@ public static class WebsiteRecipe
         if(ingredients.Count==0||steps.Count==0)throw new InvalidOperationException("The page's recipe is incomplete. Copy it into the editor manually.");
         return new Recipe{RecipeName=Text(node,"name"),Description=Text(node,"description"),SourceUrl=source,Serving=portions,PrepTime=Minutes(Text(node,"prepTime")),CookTime=Minutes(Text(node,"cookTime")),RecipeMethod=string.Join("\n\n",steps),Ingredients=RecipeDraft.ParseIngredients(string.Join("\n",ingredients)).SelectMany(s=>s.Items).ToList()};
     }
-    public static async Task<Recipe> Fetch(string source){
+    // Only the Recipe node's image is used; logos and other page images are ignored.
+    public static string PhotoUrl(string html,string source)
+    {
+        var doc=new HtmlDocument();doc.LoadHtml(html);
+        foreach(var script in doc.DocumentNode.SelectNodes("//script[@type='application/ld+json']")??new HtmlNodeCollection(null))
+        {
+            try {
+                using var json=JsonDocument.Parse(script.InnerHtml,new JsonDocumentOptions{MaxDepth=40});
+                var node=Find(json.RootElement);
+                if(node.HasValue&&node.Value.TryGetProperty("image",out var image))
+                    foreach(var candidate in ImageValues(image))
+                        if(Uri.TryCreate(new Uri(source),WebUtility.HtmlDecode(candidate),out var uri)&&IsPhotoUrl(uri))return uri.AbsoluteUri;
+            } catch(JsonException) { }
+        }
+        return null;
+    }
+    private static IEnumerable<string> ImageValues(JsonElement image)
+    {
+        if(image.ValueKind==JsonValueKind.String)yield return image.GetString();
+        else if(image.ValueKind==JsonValueKind.Array){foreach(var item in image.EnumerateArray())foreach(var value in ImageValues(item))yield return value;}
+        else if(image.ValueKind==JsonValueKind.Object){foreach(var key in new[]{"url","contentUrl"})if(image.TryGetProperty(key,out var value)&&value.ValueKind==JsonValueKind.String)yield return value.GetString();}
+    }
+    public static bool IsPhotoUrl(Uri uri)=>uri.IsAbsoluteUri&&uri.Scheme=="https"&&uri.IsDefaultPort&&uri.UserInfo.Length==0
+        &&uri.HostNameType==UriHostNameType.Dns&&uri.IdnHost.Contains('.')&&!uri.IdnHost.EndsWith(".localhost",StringComparison.OrdinalIgnoreCase)
+        &&!uri.IdnHost.EndsWith(".local",StringComparison.OrdinalIgnoreCase);
+    public static async Task<Recipe> Fetch(string source,Func<string,Task<string>> loadPhoto=null){
         var uri=Validate(source);using var handler=new HttpClientHandler{AllowAutoRedirect=false,UseCookies=false};using var client=new HttpClient(handler){Timeout=TimeSpan.FromSeconds(20)};
         for(var redirects=0;redirects<4;redirects++){
             using var response=await client.GetAsync(uri,HttpCompletionOption.ResponseHeadersRead);
@@ -52,7 +77,9 @@ public static class WebsiteRecipe
             response.EnsureSuccessStatusCode();if(response.Content.Headers.ContentLength>2_000_000)throw new InvalidOperationException("This page is too large to import.");
             using var stream=await response.Content.ReadAsStreamAsync();using var reader=new StreamReader(stream);var buffer=new char[8192];var text=new System.Text.StringBuilder();int n;
             while((n=await reader.ReadAsync(buffer,0,buffer.Length))>0){text.Append(buffer,0,n);if(text.Length>2_000_000)throw new InvalidOperationException("This page is too large to import.");}
-            return Parse(text.ToString(),uri.AbsoluteUri);
+            var html=text.ToString();var recipe=Parse(html,uri.AbsoluteUri);
+            if(loadPhoto!=null){var photo=PhotoUrl(html,uri.AbsoluteUri);if(photo!=null){try{recipe.RecipeImage=await loadPhoto(photo);}catch(Exception){/* A missing or blocked photo must not lose the recipe. */}}}
+            return recipe;
         }throw new InvalidOperationException("The recipe link redirected too many times.");
     }
 }

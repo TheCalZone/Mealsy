@@ -55,6 +55,15 @@ public class HouseholdMealEditorPage:SocialPage
             if(!await DisplayAlert("Share a recipe snapshot?","Its ingredients and method will be visible to your household. Private notes and source links stay in your recipe book.","Attach snapshot","Cancel"))return;
             Check();recipe=FeedRecipe.FromRecipe(recipes[index]);attached.Text=recipe.Title;if(string.IsNullOrWhiteSpace(title.Text))title.Text=recipe.Title;
         }),true));Body.Add(ShoppingUi.Button("Remove attachment",()=>{recipe=null;attached.Text="No recipe attached";return Task.CompletedTask;},true));
+        Body.Add(ShoppingUi.Button("Import recipe from link",async()=>{
+            Check();
+            await Navigation.PushAsync(new RecipeWebsitePage(saved: async imported => {
+                Check();
+                if(!await DisplayAlert("Share a recipe snapshot?","Its ingredients and method will be visible to your household. Private notes and source links stay in your recipe book.","Attach snapshot","Keep private"))return;
+                Check();recipe=FeedRecipe.FromRecipe(imported);attached.Text=recipe.Title;
+                if(string.IsNullOrWhiteSpace(title.Text))title.Text=recipe.Title;
+            }));
+        },true));
         Body.Add(ShoppingUi.Button("Copy my meal draft",async()=>{Check();await Clipboard.Default.SetTextAsync($"{title.Text} · {this.date.Date:d} · {slot.SelectedItem} · {servings.Text} portions\n{note.Text}");await DisplayAlert("Draft copied","Your meal text is on the clipboard.","OK");},true));
         Body.Add(ShoppingUi.Button("Review latest server version",()=>Run(async()=>{
             await HouseholdMealsService.Require();var latest=await HouseholdMealsService.Call<HouseholdWeek>(new{action="readWeek",householdId,weekStart=SocialPolicy.DateKey(weekStart)});Check();var current=latest.Meals.FirstOrDefault(m=>m.Id==id);

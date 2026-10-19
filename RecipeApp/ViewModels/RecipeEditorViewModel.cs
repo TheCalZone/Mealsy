@@ -9,6 +9,7 @@ public class RecipeEditorViewModel : ObservableObject
 {
     public RecipeDraft Draft { get; private set; } = new();
     public event Action StructureChanged;
+    public Func<Recipe, Task> RecipeSaved { get; set; }
     private readonly string account = HouseholdService.UserId;
     public string EditorAccount => account;
     private CancellationTokenSource debounce;
@@ -106,6 +107,7 @@ public class RecipeEditorViewModel : ObservableObject
                 catch (Exception) { await Shell.Current.DisplayAlert("Saved on this device", "Cloud sync couldn't finish. Your recipe is safely saved locally.", "OK"); }
             }
             await AppNavigation.Back();
+            if (RecipeSaved != null) await RecipeSaved(recipe);
         });
     }
     public async Task Discard()

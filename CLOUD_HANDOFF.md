@@ -1,5 +1,41 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest additions: meal-planner importing and optional recipe photos
+
+Personal day cards now offer Import recipe from link for each meal slot. Saving the
+reviewed recipe returns to that day and adds it to the chosen slot; Save day commits
+the plan. Household meal editing offers the same importer, then asks permission to
+attach a shared recipe snapshot. Saving the household meal is still explicit.
+Cancellation never attaches an unfinished recipe. Existing unrelated new-recipe
+drafts block the meal-import flow rather than attaching the wrong draft. Recipe
+imports remain Premium and existing account guards apply throughout.
+
+Import screen includes a checked-by-default Save recipe photo, if available option,
+and a busy indicator. Unchecking it skips photo extraction/download. Recipe JSON-LD
+image strings, arrays and ImageObject URLs are supported, including relative URLs.
+Photos use public HTTPS only, bounded streaming/timeouts/redirects and existing
+FeedPhoto JPEG compression/metadata stripping. Private network addresses are blocked
+at socket connection. Failed/missing photos do not prevent recipe import. Photo data
+uses the existing recipe_image field; no backend schema or deployment is required.
+
+337 app tests pass, including new photo metadata/URL tests. Android Debug build passes
+without warnings. Phone checks: keyboard resize and scrolling; import with/without a
+photo; unsupported image; cancelling/back navigation; importing for a personal meal
+and a household meal; saving the day/household meal after attachment. Native keyboard,
+image decoding and live-site imports still require device testing.
+
+## Latest fix: keyboard-safe Android forms
+
+Application uses Android Resize soft-input mode, and MainActivity declares/applies
+AdjustResize, so the viewport shrinks above the keyboard rather than being covered.
+Scrollable forms can reach their bottom actions while typing. RecipeEditorView now
+keeps Preview/Save/status in a fixed footer outside its scrollable fields; the footer
+is disabled with the form while busy. Top Options actions remain available too.
+No recipe data or backend changes. Verify portrait/landscape, large fonts, multiline
+method/private notes, ingredient fields, shopping edit Save and household forms on
+a phone with its actual keyboard. Native keyboard interaction cannot be confirmed
+by the platform-independent tests alone.
+
 ## Latest cooking feature: step ingredient checklists
 
 RecipeReadView uses local StepIngredients matching to show suggested ingredients

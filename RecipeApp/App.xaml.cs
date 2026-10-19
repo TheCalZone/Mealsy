@@ -4,7 +4,11 @@ namespace RecipeApp;
 public partial class App : Application
 {
     public static bool InitialAccountReady{get;private set;}
-    public App(){InitializeComponent();PageAppearing+=(_,page)=>RecipeApp.Views.PageOptions.Configure(page);ThemeService.Initialize();ShoppingListStore.AccountId=()=>AccountSession.UserId;MainPage=new AppShell();}
+    public App(){InitializeComponent();
+#if ANDROID
+        Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.SetWindowSoftInputModeAdjust(this,Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.WindowSoftInputModeAdjust.Resize);
+#endif
+        PageAppearing+=(_,page)=>RecipeApp.Views.PageOptions.Configure(page);ThemeService.Initialize();ShoppingListStore.AccountId=()=>AccountSession.UserId;MainPage=new AppShell();}
     protected override async void OnStart()
     {
         base.OnStart();

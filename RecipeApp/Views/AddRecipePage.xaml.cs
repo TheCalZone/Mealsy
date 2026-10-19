@@ -6,7 +6,7 @@ public partial class AddRecipePage : ContentPage
 {
     private readonly AddRecipeViewModel model = new();
     private RecipeApp.Models.Recipe imported;
-    public AddRecipePage(RecipeApp.Models.Recipe recipe):this(){imported=recipe;}
+    public AddRecipePage(RecipeApp.Models.Recipe recipe, Func<RecipeApp.Models.Recipe, Task> saved = null):this(){imported=recipe;model.RecipeSaved=saved;}
     public AddRecipePage()
     {
         InitializeComponent(); BindingContext = model; Content = new RecipeEditorView(model);

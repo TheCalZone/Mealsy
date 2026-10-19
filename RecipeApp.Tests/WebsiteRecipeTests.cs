@@ -22,4 +22,28 @@ public class WebsiteRecipeTests
         Assert.Throws<InvalidOperationException>(()=>WebsiteRecipe.Parse("<html>Nothing here</html>","https://www.bbcgoodfood.com"));
         Assert.Throws<InvalidOperationException>(()=>WebsiteRecipe.Parse("""<script type="application/ld+json">{"@type":"Recipe","name":"Incomplete"}</script>""","https://www.bbcgoodfood.com"));
     }
+    [Theory]
+    [InlineData("\"https://cdn.example.com/food.jpg\"")]
+    [InlineData("[\"http://cdn.example.com/unsafe.jpg\",\"https://cdn.example.com/food.jpg\"]")]
+    [InlineData("{\"@type\":\"ImageObject\",\"url\":\"https://cdn.example.com/food.jpg\"}")]
+    [InlineData("{\"contentUrl\":\"https://cdn.example.com/food.jpg\"}")]
+    public void PhotoMetadataSupportsRecipeImageShapes(string image)
+    {
+        var html="<script type=\"application/ld+json\">{\"@graph\":[{\"@type\":\"Organization\",\"image\":\"https://cdn.example.com/logo.jpg\"},{\"@type\":\"Recipe\",\"image\":"+image+"}]}</script>";
+        Assert.Equal("https://cdn.example.com/food.jpg",WebsiteRecipe.PhotoUrl(html,"https://bbcgoodfood.com/recipes/test"));
+    }
+    [Theory]
+    [InlineData("http://cdn.example.com/photo.jpg")]
+    [InlineData("https://localhost/photo.jpg")]
+    [InlineData("https://127.0.0.1/photo.jpg")]
+    [InlineData("https://user:password@cdn.example.com/photo.jpg")]
+    [InlineData("https://cdn.example.com:8080/photo.jpg")]
+    [InlineData("https://printer.local/photo.jpg")]
+    public void UnsafePhotoLinksAreRejected(string url)=>Assert.False(WebsiteRecipe.IsPhotoUrl(new Uri(url)));
+    [Fact]
+    public void MissingPhotoAndRelativePhotoAreHandled()
+    {
+        Assert.Null(WebsiteRecipe.PhotoUrl("<html>No image</html>","https://bbcgoodfood.com/recipes/test"));
+        Assert.Equal("https://bbcgoodfood.com/photo.jpg",WebsiteRecipe.PhotoUrl("<script type=\"application/ld+json\">{\"@type\":\"Recipe\",\"image\":\"/photo.jpg\"}</script>","https://bbcgoodfood.com/recipes/test"));
+    }
 }

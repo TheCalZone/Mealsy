@@ -42,6 +42,14 @@ public partial class MealPlannerPage : ContentPage
                 card.Add(ShoppingUi.Text("↳ "+note));card.Add(ShoppingUi.Button("Edit / remove note",async()=>{Check();var text=await DisplayPromptAsync("Meal note","Clear the text to remove this note.",initialValue:note,maxLength:500);if(text==null)return;var notes=MealPlanning.Notes(day,current);var index=notes.IndexOf(note);if(index>=0){if(string.IsNullOrWhiteSpace(text))notes.RemoveAt(index);else notes[index]=text.Trim();}Render();},true));
             }
             card.Add(ShoppingUi.Button("+ Choose recipes",async()=>{Check();await Navigation.PushAsync(new MealRecipePickerPage(recipes,MealPlanning.Ids(day,current),ids=>{Check();var target=MealPlanning.Ids(day,current);target.Clear();target.AddRange(ids);Render();}));}));
+            card.Add(ShoppingUi.Button("+ Import recipe from link",async()=>{
+                Check();
+                await Navigation.PushAsync(new RecipeWebsitePage(saved: recipe => {
+                    Check();recipes.RemoveAll(r=>r.Id==recipe.Id);recipes.Add(recipe);
+                    var target=MealPlanning.Ids(day,current);if(!target.Contains(recipe.Id))target.Add(recipe.Id);
+                    Render();return Task.CompletedTask;
+                }));
+            },true));
             card.Add(ShoppingUi.Button("+ Add a note",async()=>{Check();var text=await DisplayPromptAsync("Meal note","e.g. Use yesterday's leftovers or pack lunch early",maxLength:500);if(!string.IsNullOrWhiteSpace(text)){Check();MealPlanning.Notes(day,current).Add(text.Trim());Render();}},true));body.Add(ShoppingUi.Card(card));
         }
         body.Add(ShoppingUi.Button("Save day",()=>Run(SaveDay)));
