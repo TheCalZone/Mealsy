@@ -1,5 +1,34 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Tester consistency pass
+
+Account/household Premium shortcuts and the feature screen no longer display fixed
+reference prices. PlanPage loads the monthly and annual labels from the same Play
+base-plan offers used at checkout. Missing store products show Price unavailable,
+with purchase buttons disabled; Refresh plans & prices retries. No guessed UK price
+or savings claim is displayed. SubscriptionPricing retains historical UK reference
+constants for documentation/tests only; this pass does not change Play Console
+prices, billing product IDs or paid entitlements. Extra-place counts no longer quote
+an assumed total; Play confirms the price before payment. Purchase preparation now
+keeps its selected product/offer local so another price lookup cannot overwrite it.
+
+Premium and Account copy correctly distinguish private device-local personal plans,
+weekly templates, shopping-trip libraries and drafts from shared household meal
+plans. Shared planners and household widgets use consistent Premium wording. The
+recipe book has a direct import-link action. Home includes typed meals in today's
+menu and uses standard shopping navigation; batch planning is labelled personal.
+Household tools use themed buttons and provide sign-in/personal-planner routes.
+Plan/features navigation returns to the existing plan screen instead of stacking
+another subscription page. Admin patch notes include the pass.
+
+338 app tests pass, including typed dashboard meals and missing recipe handling.
+Android Debug build passes without warnings. A standalone tester APK is built via
+the clean-publish/startup-reference guard. No Firebase changes or deployments.
+Actual checkout prices and purchases need Play test-track installation/configured
+products; a sideloaded APK can display Price unavailable. Existing administrator
+complimentary Premium grants can cover non-purchasing testers. Confirm household
+sync and invitations using two physical devices; these are not cloud-verified here.
+
 ## Administrator patch notes
 
 Account → Administrator → Patch notes shows bundled newest-first change cards,

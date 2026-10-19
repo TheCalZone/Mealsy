@@ -5,7 +5,7 @@ namespace RecipeApp.Views;
 public partial class MealPlanOverviewPage : ContentPage
 {
     private MealPlan plan;private List<Recipe> recipes=new();private string account;private bool busy;
-    public MealPlanOverviewPage(){InitializeComponent();ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Household plan",null,async()=>await AppNavigation.Open(new HouseholdMealsPage())));ToolbarItems.Add(new ToolbarItem("Weekly templates · Premium",null,async()=>await PremiumAccess.OpenWeeks()));ToolbarItems.Add(new ToolbarItem("Plan a household batch",null,async()=>await Run(PlanBatch)));}
+    public MealPlanOverviewPage(){InitializeComponent();ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Household plan",null,async()=>await AppNavigation.Open(new HouseholdMealsPage())));ToolbarItems.Add(new ToolbarItem("Weekly templates · Premium",null,async()=>await PremiumAccess.OpenWeeks()));ToolbarItems.Add(new ToolbarItem("Plan a batch in my personal week",null,async()=>await Run(PlanBatch)));}
     private async Task PlanBatch()
     {
         Check();if(recipes.Count==0)throw new InvalidOperationException("Save a recipe first.");

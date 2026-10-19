@@ -20,6 +20,12 @@ public static class MealPlanning
         return copies;
     }
     public static string SimpleMeal(MealPlanDay day,int slot)=>(slot switch{0=>day.BreakfastText,1=>day.LunchText,_=>day.DinnerText})??"";
+    public static IReadOnlyList<string> MealNames(MealPlanDay day,int slot,IEnumerable<Recipe> recipes)
+    {
+        var available=recipes.ToDictionary(r=>r.Id);
+        return Ids(day,slot).Select(id=>available.TryGetValue(id,out var recipe)?recipe.RecipeName:"Recipe unavailable")
+            .Concat(new[]{SimpleMeal(day,slot)}).Where(name=>!string.IsNullOrWhiteSpace(name)).ToList();
+    }
     public static void SetSimpleMeal(MealPlanDay day,int slot,string text) {
         text=(text??"").Trim();if(text.Length>200)throw new InvalidOperationException("Keep the meal name within 200 characters.");
         if(slot==0)day.BreakfastText=text;else if(slot==1)day.LunchText=text;else day.DinnerText=text;

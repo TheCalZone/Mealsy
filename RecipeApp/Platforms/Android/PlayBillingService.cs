@@ -10,8 +10,6 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
 {
     public static PlayBillingService Instance { get; } = new();
     private NativeBilling client;
-    private ProductDetails product;
-    private ProductDetails.SubscriptionOfferDetails offer;
     private TaskCompletionSource<string> pending;
     private string pendingProduct=MonetizationConfig.ProductId;
     private readonly SemaphoreSlim connection = new(1, 1);
@@ -30,18 +28,23 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
         }
         finally { connection.Release(); }
     }
-    public async Task<string> LoadPrice(string basePlanId = MonetizationConfig.BasePlanId,string productId=MonetizationConfig.ProductId)
+    private async Task<(ProductDetails Product,ProductDetails.SubscriptionOfferDetails Offer)> LoadOffer(string basePlanId,string productId)
     {
         await Connect();
         var query = QueryProductDetailsParams.NewBuilder().SetProductList(new[] {
             QueryProductDetailsParams.Product.NewBuilder().SetProductId(productId).SetProductType("subs").Build() }).Build();
         var response = await client.QueryProductDetailsAsync(query).WaitAsync(TimeSpan.FromSeconds(30));
-        product = response.ProductDetailsList.FirstOrDefault(p => p.ProductId == productId);
-        offer = product?.GetSubscriptionOfferDetails()?.FirstOrDefault(o => o.BasePlanId == basePlanId && o.OfferId == null);
+        var product = response.ProductDetailsList.FirstOrDefault(p => p.ProductId == productId);
+        var offer = product?.GetSubscriptionOfferDetails()?.FirstOrDefault(o => o.BasePlanId == basePlanId && o.OfferId == null);
         var phase = offer?.PricingPhases.PricingPhaseList.LastOrDefault();
         var seats=productId=="mealsy_extra_places"&&System.Text.RegularExpressions.Regex.IsMatch(basePlanId,@"^places-([1-9]|1[0-6])$");
         if ((!seats&&basePlanId is not (MonetizationConfig.BasePlanId or MonetizationConfig.MonthlyBasePlanId)) || phase == null || phase.BillingPeriod != (seats||basePlanId == MonetizationConfig.MonthlyBasePlanId ? "P1M" : "P1Y")) throw new InvalidOperationException("That plan is not available from the app store yet.");
-        return Price = phase.FormattedPrice;
+        return (product,offer);
+    }
+    public async Task<string> LoadPrice(string basePlanId = MonetizationConfig.BasePlanId,string productId=MonetizationConfig.ProductId)
+    {
+        var details=await LoadOffer(basePlanId,productId);
+        return Price=details.Offer.PricingPhases.PricingPhaseList.Last().FormattedPrice;
     }
     public async Task Buy(string basePlanId = MonetizationConfig.BasePlanId,string productId=MonetizationConfig.ProductId)
     {
@@ -51,10 +54,10 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
         pendingProduct=productId;
         try
         {
-            await LoadPrice(basePlanId,productId);
+            var selected=await LoadOffer(basePlanId,productId);
             if (uid != HouseholdService.UserId) throw new InvalidOperationException("Your account changed. Please try again.");
             var parameters = BillingFlowParams.NewBuilder().SetObfuscatedAccountId(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(uid))).ToLowerInvariant())
-                .SetProductDetailsParamsList(new[] { BillingFlowParams.ProductDetailsParams.NewBuilder().SetProductDetails(product).SetOfferToken(offer.OfferToken).Build() }).Build();
+                .SetProductDetailsParamsList(new[] { BillingFlowParams.ProductDetailsParams.NewBuilder().SetProductDetails(selected.Product).SetOfferToken(selected.Offer.OfferToken).Build() }).Build();
             var result = client.LaunchBillingFlow(Platform.CurrentActivity, parameters); Check(result);
             var token = await pending.Task.WaitAsync(TimeSpan.FromMinutes(5));
             if (uid != HouseholdService.UserId) throw new InvalidOperationException("Sign in with the account used to subscribe, then restore purchases.");
@@ -104,7 +107,7 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
         if ((int)result.ResponseCode != 0) { completion.TrySetException(new InvalidOperationException("The app store could not complete the purchase. Try restoring purchases if you already paid.")); return; }
         var purchase = purchases?.FirstOrDefault(p => p.Products.Contains(pendingProduct));
         if (purchase == null) completion.TrySetException(new InvalidOperationException("No subscription was returned. Try Restore purchases."));
-        else if ((int)purchase.PurchaseState != 1) completion.TrySetException(new InvalidOperationException("Payment is pending. Family access starts after the app store confirms payment. Restore purchases after confirmation."));
+        else if ((int)purchase.PurchaseState != 1) completion.TrySetException(new InvalidOperationException("Payment is pending. Premium access starts after the app store confirms payment. Restore purchases after confirmation."));
         else completion.TrySetResult(purchase.PurchaseToken);
     }
     private static void Check(BillingResult result)

@@ -14,10 +14,10 @@ public partial class Homepage : ContentPage
         var recipes=RecipeBrowser.Visible(RecipeService.Recipes,account).ToList();var body=new VerticalStackLayout{Padding=16,Spacing=18};var first=AccountSession.CachedProfile?.FirstName;
         body.Add(ShoppingUi.Text(string.IsNullOrWhiteSpace(first)?"Good food starts here":"Welcome back, "+first,29,true));body.Add(ShoppingUi.Text("A calmer kitchen, one meal at a time.",16));
         if(!OnboardingState.Completed||OnboardingState.PendingCode.Length>0)body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Text(OnboardingState.PendingCode.Length>0?"Your household invitation is ready":"New here? Make Mealsy yours",22,true),ShoppingUi.Text("A quick guide to your account, meals and shopping. Join a household if you have a code, or get started on your own."),ShoppingUi.Button("Get started",()=>AppNavigation.Open(new OnboardingPage(startAt:OnboardingState.PendingCode.Length>0?2:0)))}}));
-        body.Add(ShoppingUi.Button("What’s for dinner? · Household plan",()=>AppNavigation.Open(new HouseholdMealsPage()),true));
+        if(account!=null)body.Add(ShoppingUi.Button("What’s for dinner? · Household plan",()=>AppNavigation.Open(new HouseholdMealsPage()),true));
         var summary="Your shopping list is ready when you are.";
         try{var json=Preferences.Get(ShoppingListStore.StateKey,"");if(json.Length>0){var items=ShoppingListDocument.Deserialize(json).Items;summary=$"{items.Count(i=>!i.InBasket)} items left to collect · {items.Count} on your personal list";}}catch(Exception){summary="Your saved list needs checking. Open Shopping for recovery options.";}
-        body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Text("Your next shopping trip",23,true),ShoppingUi.Text(summary,14),ShoppingUi.Button("Open personal shopping list",()=>Shell.Current.GoToAsync("//ShoppingListPage?OpenPersonal=True")),ShoppingUi.Button("Quick add an item",async()=>{
+        body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Text("Your next shopping trip",23,true),ShoppingUi.Text(summary,14),ShoppingUi.Button("Open personal shopping list",()=>AppNavigation.ShoppingList("//ShoppingListPage?OpenPersonal=True")),ShoppingUi.Button("Quick add an item",async()=>{
             var name=await DisplayPromptAsync("Quick add to personal list","What do you need?",maxLength:200);if(string.IsNullOrWhiteSpace(name))return;AccountSession.Check(account);ShoppingListStore.AppendIngredients(new[]{new Ingredient{Name=name.Trim()}});await DisplayAlert("Added","Added to your personal shopping list.","OK");await Render(account);
         },true)}}));
         var shortcuts=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},RowDefinitions=new(){new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8,RowSpacing=8};
@@ -26,7 +26,7 @@ public partial class Homepage : ContentPage
         var meals=new VerticalStackLayout{Spacing=9};meals.Add(ShoppingUi.Text("On the menu today",23,true));var planned=false;
         if(today!=null)for(var slot=0;slot<3;slot++)
         {
-            var names=MealPlanning.Ids(today,slot).Select(id=>recipes.FirstOrDefault(r=>r.Id==id)?.RecipeName??"Recipe unavailable").Concat(MealPlanning.Notes(today,slot)).ToList();if(names.Count==0)continue;planned=true;meals.Add(ShoppingUi.Text(MealPlanning.Slots[slot],12,true));meals.Add(ShoppingUi.Text(string.Join(" · ",names),15));
+            var names=MealPlanning.MealNames(today,slot,recipes).Concat(MealPlanning.Notes(today,slot)).ToList();if(names.Count==0)continue;planned=true;meals.Add(ShoppingUi.Text(MealPlanning.Slots[slot],12,true));meals.Add(ShoppingUi.Text(string.Join(" · ",names),15));
         }
         if(!planned)meals.Add(ShoppingUi.Text("Leave room for inspiration, leftovers, or something you've been meaning to cook.",14));meals.Add(ShoppingUi.Button("Plan your week",()=>AppNavigation.Root("MealPlanOverviewPage"),true));body.Add(ShoppingUi.Card(meals));
         body.Add(ShoppingUi.Text("Back to your favourites",23,true));foreach(var recipe in recipes.OrderByDescending(r=>RecipeBrowser.Tags(r).Contains("favourites")).ThenByDescending(r=>r.LastUpdated).Take(2))body.Add(RecipeCardView.Card(recipe,()=>AppNavigation.Recipe(recipe.Id)));

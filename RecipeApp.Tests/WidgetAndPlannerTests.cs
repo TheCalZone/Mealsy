@@ -6,6 +6,16 @@ using Xunit;
 public class WidgetAndPlannerTests
 {
     [Fact]
+    public void DashboardMealNamesKeepTypedMealsAlongsideRecipesWithoutAddingNotesAsRecipes()
+    {
+        var day=new MealPlanDay();MealPlanning.SetSimpleMeal(day,2,"Leftovers");
+        Assert.Equal(new[]{"Leftovers"},MealPlanning.MealNames(day,2,Array.Empty<Recipe>()));
+        MealPlanning.Ids(day,2).AddRange(new long[]{4,99});MealPlanning.Notes(day,2).Add("Home late");
+        Assert.Equal(new[]{"Pasta","Recipe unavailable","Leftovers"},MealPlanning.MealNames(day,2,new[]{new Recipe{Id=4,RecipeName="Pasta"}}));
+        Assert.Empty(MealPlanning.MealNames(day,0,Array.Empty<Recipe>()));
+        Assert.Equal("Home late",Assert.Single(MealPlanning.Notes(day,2)));
+    }
+    [Fact]
     public void BatchOfEightForTwoCreatesFourMealsAndShopsEightPortions()
     {
         var recipe=new Recipe{Id=40,Serving=8,RecipeName="Chilli"};

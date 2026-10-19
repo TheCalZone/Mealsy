@@ -7,6 +7,12 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,19), "Consistency improvements for testers", new[] {
+            "Account and household shortcuts no longer show fixed subscription prices. Monthly and annual prices on the upgrade screen come from Google Play, with a clear unavailable state and refresh action.",
+            "Premium descriptions now include shared household meal planning and explain which personal data stays on this device.",
+            "Typed meals appear on the home dashboard. Recipe-link importing is also available directly from the recipe book.",
+            "Improved household sign-in links, button styling and navigation between Premium plans and features. Social features remain paused."
+        }),
         new(new(2026,10,19), "Administrator patch notes", new[] {
             "Added this read-only change history to the administrator panel.",
             "The administrator screen keeps its own title and opens without the email keyboard covering the tools. The complimentary Premium shortcut still focuses the email field."

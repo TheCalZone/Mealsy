@@ -16,13 +16,7 @@ public class HouseholdPage : ContentPage
         Content = new ScrollView { Content = content };
     }
     protected override async void OnAppearing() { base.OnAppearing(); await Run(Refresh); }
-    private Button Action(string title, Func<Task> action)
-    {
-        var button = new Button { Text = title, CornerRadius = 12, TextColor = Colors.White };
-        button.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeAccent");
-        button.Clicked += async (_, _) => await Run(action);
-        return button;
-    }
+    private Button Action(string title,Func<Task> action)=>ShoppingUi.Button(title,()=>Run(action));
     private async Task Run(Func<Task> action)
     {
         if (busy) return;
@@ -42,12 +36,12 @@ public class HouseholdPage : ContentPage
         content.Clear();
         content.Add(ShoppingUi.Text("Shop together", 30, true));
         content.Add(ShoppingUi.Text("Each person keeps a private list and their own login. Everyone in your household can add, edit, remove and collect items on the household list."));
-        if (account == null) { content.Add(ShoppingUi.Text("Sign in or create an account on the Account tab to get started.")); return; }
+        if (account == null) { content.Add(ShoppingUi.Text("Sign in or create an account on the Account tab to get started."));content.Add(Action("Go to Account",()=>AppNavigation.Root("AccountPage"))); return; }
         PlanStatus plan;
         try { plan = await PlanService.RefreshAsync(); }
         catch (Exception) { plan = PlanService.Cached ?? new PlanStatus(false, false, false, 0, true, "", ""); }
         // Membership cleanup must remain available even if Play's API is unavailable.
-        content.Add(Action(plan.FamilyEnabled ? "Mealsy Family · Manage plan" : "Unlock Premium · "+SubscriptionPricing.Summary, async () => await Navigation.PushAsync(new PlanPage())));
+        content.Add(Action(plan.FamilyEnabled ? "Mealsy Premium · Manage plan" : "Mealsy Premium · Plans & benefits", async () => await Navigation.PushAsync(new PlanPage())));
         var household = await HouseholdService.StatusAsync();
         CheckAccount();
         if (household.HouseholdId == null)
@@ -68,7 +62,7 @@ public class HouseholdPage : ContentPage
         else
         {
             content.Add(Action("What’s for dinner? · Shared meal plan",()=>AppNavigation.Open(new HouseholdMealsPage())));
-            if (!household.FamilyEnabled) content.Add(ShoppingUi.Text("Family sharing is paused. The household owner needs to renew or restore their Family plan. Your household data has been kept."));
+            if (!household.FamilyEnabled) content.Add(ShoppingUi.Text("Family sharing is paused. The household owner needs to renew or restore their Premium plan. Your household data has been kept."));
             content.Add(ShoppingUi.Text(household.Name, 24, true));
             content.Add(ShoppingUi.Text($"{household.Members.Count} of {household.MemberLimit} people"));
             foreach (var member in household.Members)

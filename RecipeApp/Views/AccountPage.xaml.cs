@@ -79,9 +79,9 @@ public partial class AccountPage : ContentPage
         if(administrator){body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));body.Add(FoodFeedPage.Button("Give complimentary Premium",()=>AppNavigation.Open(new AdminPage(true))));}
         body.Add(ShoppingUi.Button("Weekly templates · Premium",PremiumAccess.OpenWeeks,true));
         body.Add(ShoppingUi.Button("Saved shopping trips · Premium",PremiumAccess.OpenShopping,true));
-        body.Add(ShoppingUi.Button("Premium · "+SubscriptionPricing.Summary,()=>AppNavigation.Open(new PlanPage())));
-        body.Add(ShoppingUi.Button("See everything included",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
-        body.Add(ShoppingUi.Text("Your recipes and shopping checklists sync when connected to the account service. Meal plans and editor drafts are device-local. Signing in doesn't automatically upload recipes created in device mode.",13));
+        body.Add(ShoppingUi.Button("Mealsy Premium · Plans & benefits",()=>AppNavigation.Open(new PlanPage())));
+        body.Add(ShoppingUi.Button("Premium features",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
+        body.Add(ShoppingUi.Text("Your recipes and shopping lists sync when connected. Your personal meal plan, saved weeks, saved shopping trips and editor drafts stay on this device. Household shopping and household meal plans are shared online. Signing in does not automatically copy recipes created in device mode.",13));
         body.Add(ShoppingUi.Button("Sign out",async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.","Sign out","Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();requests.Invalidate();loading=false;loadWarning=null;account=null;community=null;administrator=false;Render();},true));
         Content=new ScrollView{Content=body};
     }
