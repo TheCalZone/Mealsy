@@ -56,7 +56,7 @@
 		<MauiIcon Include="Resources\AppIcon\saladiconandroid.svg" Condition="'$(TargetFramework)' != 'net8.0-ios'">
 			<BaseSize>168,168</BaseSize>
 		</MauiIcon>		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\saladiconsplash.svg" BaseSize="168,208" Color="#F7B548" />
+		<MauiSplashScreen Include="Resources\Splash\saladiconsplash.svg" BaseSize="168,168" Color="#214D35" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />

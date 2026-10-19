@@ -23,6 +23,16 @@ No native iOS build or IPA is verified: the Mac is not connected to this session
 needed before a current iPhone release. Run `python3 scripts/ios-preflight.py` on
 the Mac to collect its toolchain state without installing or changing anything.
 
+## Latest update: Android startup and status-bar colours
+
+Launch splash now uses the default Forest green (#214D35), with the existing food
+logo sized square to preserve its proportions. Native colorPrimary/colorPrimaryDark
+and MAUI fallback palette no longer use the template purple. Once the app starts,
+ThemeService applies the current ThemePrimary to Android's status bar with white
+system icons, and reapplies it on theme changes/resume. The native OS splash is
+statically Forest-branded; saved palette selection applies after startup. No backend
+changes. Verify cold launch, resume and each colour theme on a phone.
+
 ## Latest update: offline ingredient autocomplete
 
 Shopping quick-add and WidgetQuickAddPage show up to five ingredient chips after
