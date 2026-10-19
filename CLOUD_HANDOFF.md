@@ -1,5 +1,37 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Startup crash fix and Mealsy splash title
+
+The af9600c APK reproduced a native Mono SIGABRT before App construction:
+`icall.c:6231: !only_unmanaged_callers_only`. Its libxamarin-app.so startup tokens
+were stale: Initialize 0x06002274 / RegisterJniNatives 0x06002273, while its actual
+bundled Mono.Android.dll methods were 0x06002275 / 0x06002274. This is a Release
+incremental packaging mismatch, not a Firebase or keyboard/form failure. No user
+data/schema migration is required. The existing keyboard resize code is retained.
+
+Use `scripts/build-android-test-apk.sh` to clean Release before standalone test
+publishing with the existing Android development key. It runs the new Python
+standard-library `scripts/check-android-startup.py APK` guard, which reads native
+ELF startup tokens and the actual (LZ4-compressed) Mono.Android.dll inside the APK.
+The guard rejects the original broken APK and passes the rebuilt APK for all four
+ABIs. It supports this project's .NET 8 assembly-store layout; newer SDK layouts
+must update the check rather than silently skipping it. Supply DOTNET_ROOT/PATH,
+ANDROID_HOME/JAVA_HOME and the normal NuGet/cache selectors for your environment.
+For production signing and Play bundles, use your production build/signing workflow.
+
+Splash now uses mealsysplash.svg: the existing salad illustration plus a cream
+Mealsy wordmark rendered as vector paths, with the same Forest background. Text is
+outlined so Android resource generation does not depend on device fonts. Existing
+icon and other resources remain intact. Android Debug clean build and 337 app tests
+pass; final APK startup consistency is checked against its bundled bytes.
+
+Software API 29 emulator reproduced the original runtime abort. A clean rebuild
+passed that point into Firebase initialization and MAUI/Android view creation.
+The emulator also suffered Android System UI ANRs under software emulation; do not
+claim a complete interactive device pass from this run. Check cold launch and
+keyboard/forms on a physical phone with the replacement APK. No uninstall or
+app-data clearing is part of this fix.
+
 ## Latest additions: meal-planner importing and optional recipe photos
 
 Personal day cards now offer Import recipe from link for each meal slot. Saving the
