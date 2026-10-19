@@ -47,6 +47,12 @@ new social backend. See [content sharing setup](CONTENT_SHARING.md).
 ## Free personal features
 
 **Recipe book**
+- Cooking steps suggest ingredient checklists by matching names locally, including
+  plurals and preparation words. Each step has its own temporary addition ticks;
+  prep checks and shopping items are unchanged. Add/remove step ingredients manually
+  for ambiguous instructions. Quantities are whole-recipe totals, update with
+  serving adjustments and do not infer per-step portions. Shared reading screens
+  and editor previews use the same feature; no AI or Firebase calls.
 - Create, view, edit and delete recipes using one shared editor, with a photo,
   introduction, servings, separate prep/cook times, rating and tags.
 - Preview before saving; local account-specific drafts recover after navigation.

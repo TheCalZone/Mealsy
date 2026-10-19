@@ -1,5 +1,21 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Latest cooking feature: step ingredient checklists
+
+RecipeReadView uses local StepIngredients matching to show suggested ingredients
+inside method cards. Whole words/plurals/accents/preparation modifiers are handled;
+longer compound names win over contained names (chicken stock vs chicken) and
+ambiguous short references (two oils) are not guessed. Vague "remaining ingredients"
+instructions require manual selection. Each step has independent temporary ticks,
+separate from overall prep and shopping checks. Choose ingredients adds/removes
+suggestions without changing the saved recipe. Repeated uses can be checked again.
+
+Displayed amounts are recipe totals, not inferred allocations; follow step text
+for half/divided quantities. All rendered totals follow serving adjustments.
+No backend changes or AI calls. Tests cover matching, ambiguity, duplicate section
+ingredients, repeated uses and preserving source quantities. Verify cooking flow
+and manual selections on a phone.
+
 ## Latest UI adjustment: one Options control in page toolbars
 
 Application PageAppearing groups each page's existing toolbar actions under a

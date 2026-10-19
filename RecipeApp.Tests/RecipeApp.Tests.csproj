@@ -48,6 +48,7 @@
     <Compile Include="../RecipeApp/Services/CupboardRules.cs" Link="CupboardRules.cs" />
     <Compile Include="../RecipeApp/Services/DiagnosticPolicy.cs" Link="DiagnosticPolicy.cs" />
     <Compile Include="../RecipeApp/Services/AppDiagnostics.cs" Link="AppDiagnostics.cs" />
+    <Compile Include="../RecipeApp/Services/StepIngredients.cs" Link="StepIngredients.cs" />
     <Compile Include="../RecipeApp/Services/IngredientSuggestions.cs" Link="IngredientSuggestions.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingCategories.cs" Link="ShoppingCategories.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingItemOrder.cs" Link="ShoppingItemOrder.cs" />
