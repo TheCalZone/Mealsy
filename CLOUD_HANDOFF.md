@@ -1,5 +1,16 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Administrator patch notes
+
+Account → Administrator → Patch notes shows bundled newest-first change cards,
+release dates and the installed app version/build. The notes button appears after
+the existing administrator status check; account changes still invalidate actions.
+This is a local read-only history, with no Firebase write, new endpoint or audit
+entry. Content lives in Services/AppPatchNotes.cs; add a dated entry when shipping
+future changes. Earlier social work is clearly marked as paused. The administrator
+screen now keeps its Administrator title when social features are paused and only
+the explicit complimentary Premium shortcut autofocuses the email field.
+
 ## Startup crash fix and Mealsy splash title
 
 The af9600c APK reproduced a native Mono SIGABRT before App construction:

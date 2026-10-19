@@ -14,17 +14,20 @@ public class AdminPage : ContentPage
     private bool busy;
     private Button more;
     private readonly bool premiumOnly;
+    private readonly bool focusPremium;
+    private readonly Button patchNotes;
     public AdminPage(bool premium=false)
     {
-        premiumOnly=premium||!ProductFeatures.SocialEnabled;Title = premiumOnly?"Complimentary Premium":"Administrator"; ShoppingUi.Theme(this);
+        focusPremium=premium;premiumOnly=premium||!ProductFeatures.SocialEnabled;Title = premium?"Complimentary Premium":"Administrator"; ShoppingUi.Theme(this);
         var body = new VerticalStackLayout { Padding = 20, Spacing = 14 };
         body.Add(ShoppingUi.Text("Mealsy administration",26,true));
-        body.Add(ShoppingUi.Text("Changes here are recorded in the administrator activity log.",13));
+        body.Add(ShoppingUi.Text("Account and moderation changes are recorded in the administrator activity log.",13));
         if(ProductFeatures.SocialEnabled)body.Add(Action("Community posts & reports", () => Load("posts",true)));
         body.Add(ShoppingUi.Text("Complimentary Premium access",21,true));
         body.Add(ShoppingUi.Text("Find an existing account by email, then grant 30, 90 or 365 days without a purchase. A reason is required and every change is audited. This does not create an app-store subscription or grant administrator rights.",13));
         body.Add(email); body.Add(Action("Find account / manage Premium", FindUser));
         body.Add(Action("Administrator activity", () => Load("audit",true)));
+        patchNotes=Action("Patch notes · what’s changed",ShowPatchNotes);patchNotes.IsVisible=false;body.Add(patchNotes);
         if(ProductFeatures.SocialEnabled)body.Add(Action("Verify businesses & creators",()=>Navigation.PushAsync(new BusinessVerificationPage())));
         body.Add(status); body.Add(results);
         more = Action("Load more", () => Load(section,false)); more.IsVisible = false; body.Add(more);
@@ -32,9 +35,26 @@ public class AdminPage : ContentPage
     }
     protected override async void OnAppearing()
     {
-        base.OnAppearing(); results.Clear(); more.IsVisible = false;
-        try { Check(); var role = await AdminService.Status(); Check(); if (!role.Admin) throw new HouseholdException("PERMISSION_DENIED","Administrator access is required."); if(premiumOnly){status.Text="Enter the recipient’s registered email to manage complimentary Premium.";email.Focus();}else await Load("posts",true); }
+        base.OnAppearing(); results.Clear(); more.IsVisible = false;patchNotes.IsVisible=false;
+        try { Check(); var role = await AdminService.Status(); Check(); if (!role.Admin) throw new HouseholdException("PERMISSION_DENIED","Administrator access is required."); patchNotes.IsVisible=true;if(premiumOnly){status.Text="Enter the recipient’s registered email to manage complimentary Premium.";if(focusPremium)email.Focus();}else await Load("posts",true); }
         catch (Exception e) { status.Text = e is HouseholdException ? e.Message : "Administration unavailable. Reopen this screen to retry."; }
+    }
+    private Task ShowPatchNotes()
+    {
+        Check();if(busy)return Task.CompletedTask;
+        AppNavigation.DismissKeyboard();results.Clear();cursor=null;more.IsVisible=false;section="patchNotes";
+        status.Text="Patch notes · Newest first · Included with this installed app";
+        results.Add(ShoppingUi.Text($"Mealsy {AppInfo.Current.VersionString} (build {AppInfo.Current.BuildString})",18,true));
+        results.Add(ShoppingUi.Text("This history is bundled with the app. Install a newer version to see its notes. Reading notes does not change any accounts or Premium access.",13));
+        foreach(var note in AppPatchNotes.Entries)
+        {
+            var card=new VerticalStackLayout{Spacing=8};
+            card.Add(ShoppingUi.Text(note.Date.ToString("d MMMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("en-GB")),12));
+            card.Add(ShoppingUi.Text(note.Title,20,true));
+            foreach(var change in note.Changes)card.Add(ShoppingUi.Text("• "+change,14));
+            results.Add(ShoppingUi.Card(card));
+        }
+        return Task.CompletedTask;
     }
     private void Check() { if(account == null || account != AccountSession.UserId) throw new HouseholdException("UNAUTHENTICATED","Your account changed. Close administration and reopen Account."); }
     private Button Action(string text, Func<Task> action)
