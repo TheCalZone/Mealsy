@@ -12,7 +12,7 @@ public class ShoppingSectionOrderPage:ContentPage
     {
         this.model=model;context=model.SectionOrderContext;
         drag=new ShoppingSectionDrag(model.SectionNames,order=>{Check();model.SaveSectionOrder(order);Render();},()=>AccountSession.UserId==account&&model.SectionOrderContext==context);
-        ToolbarItems.Add(new ToolbarItem("Move with buttons",null,()=>{showButtons=!showButtons;Render();}){Order=ToolbarItemOrder.Secondary});Title="Reorder sections";ShoppingUi.Theme(this);Content=new ScrollView{Content=body};
+        ToolbarItems.Add(new ToolbarItem("Move with buttons",null,()=>{showButtons=!showButtons;Render();}){Order=ToolbarItemOrder.Secondary});Title=AppLocalization.Text("Reorder sections");ShoppingUi.Theme(this);Content=new ScrollView{Content=body};
     }
     private void Check(){AccountSession.Check(account);if(model.SectionOrderContext!=context)throw new InvalidOperationException("Your shopping list changed. Reopen section order from the list you want to arrange.");}
     protected override void OnAppearing(){base.OnAppearing();try{Check();Render();}catch(InvalidOperationException e){drag.Cancel();body.Clear();body.Add(ShoppingUi.Text(e.Message));}}

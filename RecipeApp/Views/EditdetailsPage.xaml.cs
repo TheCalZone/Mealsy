@@ -13,6 +13,6 @@ public partial class EditdetailsPage : ContentPage
         var first=Field("First name",profile.FirstName,80);var last=Field("Last name",profile.LastName,80);var diet=Field("Dietary preferences",profile.DietRestrictions,500);var cuisines=Field("Favourite cuisines",profile.FavouriteCuisines,500);
         body.Add(ShoppingUi.Text("Your sign-in email is read-only. Preferences can be saved locally while cloud sync is unavailable.",13));
         body.Add(ShoppingUi.Button("Save profile",async()=>{if(saved)return;AccountSession.Check(account);AccountSession.SaveProfile(new AppUser{FirebaseUID=account,FirstName=first.Text,LastName=last.Text,DietRestrictions=diet.Text,FavouriteCuisines=cuisines.Text});saved=true;_=AccountSession.SyncSafely();await AppNavigation.Back();}));
-        body.Add(ShoppingUi.Button("Cancel",AppNavigation.Back,true));Content=new ScrollView{Content=body};
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Cancel"),AppNavigation.Back,true));Content=new ScrollView{Content=body};
     }
 }

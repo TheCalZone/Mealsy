@@ -13,7 +13,7 @@ public class RecipeReadView : ContentView
         var portionLabels=new List<(int Index,Label Label)>();var portions=ShoppingUi.Entry(CurrentServings.ToString(),"Servings",_=>{},4,true);var portionCard=new VerticalStackLayout{Spacing=7};portionCard.Add(ShoppingUi.Text("Cook for your table",20,true));portionCard.Add(ShoppingUi.Text("Preview quantities for different servings. Your saved recipe stays unchanged.",13));portionCard.Add(portions);
         portionCard.Add(ShoppingUi.Button("Adjust servings",()=>{if(!int.TryParse(portions.Text,out var wanted))throw new InvalidOperationException("Enter a whole number of servings.");var scaled=RecipeBrowser.ForServings(original,wanted);CurrentServings=wanted;time.Text=RecipePresentation.TimeText(scaled);foreach(var entry in portionLabels)entry.Label.Text=$"{scaled.Ingredients[entry.Index].Quantity} {scaled.Ingredients[entry.Index].Name}".Trim();return Task.CompletedTask;},true));body.Add(ShoppingUi.Card(portionCard));
         cooking.Toggled+=(_,e)=>{if(e.Value){previousKeepAwake=DeviceDisplay.Current.KeepScreenOn;holding=true;DeviceDisplay.Current.KeepScreenOn=true;}else Release();};body.Add(new HorizontalStackLayout{Spacing=8,Children={cooking,ShoppingUi.Text("Keep screen awake",14)}});
-        var ingredientAnchor=ShoppingUi.Text("Ingredients",24,true);var methodAnchor=ShoppingUi.Text("Method",24,true);var jump=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};jump.Add(ShoppingUi.Button("Ingredients",()=>scroll.ScrollToAsync(ingredientAnchor,ScrollToPosition.Start,true),true),0);jump.Add(ShoppingUi.Button("Method",()=>scroll.ScrollToAsync(methodAnchor,ScrollToPosition.Start,true),true),1);body.Add(jump);
+        var ingredientAnchor=ShoppingUi.Text(AppLocalization.Text("Ingredients"),24,true);var methodAnchor=ShoppingUi.Text(AppLocalization.Text("Method"),24,true);var jump=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};jump.Add(ShoppingUi.Button(AppLocalization.Text("Ingredients"),()=>scroll.ScrollToAsync(ingredientAnchor,ScrollToPosition.Start,true),true),0);jump.Add(ShoppingUi.Button(AppLocalization.Text("Method"),()=>scroll.ScrollToAsync(methodAnchor,ScrollToPosition.Start,true),true),1);body.Add(jump);
         body.Add(ingredientAnchor);body.Add(ShoppingUi.Text("Tick as you prepare. Cooking checks reset when you close the recipe and don't change your shopping list.",12));
         foreach(var section in recipe.Ingredients.GroupBy(i=>string.IsNullOrWhiteSpace(i.IngredientSection)?"Ingredients":i.IngredientSection))
         {
@@ -48,7 +48,7 @@ public class RecipeReadView : ContentView
             card.Add(ShoppingUi.Button("Choose ingredients for this step…",async()=>{
                 var action=await Shell.Current.DisplayActionSheet("Step "+(index+1)+" ingredients","Cancel",null,"Add an ingredient","Remove an ingredient");if(action is not ("Add an ingredient" or "Remove an ingredient"))return;
                 var candidates=Enumerable.Range(0,recipe.Ingredients.Count).Where(n=>action=="Add an ingredient"?!selected.Contains(n):selected.Contains(n)).ToList();
-                if(candidates.Count==0){await Shell.Current.DisplayAlert("Step ingredients",action=="Add an ingredient"?"All recipe ingredients are already shown for this step.":"No ingredients to remove.","OK");return;}
+                if(candidates.Count==0){await Shell.Current.DisplayAlert("Step ingredients",action=="Add an ingredient"?"All recipe ingredients are already shown for this step.":"No ingredients to remove.",AppLocalization.Text("OK"));return;}
                 var labels=candidates.Select(n=>$"{n+1}. {recipe.Ingredients[n].Name} · {recipe.Ingredients[n].IngredientSection}").ToArray();
                 var choice=await Shell.Current.DisplayActionSheet(action,"Cancel",null,labels);var position=Array.IndexOf(labels,choice);if(position<0)return;var chosen=candidates[position];
                 if(action=="Add an ingredient")selected.Add(chosen);else{selected.Remove(chosen);checks.Remove(chosen);}RenderAdditions();
@@ -65,7 +65,7 @@ public class RecipeReadView : ContentView
 public class RecipePreviewPage : ContentPage
 {
     private readonly RecipeReadView read;
-    public RecipePreviewPage(RecipeDraft draft){Title="Preview · not saved";ShoppingUi.Theme(this);var recipe=RecipePresentation.Preview(draft);Content=read=new(recipe);ToolbarItems.Add(new ToolbarItem("Copy",null,async()=>{try{await Clipboard.Default.SetTextAsync(RecipePresentation.PlainText(RecipeBrowser.ForServings(recipe,read.CurrentServings)));}catch(Exception){await DisplayAlert("Copy unavailable","Try copying again.","OK");}}));}
+    public RecipePreviewPage(RecipeDraft draft){Title="Preview · not saved";ShoppingUi.Theme(this);var recipe=RecipePresentation.Preview(draft);Content=read=new(recipe);ToolbarItems.Add(new ToolbarItem("Copy",null,async()=>{try{await Clipboard.Default.SetTextAsync(RecipePresentation.PlainText(RecipeBrowser.ForServings(recipe,read.CurrentServings)));}catch(Exception){await DisplayAlert("Copy unavailable","Try copying again.",AppLocalization.Text("OK"));}}));}
     protected override void OnAppearing(){base.OnAppearing();read.StartCooking();}
     protected override void OnDisappearing(){read.StopCooking();base.OnDisappearing();}
 }

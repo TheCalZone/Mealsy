@@ -7,6 +7,12 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,19), "Language support", new[] {
+            "Added automatic device-language selection for English, Spanish, French, German and Portuguese, with English fallback.",
+            "Choose a language in Settings and restart Mealsy to apply it. Recipes, lists and saved identifiers are kept unchanged.",
+            "Translated core navigation, account forms, shopping controls, recipe editing and meal-planning controls. Regional dates, numbers and Play prices follow the device/store settings.",
+            "Advanced/admin text, some help and backend errors still fall back to English. Recipe content and ingredient names are not automatically translated."
+        }),
         new(new(2026,10,19), "Consistency improvements for testers", new[] {
             "Account and household shortcuts no longer show fixed subscription prices. Monthly and annual prices on the upgrade screen come from Google Play, with a clear unavailable state and refresh action.",
             "Premium descriptions now include shared household meal planning and explain which personal data stays on this device.",

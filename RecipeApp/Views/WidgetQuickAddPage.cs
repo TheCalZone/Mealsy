@@ -34,7 +34,7 @@ public class WidgetQuickAddPage : ContentPage
     {
         base.OnAppearing();_=suggestions.Refresh();if(account==HouseholdService.UserId)return;
         Content=ShoppingUi.Text("Your account changed. Reopen quick add.");
-        await DisplayAlert("Account changed","Reopen the widget to choose a list for your current account.","OK");await Navigation.PopAsync();
+        await DisplayAlert("Account changed","Reopen the widget to choose a list for your current account.",AppLocalization.Text("OK"));await Navigation.PopAsync();
     }
     private void Check(){if(account!=HouseholdService.UserId)throw new InvalidOperationException("Your account changed. Close quick add and reopen the widget.");}
     private WidgetListTarget Selected(){Check();if(picker.SelectedIndex<0)throw new InvalidOperationException("Choose a shopping list first.");return targets[picker.SelectedIndex];}
@@ -76,7 +76,7 @@ public class WidgetHelpPage : ContentPage
     public WidgetHelpPage()
     {
         if(!ClientPlatform.HomeScreenWidgetAvailable){Title="Quick shopping";ShoppingUi.Theme(this);Content=new VerticalStackLayout{Padding=20,Spacing=16,Children={ShoppingUi.Text("Shopping on iPhone",26,true),ShoppingUi.Text("A home-screen widget isn't included in this iOS build. Add items from the Shopping tab, including offline personal items."),ShoppingUi.Button("Open shopping",()=>AppNavigation.Root("ShoppingListPage"))}};return;}
-        Title="Home-screen quick add";ShoppingUi.Theme(this);
+        Title=AppLocalization.Text("Home-screen quick add");ShoppingUi.Theme(this);
         var body=new VerticalStackLayout {Padding=20,Spacing=16,Children={ShoppingUi.Text("Catch a shopping thought",28,true),ShoppingUi.Text("Add the Mealsy quick-add widget to your Android home screen. Tap + Add item to open a focused entry screen, without finding the shopping tab first."),ShoppingUi.Text("1. Long-press an empty area on your home screen.\n2. Choose Widgets, then Mealsy quick add.\n3. Drag it onto your home screen.\n4. Tap Choose list to save a personal or household target."),ShoppingUi.Text("Each widget remembers its own selection. Household access needs an active Premium plan and an online permission check; personal items can be saved offline. The widget shows no shopping items on your home screen. After switching accounts, explicitly choose a list again.",14)}};
         body.Add(ShoppingUi.Button("Add widget to home screen",async()=>{
 #if ANDROID
@@ -86,7 +86,7 @@ public class WidgetHelpPage : ContentPage
                 manager.RequestPinAppWidget(new global::Android.Content.ComponentName(context.PackageName,"com.companyname.recipeapp.ShoppingQuickAddWidget"),null,null);return;
             }
 #endif
-            await DisplayAlert("Add from your launcher","Long-press your home screen, choose Widgets, and look for Mealsy quick add.","OK");
+            await DisplayAlert("Add from your launcher","Long-press your home screen, choose Widgets, and look for Mealsy quick add.",AppLocalization.Text("OK"));
         }));Content=new ScrollView {Content=body};
     }
 }

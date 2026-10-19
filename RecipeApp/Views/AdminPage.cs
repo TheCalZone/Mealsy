@@ -145,11 +145,11 @@ public class AdminPage : ContentPage
         if(busy)return;busy=true;var changed=false;
         try{
             Check();var message=days==0?$"Remove complimentary Premium from {user.Email}? Paid subscriptions remain active until their own expiry.":$"Give {user.Email} complimentary Premium for {days} days from now? This replaces any previous complimentary expiry with {DateTimeOffset.Now.AddDays(days):d}. No charge or store subscription is created.";
-            if(!await DisplayAlert("Confirm Premium change",message,days==0?"Revoke access":"Grant free Premium","Cancel"))return;
+            if(!await DisplayAlert("Confirm Premium change",message,days==0?"Revoke access":"Grant free Premium",AppLocalization.Text("Cancel")))return;
             var reason=await Reason("Reason for this Premium change");if(reason==null)return;Check();
             await AdminService.Call<object>(new{action="setFamilyGrant",uid=user.Uid,days,reason});Check();email.Text=user.Email;changed=true;
         }finally{busy=false;}
-        if(changed){await FindUser();await DisplayAlert("Premium updated",days==0?"The complimentary grant was revoked. This does not cancel a paid subscription. Cached offline access may last up to one hour.":"Complimentary Premium is active. Ask the recipient to open Account → Premium or use Restore purchases to refresh access. No payment was taken.","OK");}
+        if(changed){await FindUser();await DisplayAlert("Premium updated",days==0?"The complimentary grant was revoked. This does not cancel a paid subscription. Cached offline access may last up to one hour.":"Complimentary Premium is active. Ask the recipient to open Account → Premium or use Restore purchases to refresh access. No payment was taken.",AppLocalization.Text("OK"));}
     }
 
 }

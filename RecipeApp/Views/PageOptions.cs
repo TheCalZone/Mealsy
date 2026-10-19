@@ -1,10 +1,11 @@
+using RecipeApp.Services;
 using System.Runtime.CompilerServices;
 namespace RecipeApp.Views;
 
 /// <summary>Keep each page's existing actions, commands and labels behind one options control.</summary>
 internal static class PageOptions
 {
-    private const string Caption="⚙ Options";
+    private static string Caption=>AppLocalization.Text("⚙ Options");
     private static readonly ConditionalWeakTable<ContentPage,OptionsState> states=new();
     public static void Configure(Page page)
     {

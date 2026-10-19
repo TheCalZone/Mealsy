@@ -29,7 +29,7 @@ public class HouseholdMealsPage:SocialPage
                 foreach(var meal in entries){card.Add(ShoppingUi.Text($"{meal.Title} · {meal.Servings} portions",18,true));if(!string.IsNullOrWhiteSpace(meal.Note))card.Add(ShoppingUi.Text(meal.Note,13));
                     if(meal.Recipe!=null)card.Add(ShoppingUi.Button("Cook this meal",()=>{var recipe=RecipeBrowser.ForServings(meal.Recipe.ToRecipe(""),meal.Servings);return AppNavigation.Open(new RecipePreviewPage(RecipeDraft.FromRecipe(recipe)));},true));
                     card.Add(ShoppingUi.Button("Edit meal",()=>AppNavigation.Open(new HouseholdMealEditorPage(household.HouseholdId,weekStart,meal)),true));
-                    card.Add(ShoppingUi.Button("Remove meal…",()=>Run(async()=>{if(!await DisplayAlert("Remove shared meal?","This removes it from everyone's household plan. Your original recipe is kept.","Remove","Keep"))return;Check();await HouseholdMealsService.Call<object>(new{action="deleteMeal",householdId=household.HouseholdId,weekStart=SocialPolicy.DateKey(weekStart),mealId=meal.Id,expectedVersion=meal.Version});await Load();}),true));
+                    card.Add(ShoppingUi.Button("Remove meal…",()=>Run(async()=>{if(!await DisplayAlert("Remove shared meal?","This removes it from everyone's household plan. Your original recipe is kept.",AppLocalization.Text("Remove"),AppLocalization.Text("Keep")))return;Check();await HouseholdMealsService.Call<object>(new{action="deleteMeal",householdId=household.HouseholdId,weekStart=SocialPolicy.DateKey(weekStart),mealId=meal.Id,expectedVersion=meal.Version});await Load();}),true));
                 }
             }
             card.Add(ShoppingUi.Button("+ Plan a meal",()=>AppNavigation.Open(new HouseholdMealEditorPage(household.HouseholdId,weekStart,date:date))));Body.Add(ShoppingUi.Card(card));
@@ -52,7 +52,7 @@ public class HouseholdMealEditorPage:SocialPage
         Body.Add(ShoppingUi.Button("Attach one of my recipes",()=>Run(async()=>{
             await RecipeService.GetRecipesForLocal();Check();var recipes=RecipeBrowser.Visible(RecipeService.Recipes,Account).ToList();if(recipes.Count==0)throw new InvalidOperationException("Save a personal recipe first, or type the meal name without a recipe.");
             var labels=recipes.Select((r,i)=>$"{i+1}. {r.RecipeName}").ToArray();var choice=await DisplayActionSheet("Choose a recipe","Cancel",null,labels);var index=Array.IndexOf(labels,choice);if(index<0)return;
-            if(!await DisplayAlert("Share a recipe snapshot?","Its ingredients and method will be visible to your household. Private notes and source links stay in your recipe book.","Attach snapshot","Cancel"))return;
+            if(!await DisplayAlert("Share a recipe snapshot?","Its ingredients and method will be visible to your household. Private notes and source links stay in your recipe book.","Attach snapshot",AppLocalization.Text("Cancel")))return;
             Check();recipe=FeedRecipe.FromRecipe(recipes[index]);attached.Text=recipe.Title;if(string.IsNullOrWhiteSpace(title.Text))title.Text=recipe.Title;
         }),true));Body.Add(ShoppingUi.Button("Remove attachment",()=>{recipe=null;attached.Text="No recipe attached";return Task.CompletedTask;},true));
         Body.Add(ShoppingUi.Button("Import recipe from link",async()=>{
@@ -64,13 +64,13 @@ public class HouseholdMealEditorPage:SocialPage
                 if(string.IsNullOrWhiteSpace(title.Text))title.Text=recipe.Title;
             }));
         },true));
-        Body.Add(ShoppingUi.Button("Copy my meal draft",async()=>{Check();await Clipboard.Default.SetTextAsync($"{title.Text} · {this.date.Date:d} · {slot.SelectedItem} · {servings.Text} portions\n{note.Text}");await DisplayAlert("Draft copied","Your meal text is on the clipboard.","OK");},true));
+        Body.Add(ShoppingUi.Button("Copy my meal draft",async()=>{Check();await Clipboard.Default.SetTextAsync($"{title.Text} · {this.date.Date:d} · {slot.SelectedItem} · {servings.Text} portions\n{note.Text}");await DisplayAlert("Draft copied","Your meal text is on the clipboard.",AppLocalization.Text("OK"));},true));
         Body.Add(ShoppingUi.Button("Review latest server version",()=>Run(async()=>{
             await HouseholdMealsService.Require();var latest=await HouseholdMealsService.Call<HouseholdWeek>(new{action="readWeek",householdId,weekStart=SocialPolicy.DateKey(weekStart)});Check();var current=latest.Meals.FirstOrDefault(m=>m.Id==id);
-            if(current==null){await DisplayAlert("No current meal","This meal has not been saved, or someone removed it. Your draft remains open. Reopen the week before creating a replacement.","OK");return;}
+            if(current==null){await DisplayAlert("No current meal","This meal has not been saved, or someone removed it. Your draft remains open. Reopen the week before creating a replacement.",AppLocalization.Text("OK"));return;}
             if(await DisplayAlert("Review latest meal",$"{current.Title} · {current.Servings} portions\n{current.Note}\n\nKeep your form's draft and use it to replace this version on the next Save? Another edit will still cause a conflict.","Use my draft","Keep reviewing"))version=current.Version;
         }),true));
-        Body.Add(ShoppingUi.Button("Save to household",()=>Run(async()=>{
+        Body.Add(ShoppingUi.Button(AppLocalization.Text("Save to household"),()=>Run(async()=>{
             if(saved)return;if(!int.TryParse(servings.Text,out var portions))throw new InvalidOperationException("Enter whole-number portions.");var meal=new HouseholdMeal(id,SocialPolicy.DateKey(this.date.Date),slot.SelectedItem?.ToString(),title.Text?.Trim(),portions,note.Text??"",recipe,version);SocialPolicy.ValidateMeal(meal);
             await HouseholdMealsService.Require();Check();await HouseholdMealsService.Call<object>(new{action="upsertMeal",householdId,weekStart=SocialPolicy.DateKey(weekStart),meal,expectedVersion=version});Check();saved=true;await AppNavigation.Back();
         })));Body.Add(ShoppingUi.Text("If another person edits this meal first, the server must reject the conflict and keep your form open. Reopen the meal to review their latest version before replacing it.",13));

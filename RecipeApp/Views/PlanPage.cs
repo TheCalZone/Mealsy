@@ -5,8 +5,8 @@ public class PlanPage : ContentPage
 {
     private readonly Label status=ShoppingUi.Text("Checking your plan…");
     private readonly Button monthly, annual, signIn;
-    private readonly Label monthlyPrice=ShoppingUi.Text("Checking store price…",25,true);
-    private readonly Label annualPrice=ShoppingUi.Text("Checking store price…",25,true);
+    private readonly Label monthlyPrice=ShoppingUi.Text(AppLocalization.Text("Checking store price…"),25,true);
+    private readonly Label annualPrice=ShoppingUi.Text(AppLocalization.Text("Checking store price…"),25,true);
     private readonly LoadingIndicator loading=new("Checking plans & prices…",false);
     private bool busy;
     public PlanPage()
@@ -19,13 +19,13 @@ public class PlanPage : ContentPage
         var body=new VerticalStackLayout {Padding=20,Spacing=16,Children={
             ShoppingUi.Text("Your kitchen, on repeat",29,true),
             ShoppingUi.Text("Save time cooking for one or sharing with others. One subscription includes Premium tools and Family sharing.",17),
-            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text("MONTHLY",12,true),monthlyPrice,ShoppingUi.Text("Billed monthly · Google Play confirms the price before payment",13),monthly}}),
-            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text("ANNUAL",12,true),annualPrice,ShoppingUi.Text("One payment each year · Google Play confirms the price before payment",13),annual}}),
+            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("MONTHLY"),12,true),monthlyPrice,ShoppingUi.Text("Billed monthly · Google Play confirms the price before payment",13),monthly}}),
+            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("ANNUAL"),12,true),annualPrice,ShoppingUi.Text("One payment each year · Google Play confirms the price before payment",13),annual}}),
             ShoppingUi.Text("Both options include exactly the same Premium features. The app store confirms your actual local price and billing period before payment.",13),
             ShoppingUi.Button("See everything included",async()=>await Navigation.PushAsync(new UpgradeFeaturesPage(true))),loading,status,signIn,
             ShoppingUi.Button("Refresh plans & prices",()=>Run(Refresh),true),
             ShoppingUi.Button("Extra household places · Check store price",async()=>await Navigation.PushAsync(new ExtraPlacesPage())),
-            ShoppingUi.Button("Restore purchases",()=>Run(async()=>{
+            ShoppingUi.Button(AppLocalization.Text("Restore purchases"),()=>Run(async()=>{
 #if ANDROID
                 await RecipeApp.Platforms.Android.PlayBillingService.Instance.Restore();
 #endif
@@ -48,10 +48,10 @@ public class PlanPage : ContentPage
             foreach(var child in body.Children.OfType<Button>().Where(button=>button.Text=="Ad privacy choices").ToList())body.Remove(child);
         if(!ClientPlatform.StorePurchasesAvailable)
         {
-            monthlyPrice.Text="Monthly membership";annualPrice.Text="Annual membership";
+            monthlyPrice.Text=AppLocalization.Text("Monthly membership");annualPrice.Text=AppLocalization.Text("Annual membership");
             // Keep price/feature information and verified status, but no inert purchase actions.
             foreach(var child in body.Children.ToList())if(child is Button button &&
-                (button.Text.StartsWith("Extra household")||button.Text=="Restore purchases"||button.Text.StartsWith("Manage or cancel")||button.Text=="Ad privacy choices"||button.Text=="Store terms"))body.Remove(child);
+                (button.Text.StartsWith("Extra household")||button.Text==AppLocalization.Text("Restore purchases")||button.Text.StartsWith("Manage or cancel")||button.Text=="Ad privacy choices"||button.Text=="Store terms"))body.Remove(child);
             monthly.IsVisible=annual.IsVisible=false;
             body.Insert(2,ShoppingUi.Card(ShoppingUi.Text(ClientPlatform.IosPurchaseNotice,14)));
         }
@@ -85,7 +85,7 @@ public class PlanPage : ContentPage
         if(plan==null||!monthly.IsVisible)return;
         foreach(var option in new[]{(monthly,monthlyPrice,"Monthly"),(annual,annualPrice,"Annual")})
         {
-            option.Item1.IsEnabled=option.Item2.Text!="Price unavailable";
+            option.Item1.IsEnabled=option.Item2.Text!=AppLocalization.Text("Price unavailable");
             option.Item1.Text=option.Item1.IsEnabled?$"Subscribe · {option.Item2.Text}":$"{option.Item3} plan unavailable in Google Play";
         }
     }
@@ -94,9 +94,9 @@ public class PlanPage : ContentPage
 #if ANDROID
         foreach(var option in new[]{(monthlyPrice,MonetizationConfig.MonthlyBasePlanId,"month"),(annualPrice,MonetizationConfig.BasePlanId,"year")})
         {
-            option.Item1.Text="Checking store price…";
+            option.Item1.Text=AppLocalization.Text("Checking store price…");
             try{var price=await RecipeApp.Platforms.Android.PlayBillingService.Instance.LoadPrice(option.Item2).WaitAsync(TimeSpan.FromSeconds(15));AccountSession.Check(account);option.Item1.Text=$"{price} per {option.Item3}";}
-            catch(Exception){AccountSession.Check(account);option.Item1.Text="Price unavailable";}
+            catch(Exception){AccountSession.Check(account);option.Item1.Text=AppLocalization.Text("Price unavailable");}
         }
 #else
         await Task.CompletedTask;

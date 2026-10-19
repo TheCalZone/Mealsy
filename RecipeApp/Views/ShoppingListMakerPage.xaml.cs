@@ -43,12 +43,12 @@ public partial class ShoppingListMakerPage : ContentPage
             if (account!=model.Account) stage=0;
             if (stage>0) model.BuildReview(); Render();
         }
-        catch (Exception e) { await DisplayAlert("Creator unavailable",e is InvalidOperationException ? e.Message : "Your recipes and checklists couldn't be loaded. Please reopen this screen.","OK"); }
+        catch (Exception e) { await DisplayAlert("Creator unavailable",e is InvalidOperationException ? e.Message : "Your recipes and checklists couldn't be loaded. Please reopen this screen.",AppLocalization.Text("OK")); }
     }
     private void UpdateSummary() => summary.Text=model.Summary + (stage==2 ? $" · {model.Review.Count(r => r.Included)} items to buy" : "");
     private void Render()
     {
-        heading.Text=stage switch {0=>"1  Choose your meals",1=>"2  Check the cupboard",_=>"3  Ready for your shop"}; progress.Progress=(stage+1)/3d; UpdateSummary(); footer.Clear();
+        heading.Text=stage switch {0=>AppLocalization.Text("1  Choose your meals"),1=>AppLocalization.Text("2  Check the cupboard"),_=>AppLocalization.Text("3  Ready for your shop")}; progress.Progress=(stage+1)/3d; UpdateSummary(); footer.Clear();
         if (stage==0) RenderRecipes(); else if (stage==1) RenderChecks(); else RenderReview();
         if (stage>0) footer.Add(ShoppingUi.Button("← Back",() => { stage--; Render(); return Task.CompletedTask; },true));
         if (stage<2) footer.Add(ShoppingUi.Button(stage==0 ? "Check ingredients & extras →" : "Review my shopping list →",() => {
@@ -79,10 +79,10 @@ public partial class ShoppingListMakerPage : ContentPage
     private void RenderChecks()
     {
         var body=new VerticalStackLayout { Padding=16, Spacing=14 };
-        body.Add(ShoppingUi.Text("Already in the cupboard?",22,true));
+        body.Add(ShoppingUi.Text(AppLocalization.Text("Already in the cupboard?"),22,true));
         body.Add(ShoppingUi.Text("These include non-main ingredients, common herbs, spices and oils, and items saved as essentials. Tick only what you need to buy. Required ingredients can be checked on the next screen.",14));
         var optional=model.Review.Where(r => r.CheckCupboard).ToList();
-        if (optional.Count==0) body.Add(ShoppingUi.Text("No cupboard checks from these recipes. You can still add snacks or essentials below.",14));
+        if (optional.Count==0) body.Add(ShoppingUi.Text(AppLocalization.Text("No cupboard checks from these recipes. You can still add snacks or essentials below."),14));
         if (optional.Count>0)
         {
             var bulk=new Grid {ColumnDefinitions=new() {new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};
@@ -90,8 +90,8 @@ public partial class ShoppingListMakerPage : ContentPage
             bulk.Add(ShoppingUi.Button("Have all",() => { foreach (var row in optional) row.Included=false; return Task.CompletedTask; },true),1); body.Add(bulk);
         }
         foreach (var row in optional) body.Add(ReviewCard(row,false));
-        body.Add(ShoppingUi.Text("Your reusable checklists",22,true));
-        body.Add(ShoppingUi.Text("Nothing here is added automatically. Tick what's running low for this trip.",14));
+        body.Add(ShoppingUi.Text(AppLocalization.Text("Your reusable checklists"),22,true));
+        body.Add(ShoppingUi.Text(AppLocalization.Text("Nothing here is added automatically. Tick what's running low for this trip."),14));
         var tabs=new Grid { ColumnDefinitions=new() {new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8 };
         tabs.Add(ShoppingUi.Button(librarySnacks ? "Essentials" : "✓ Essentials",() => { librarySnacks=false; RenderChecks(); return Task.CompletedTask; },true),0);
         tabs.Add(ShoppingUi.Button(librarySnacks ? "✓ Snacks" : "Snacks",() => { librarySnacks=true; RenderChecks(); return Task.CompletedTask; },true),1); body.Add(tabs);
@@ -100,7 +100,7 @@ public partial class ShoppingListMakerPage : ContentPage
         void Filter()
         {
             entries.Clear(); var visible=model.Library.Where(i => i.IsSnack==librarySnacks && (i.Name ?? "").Contains(librarySearch,StringComparison.OrdinalIgnoreCase)).ToList();
-            if (visible.Count==0) entries.Add(ShoppingUi.Text("Nothing here yet. Save items you like to check before a shop.",14));
+            if (visible.Count==0) entries.Add(ShoppingUi.Text(AppLocalization.Text("Nothing here yet. Save items you like to check before a shop."),14));
             foreach (var item in visible)
             {
                 var content=new VerticalStackLayout {Spacing=6};
@@ -118,8 +118,8 @@ public partial class ShoppingListMakerPage : ContentPage
     private void RenderReview()
     {
         var body=new VerticalStackLayout {Padding=16,Spacing=12};
-        body.Add(ShoppingUi.Text("Tick what you need; adjust amounts before adding. Compatible quantities combine. Different units or preparation notes stay separate.",14));
-        if (model.Review.Count==0) body.Add(ShoppingUi.Text("Your plan is empty. Go back to choose meals, snacks or essentials.",17,true));
+        body.Add(ShoppingUi.Text(AppLocalization.Text("Tick what you need; adjust amounts before adding. Compatible quantities combine. Different units or preparation notes stay separate."),14));
+        if (model.Review.Count==0) body.Add(ShoppingUi.Text(AppLocalization.Text("Your plan is empty. Go back to choose meals, snacks or essentials."),17,true));
         foreach (var group in model.Review.GroupBy(r => r.Item.Category).OrderBy(g => g.Key))
         {
             body.Add(ShoppingUi.Text(group.Key,21,true)); foreach (var row in group) body.Add(ReviewCard(row,true));
@@ -155,7 +155,7 @@ public partial class ShoppingListMakerPage : ContentPage
             body.Add(ShoppingUi.Text(RecipePresentation.TimeText(choice.Recipe),12));
             var amounts=new Grid {ColumnDefinitions=new() {new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=10};
             amounts.SetBinding(IsVisibleProperty,nameof(choice.Selected));
-            var portions=new VerticalStackLayout {Children={ShoppingUi.Text("Servings per batch",12,true),ShoppingUi.Entry(choice.Servings,"Servings",s => choice.Servings=s,4,true)}};
+            var portions=new VerticalStackLayout {Children={ShoppingUi.Text(AppLocalization.Text("Servings per batch"),12,true),ShoppingUi.Entry(choice.Servings,"Servings",s => choice.Servings=s,4,true)}};
             var batches=new VerticalStackLayout {Children={ShoppingUi.Text("Number of batches",12,true),ShoppingUi.Entry(choice.Batches,"Batches",s => choice.Batches=s,3,true)}};
             amounts.Add(portions,0); amounts.Add(batches,1); body.Add(amounts); Content=ShoppingUi.Card(body);
         }

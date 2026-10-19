@@ -11,7 +11,7 @@ public class HouseholdPage : ContentPage
     private string account;
     public HouseholdPage()
     {
-        Title = "Your household";
+        Title = AppLocalization.Text("Your household");
         ShoppingUi.Theme(this);
         Content = new ScrollView { Content = content };
     }
@@ -22,8 +22,8 @@ public class HouseholdPage : ContentPage
         if (busy) return;
         busy = true;
         try { await action(); }
-        catch (HouseholdException e) { await DisplayAlert("Household", e.Message, "OK"); }
-        catch (Exception) { await DisplayAlert("Connection unavailable", "Could not reach the household service. Check your connection and try again.", "OK"); }
+        catch (HouseholdException e) { await DisplayAlert(AppLocalization.Text("Household"), e.Message, AppLocalization.Text("OK")); }
+        catch (Exception) { await DisplayAlert("Connection unavailable", "Could not reach the household service. Check your connection and try again.", AppLocalization.Text("OK")); }
         finally { busy = false; }
     }
     private void CheckAccount()
@@ -55,7 +55,7 @@ public class HouseholdPage : ContentPage
             content.Add(Action("Join with invitation code", async () => {
                 var code = await DisplayPromptAsync("Join your family", "Paste the invitation code or Mealsy invitation link sent by the household owner.", maxLength: 2000);
                 if (string.IsNullOrWhiteSpace(code)) return;
-                if (!await DisplayAlert("Join household?", "Your account email will be visible to the household owner and other members. Your personal list stays private.", "Join", "Cancel")) return;
+                if (!await DisplayAlert("Join household?", "Your account email will be visible to the household owner and other members. Your personal list stays private.", "Join", AppLocalization.Text("Cancel"))) return;
                 CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "join", code=InvitationLinks.Code(code) }); await Refresh();
             }));
         }
@@ -71,7 +71,7 @@ public class HouseholdPage : ContentPage
                 content.Add(ShoppingUi.Text(member.Label + (owner ? " · Owner" : "") + (member.Id == account ? " · You" : "")));
                 if (household.Owner == account && !owner)
                     content.Add(Action("Remove " + member.Label, async () => {
-                        if (!await DisplayAlert("Remove member?", "They will lose access to the shared list. Their personal list will be kept.", "Remove", "Cancel")) return;
+                        if (!await DisplayAlert("Remove member?", "They will lose access to the shared list. Their personal list will be kept.", AppLocalization.Text("Remove"), AppLocalization.Text("Cancel"))) return;
                         CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "remove", member = member.Id }); await Refresh();
                     }));
             }
@@ -87,7 +87,7 @@ public class HouseholdPage : ContentPage
                     else if (choice == "Share invitation") await Share.Default.RequestAsync(new ShareTextRequest { Title = "Join my Mealsy household", Text = InvitationLinks.ShareHousehold(household.Name,code) });
                 }));
                 content.Add(Action("Delete household", async () => {
-                    if (!await DisplayAlert("Delete household permanently?", "This deletes the shared shopping list and removes access for every member. Everyone keeps their personal list. This cannot be undone.", "Delete household", "Cancel")) return;
+                    if (!await DisplayAlert("Delete household permanently?", "This deletes the shared shopping list and removes access for every member. Everyone keeps their personal list. This cannot be undone.", "Delete household", AppLocalization.Text("Cancel"))) return;
                     CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "delete" }); await Refresh();
                 }));
                 content.Add(ShoppingUi.Text("Only the owner can invite or remove members. Each invitation is single-use and lasts 7 days. Creating a new code replaces any unused code."));
@@ -96,13 +96,13 @@ public class HouseholdPage : ContentPage
                 }));
             }
             else content.Add(Action("Leave household", async () => {
-                if (!await DisplayAlert("Leave household?", "You will lose access to its shopping list. Your personal list stays with your account.", "Leave", "Cancel")) return;
+                if (!await DisplayAlert("Leave household?", "You will lose access to its shopping list. Your personal list stays with your account.", "Leave", AppLocalization.Text("Cancel"))) return;
                 CheckAccount(); await HouseholdService.CallAsync<object>(new { action = "leave" }); await Refresh();
             }));
         }
         content.Add(ShoppingUi.Text("Switch between Personal and Household from the list selector on the shopping screen. Recipe shortcuts add to your personal list."));
         content.Add(Action("Copy this device's original list to my personal list", async () => {
-            if (!await DisplayAlert("Copy device list?", "The original list may have been used by other people on this device. Copy its items into your private personal list?", "Copy", "Cancel")) return;
+            if (!await DisplayAlert("Copy device list?", "The original list may have been used by other people on this device. Copy its items into your private personal list?", "Copy", AppLocalization.Text("Cancel"))) return;
             CheckAccount();
             var saved = Preferences.Get("ShoppingList.v2", "");
             var source = string.IsNullOrWhiteSpace(saved) ? new ShoppingListDocument() : ShoppingListDocument.Deserialize(saved);

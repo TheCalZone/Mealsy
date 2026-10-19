@@ -8,7 +8,7 @@ public class SavedWeeksPage:ContentPage
     private bool busy;
     public SavedWeeksPage(){Title="Weekly templates · Premium";ShoppingUi.Theme(this);}
     protected override async void OnAppearing(){base.OnAppearing();if(account!=AccountSession.UserId)Content=ShoppingUi.Text("Your account changed. Reopen this library from your account.");await Run(Render);}
-    private async Task Run(Func<Task> action){if(busy)return;busy=true;try{AccountSession.Check(account);await action();}catch(Exception e){if(account!=AccountSession.UserId)Content=ShoppingUi.Text("Your account changed. Reopen this library.");await DisplayAlert("Weekly templates",e is InvalidOperationException?e.Message:"Your templates couldn't be updated. Your current plan has been kept.","OK");}finally{busy=false;}}
+    private async Task Run(Func<Task> action){if(busy)return;busy=true;try{AccountSession.Check(account);await action();}catch(Exception e){if(account!=AccountSession.UserId)Content=ShoppingUi.Text("Your account changed. Reopen this library.");await DisplayAlert("Weekly templates",e is InvalidOperationException?e.Message:"Your templates couldn't be updated. Your current plan has been kept.",AppLocalization.Text("OK"));}finally{busy=false;}}
     private async Task Render()
     {
         var entries=await PremiumLibrary.Load<SavedWeekTemplate>(account,"weeks");AccountSession.Check(account);
@@ -28,9 +28,9 @@ public class SavedWeeksPage:ContentPage
                 await RecipeService.GetRecipesForLocal();var plan=await RecipeService.GetMealPlan(account);AccountSession.Check(account);if(plan==null)throw new InvalidOperationException("Open the meal planner first.");
                 var copies=entry.Apply(plan.Days,RecipeBrowser.Visible(RecipeService.Recipes,account).Select(r=>r.Id));
                 if(!await DisplayAlert("Replace this week's meals?",entry.Name+" will replace all seven days' meals, notes and portions. The week date and your saved template stay unchanged.","Use template","Keep current week"))return;
-                AccountSession.Check(account);await RecipeService.SaveMealPlanDays(copies,plan.Id);await DisplayAlert("Week ready","Your template is now in your personal meal plan.","OK");await AppNavigation.Back();
+                AccountSession.Check(account);await RecipeService.SaveMealPlanDays(copies,plan.Id);await DisplayAlert("Week ready","Your template is now in your personal meal plan.",AppLocalization.Text("OK"));await AppNavigation.Back();
             })));
-            card.Add(ShoppingUi.Button("Delete template…",()=>Run(async()=>{if(!await DisplayAlert("Delete template?","Your current meal plan is kept.","Delete","Keep"))return;AccountSession.Check(account);await PremiumLibrary.Remove<SavedWeekTemplate>(account,"weeks",e=>e.Id==entry.Id);await Render();}),true));body.Add(ShoppingUi.Card(card));
+            card.Add(ShoppingUi.Button("Delete template…",()=>Run(async()=>{if(!await DisplayAlert("Delete template?","Your current meal plan is kept.",AppLocalization.Text("Delete"),AppLocalization.Text("Keep")))return;AccountSession.Check(account);await PremiumLibrary.Remove<SavedWeekTemplate>(account,"weeks",e=>e.Id==entry.Id);await Render();}),true));body.Add(ShoppingUi.Card(card));
         }
         Content=new ScrollView{Content=body};
     }
@@ -41,7 +41,7 @@ public class SavedShoppingTripsPage:ContentPage
     private readonly string account=AccountSession.UserId;private bool busy;
     public SavedShoppingTripsPage(){Title="Saved shopping trips · Premium";ShoppingUi.Theme(this);}
     protected override async void OnAppearing(){base.OnAppearing();if(account!=AccountSession.UserId)Content=ShoppingUi.Text("Your account changed. Reopen this library from your account.");await Run(Render);}
-    private async Task Run(Func<Task> action){if(busy)return;busy=true;try{AccountSession.Check(account);await action();}catch(Exception e){if(account!=AccountSession.UserId)Content=ShoppingUi.Text("Your account changed. Reopen this library.");await DisplayAlert("Saved shopping trips",e is InvalidOperationException?e.Message:"Your saved trips couldn't be updated. Your shopping list has been kept.","OK");}finally{busy=false;}}
+    private async Task Run(Func<Task> action){if(busy)return;busy=true;try{AccountSession.Check(account);await action();}catch(Exception e){if(account!=AccountSession.UserId)Content=ShoppingUi.Text("Your account changed. Reopen this library.");await DisplayAlert("Saved shopping trips",e is InvalidOperationException?e.Message:"Your saved trips couldn't be updated. Your shopping list has been kept.",AppLocalization.Text("OK"));}finally{busy=false;}}
     private async Task Render()
     {
         var entries=await PremiumLibrary.Load<SavedShoppingTrip>(account,"shopping");AccountSession.Check(account);
@@ -60,9 +60,9 @@ public class SavedShoppingTripsPage:ContentPage
                 if(!await PremiumAccess.Require("Saved shopping trips"))return;AccountSession.Check(account);
                 if(!await DisplayAlert("Add these items?",$"Add {items.Count} uncollected items from {entry.Name} to your personal list? Existing items are kept; compatible quantities combine.","Add items","Cancel"))return;
                 AccountSession.Check(account);var list=ShoppingListDocument.Deserialize(Preferences.Get(ShoppingListStore.StateKey,"[]"));list.AppendReusableItems(entry.ReusableItems());ShoppingListStore.Save(list);
-                await DisplayAlert("Trip added","Your personal shopping list is ready. Open Shopping to review and sync it.","OK");
+                await DisplayAlert("Trip added","Your personal shopping list is ready. Open Shopping to review and sync it.",AppLocalization.Text("OK"));
             })));
-            card.Add(ShoppingUi.Button("Delete saved trip…",()=>Run(async()=>{if(!await DisplayAlert("Delete saved trip?","Your current shopping list is kept.","Delete","Keep"))return;AccountSession.Check(account);await PremiumLibrary.Remove<SavedShoppingTrip>(account,"shopping",e=>e.Id==entry.Id);await Render();}),true));body.Add(ShoppingUi.Card(card));
+            card.Add(ShoppingUi.Button("Delete saved trip…",()=>Run(async()=>{if(!await DisplayAlert("Delete saved trip?","Your current shopping list is kept.",AppLocalization.Text("Delete"),AppLocalization.Text("Keep")))return;AccountSession.Check(account);await PremiumLibrary.Remove<SavedShoppingTrip>(account,"shopping",e=>e.Id==entry.Id);await Render();}),true));body.Add(ShoppingUi.Card(card));
         }
         Content=new ScrollView{Content=body};
     }

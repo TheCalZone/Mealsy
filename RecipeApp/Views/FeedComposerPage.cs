@@ -27,7 +27,7 @@ public class FeedComposerPage : ContentPage
             FoodFeedPage.Button("Attach a recipe from my book", async () => {
                 CheckAccount();
                 var recipes = RecipeBrowser.Visible(RecipeService.Recipes,account).ToList();
-                if (recipes.Count == 0) { await DisplayAlert("No recipes yet", "Create a recipe in your recipe book first.", "OK"); return; }
+                if (recipes.Count == 0) { await DisplayAlert("No recipes yet", "Create a recipe in your recipe book first.", AppLocalization.Text("OK")); return; }
                 var picker = new Picker { Title = "Choose recipe", ItemsSource = recipes, ItemDisplayBinding = new Binding(nameof(Recipe.RecipeName)) };
                 var chooser = new ContentPage { Title = "Choose a recipe" };
                 chooser.Content = new VerticalStackLayout { Padding = 20, Children = { picker, FoodFeedPage.Button("Attach selected recipe", async () => {
@@ -103,9 +103,9 @@ public class FeedComposerPage : ContentPage
     private async Task Publish()
     {
         CheckAccount();
-        if (preparingPhotos > 0) { await DisplayAlert("Preparing photo", "Wait for the photo to finish before publishing.", "OK"); return; }
+        if (preparingPhotos > 0) { await DisplayAlert("Preparing photo", "Wait for the photo to finish before publishing.", AppLocalization.Text("OK")); return; }
         if (string.IsNullOrWhiteSpace(name.Text) || (string.IsNullOrWhiteSpace(caption.Text) && recipe == null))
-        { await DisplayAlert("Add a little more", "Choose a public display name and write a caption or attach a recipe.", "OK"); return; }
+        { await DisplayAlert("Add a little more", "Choose a public display name and write a caption or attach a recipe.", AppLocalization.Text("OK")); return; }
         var visibility=SocialPolicy.Audience(SocialPolicy.Audiences[audience.SelectedIndex < 0 ? 1 : audience.SelectedIndex]);
         if (!await DisplayAlert("Confirm post audience", "Audience: "+SocialPolicy.AudienceLabel(visibility)+". This includes any attached photo and recipe snapshot. Previously delivered content cannot be recalled.", "Publish", "Keep editing")) return;
         CheckAccount(); SaveDraft();

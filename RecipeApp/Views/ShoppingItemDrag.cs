@@ -34,7 +34,7 @@ internal sealed class ShoppingItemDrag
             try{
                 e.Handled=true;if(!Valid())return;var id=source.Value;var target=((ShoppingListItem)row.BindingContext).Id;var after=(e.GetPosition(row)?.Y??0)>row.Height/2;
                 Cancel();model.DropItem(id,target,after);
-            }catch(Exception error){_=Shell.Current.DisplayAlert("Item order",error is InvalidOperationException?error.Message:"Couldn't save the item order. Please try again.","OK");}
+            }catch(Exception error){_=Shell.Current.DisplayAlert("Item order",error is InvalidOperationException?error.Message:"Couldn't save the item order. Please try again.",AppLocalization.Text("OK"));}
             finally{Cancel();}
         };row.GestureRecognizers.Add(drop);
     }

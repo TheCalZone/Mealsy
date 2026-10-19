@@ -5,7 +5,7 @@ public partial class AccountPage : ContentPage
     private string account;
     private RecipeApp.Models.CommunityProfile community;
     private bool administrator;
-    public AccountPage(){InitializeComponent();Title="Your account";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Get started",null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem("Share Mealsy",null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Settings",null,async()=>await AppNavigation.Open(new SettingsPage())));}
+    public AccountPage(){InitializeComponent();Title=AppLocalization.Text("Your account");ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));}
     private readonly LoadGeneration requests=new();
     private bool visible,loading;
     private string loadWarning;
@@ -43,7 +43,7 @@ public partial class AccountPage : ContentPage
     {
         if(AccountSession.UserId==null){Content=new AuthFormView(false,SignedIn);return;}
         var profile=AccountSession.CachedProfile;var status=ShoppingUi.Text(AccountSession.Status,13);var body=new VerticalStackLayout{Padding=20,Spacing=16};
-        body.Add(ShoppingUi.Text("Your place at the table",28,true));body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Text(string.IsNullOrWhiteSpace(profile.FirstName)?"Welcome to Mealsy":profile.FirstName+" "+profile.LastName,23,true),ShoppingUi.Text(AccountSession.Email??"",14),ShoppingUi.Text("Private account · Each family member uses their own login",13)}}));
+        body.Add(ShoppingUi.Text(AppLocalization.Text("Your place at the table"),28,true));body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Text(string.IsNullOrWhiteSpace(profile.FirstName)?"Welcome to Mealsy":profile.FirstName+" "+profile.LastName,23,true),ShoppingUi.Text(AccountSession.Email??"",14),ShoppingUi.Text(AppLocalization.Text("Private account · Each family member uses their own login"),13)}}));
         if(ProductFeatures.SocialEnabled&&ContentSharing.HasPending)body.Add(ShoppingUi.Button("Open saved shared post or plan",ContentSharing.Resume));
         if(loading)body.Add(new LoadingIndicator("Updating profile and account permissions…"));
         if(loadWarning!=null){body.Add(ShoppingUi.Text(loadWarning,13));body.Add(ShoppingUi.Button("Retry account details",RefreshAccountAsync,true));}
@@ -57,32 +57,32 @@ public partial class AccountPage : ContentPage
                 var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();
             }));
             body.Add(ShoppingUi.Text(loading?"Checking email confirmation…":community?.EmailVerified==true?"✓ Email confirmed · You can share recipes":"Confirm your email before sharing recipes",14,true));
-            if(!loading&&community?.EmailVerified!=true)body.Add(ShoppingUi.Button("Send confirmation email",async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.","OK");},true));
+            if(!loading&&community?.EmailVerified!=true)body.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.",AppLocalization.Text("OK"));},true));
             body.Add(ShoppingUi.Button("Check email confirmation",async()=>{var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();},true));
         }
         else
         {
-            body.Add(ShoppingUi.Text("Email confirmation",22,true));
-            body.Add(ShoppingUi.Text("Keep your email address confirmed for household invitations and account access.",13));
-            body.Add(ShoppingUi.Button("Send confirmation email",async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","If confirmation is needed, open the link sent to your email address.","OK");},true));
+            body.Add(ShoppingUi.Text(AppLocalization.Text("Email confirmation"),22,true));
+            body.Add(ShoppingUi.Text(AppLocalization.Text("Keep your email address confirmed for household invitations and account access."),13));
+            body.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","If confirmation is needed, open the link sent to your email address.",AppLocalization.Text("OK"));},true));
         }
-        body.Add(status);body.Add(ShoppingUi.Button("Sync my account",async()=>{AccountSession.Check(account);status.Text="Syncing your recipes and checklists…";status.Text=await AccountSession.SyncSafely();},true));
-        body.Add(ShoppingUi.Button("Edit my profile",()=>AppNavigation.Open(new EditdetailsPage())));
+        body.Add(status);body.Add(ShoppingUi.Button(AppLocalization.Text("Sync my account"),async()=>{AccountSession.Check(account);status.Text="Syncing your recipes and checklists…";status.Text=await AccountSession.SyncSafely();},true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Edit my profile"),()=>AppNavigation.Open(new EditdetailsPage())));
         body.Add(ShoppingUi.Button("Copy device recipes into this account…",async()=>{
-            var uid=account;AccountSession.Check(uid);if(!await DisplayAlert("Copy your device recipes?","Copy recipes created in device mode into this private account? The device originals are kept. Existing imports won't be duplicated.","Copy recipes","Cancel"))return;AccountSession.Check(uid);var count=await RecipeService.CopyDeviceRecipes(uid);AccountSession.Check(uid);_=AccountSession.SyncSafely();await DisplayAlert("Recipes copied",$"{count} recipes copied. Device originals are unchanged.","OK");
+            var uid=account;AccountSession.Check(uid);if(!await DisplayAlert("Copy your device recipes?","Copy recipes created in device mode into this private account? The device originals are kept. Existing imports won't be duplicated.","Copy recipes",AppLocalization.Text("Cancel")))return;AccountSession.Check(uid);var count=await RecipeService.CopyDeviceRecipes(uid);AccountSession.Check(uid);_=AccountSession.SyncSafely();await DisplayAlert("Recipes copied",$"{count} recipes copied. Device originals are unchanged.",AppLocalization.Text("OK"));
         },true));
         if(ProductFeatures.SocialEnabled)body.Add(ShoppingUi.Button("Friends & public profile",()=>AppNavigation.Open(new FriendsPage()),true));
-        body.Add(ShoppingUi.Button("Household meal plan",()=>AppNavigation.Open(new HouseholdMealsPage()),true));
-        body.Add(ShoppingUi.Button("My recipes",()=>AppNavigation.Root("RecipePage"),true));
-        body.Add(ShoppingUi.Button("My household",()=>AppNavigation.Open(new HouseholdPage()),true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Household meal plan"),()=>AppNavigation.Open(new HouseholdMealsPage()),true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("My recipes"),()=>AppNavigation.Root("RecipePage"),true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("My household"),()=>AppNavigation.Open(new HouseholdPage()),true));
         if(ProductFeatures.SocialEnabled)body.Add(FoodFeedPage.Button("Mealsy Business & creators",()=>AppNavigation.Open(new BusinessHubPage())));
         if(administrator){body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));body.Add(FoodFeedPage.Button("Give complimentary Premium",()=>AppNavigation.Open(new AdminPage(true))));}
         body.Add(ShoppingUi.Button("Weekly templates · Premium",PremiumAccess.OpenWeeks,true));
         body.Add(ShoppingUi.Button("Saved shopping trips · Premium",PremiumAccess.OpenShopping,true));
         body.Add(ShoppingUi.Button("Mealsy Premium · Plans & benefits",()=>AppNavigation.Open(new PlanPage())));
-        body.Add(ShoppingUi.Button("Premium features",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Premium features"),()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
         body.Add(ShoppingUi.Text("Your recipes and shopping lists sync when connected. Your personal meal plan, saved weeks, saved shopping trips and editor drafts stay on this device. Household shopping and household meal plans are shared online. Signing in does not automatically copy recipes created in device mode.",13));
-        body.Add(ShoppingUi.Button("Sign out",async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.","Sign out","Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();requests.Invalidate();loading=false;loadWarning=null;account=null;community=null;administrator=false;Render();},true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Sign out"),async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.",AppLocalization.Text("Sign out"),"Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();requests.Invalidate();loading=false;loadWarning=null;account=null;community=null;administrator=false;Render();},true));
         Content=new ScrollView{Content=body};
     }
 }

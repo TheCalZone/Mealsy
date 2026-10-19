@@ -14,20 +14,20 @@ public class RecipeWebsitePage:ContentPage
     private readonly string account=AccountSession.UserId;
     public RecipeWebsitePage(string shared=null,Func<Recipe,Task> saved=null)
     {
-        this.saved=saved;Title="Import a recipe link";ShoppingUi.Theme(this);link.Text=shared;
+        this.saved=saved;Title=AppLocalization.Text("Import a recipe link");ShoppingUi.Theme(this);link.Text=shared;
         var photoOption=new Grid{ColumnDefinitions=new(){new(GridLength.Auto),new(GridLength.Star)}};
-        photoOption.Add(savePhoto,0);photoOption.Add(ShoppingUi.Text("Save recipe photo, if available",15),1);
+        photoOption.Add(savePhoto,0);photoOption.Add(ShoppingUi.Text(AppLocalization.Text("Save recipe photo, if available"),15),1);
         SemanticProperties.SetDescription(savePhoto,"Save recipe photo, if available");
-        import=ShoppingUi.Button("Import & review",Import);
+        import=ShoppingUi.Button(AppLocalization.Text("Import & review"),Import);
         Content=new ScrollView{Content=new VerticalStackLayout{Padding=20,Spacing=14,Children={
-            ShoppingUi.Text("From the web to your recipe book",25,true),
+            ShoppingUi.Text(AppLocalization.Text("From the web to your recipe book"),25,true),
             ShoppingUi.Text(saved==null?"Paste a supported recipe link, then review it before saving privately.":"Import and review a recipe, then save it to attach it to this meal. Save your meal afterwards to keep the plan."),
             ShoppingUi.Text("Premium feature · Some sites block imports; you can paste their ingredients manually."),
             link,photoOption,ShoppingUi.Text("Photos are optional. If a photo isn't available, the recipe will still import.",12),import,loading,status}}};
     }
     private async Task Import()
     {
-        if(busy)return;busy=true;import.IsEnabled=false;link.IsEnabled=false;savePhoto.IsEnabled=false;loading.IsRunning=true;status.Text="Reading recipe…";
+        if(busy)return;busy=true;import.IsEnabled=false;link.IsEnabled=false;savePhoto.IsEnabled=false;loading.IsRunning=true;status.Text=AppLocalization.Text("Reading recipe…");
         try
         {
             AccountSession.Check(account);

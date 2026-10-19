@@ -22,7 +22,7 @@ internal sealed class ShoppingSectionDrag
         drop.DragLeave+=(_,_)=>{if(section()!=source)row.Opacity=1;};
         drop.Drop+=(_,e)=>{
             try{e.Handled=true;if(source==null||!allowed())return;var target=section();var after=(e.GetPosition(row)?.Y??0)>row.Height/2;var moved=ShoppingSectionOrder.Drop(order(),source,target,after);Cancel();save(moved);}
-            catch(Exception error){Cancel();_=Shell.Current.DisplayAlert("Section order",error is InvalidOperationException?error.Message:"Couldn’t save the section order. Please try again.","OK");}
+            catch(Exception error){Cancel();_=Shell.Current.DisplayAlert("Section order",error is InvalidOperationException?error.Message:"Couldn’t save the section order. Please try again.",AppLocalization.Text("OK"));}
             finally{Cancel();}
         };
         row.GestureRecognizers.Add(drag);row.GestureRecognizers.Add(drop);

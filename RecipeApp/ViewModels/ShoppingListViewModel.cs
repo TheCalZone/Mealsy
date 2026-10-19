@@ -9,7 +9,7 @@ namespace RecipeApp.ViewModels;
 public class ShoppingListGroup : ObservableRangeCollection<ShoppingListItem>
 {
     public string Title { get; }
-    public string Summary => Count == 1 ? "1 item" : $"{Count} items";
+    public string Summary => Count == 1 ? AppLocalization.Text("1 item") : AppLocalization.Format("{0} items",Count);
     public ShoppingListGroup(string title, IEnumerable<ShoppingListItem> items) : base(items) => Title = title;
 }
 
@@ -67,10 +67,10 @@ public class ShoppingListViewModel : CustomViewModelBase
     public int Collected => document.Items.Count(i => i.InBasket);
     public int Remaining => Total - Collected;
     public double Progress => Total == 0 ? 0 : (double)Collected / Total;
-    public string ProgressText => Total == 0 ? "Ready for your next shop" : $"{Collected} of {Total} collected";
-    public string RemainingText => Remaining == 1 ? "1 item left" : $"{Remaining} items left";
-    public string EmptyTitle => Total == 0 ? "A fresh start" : Remaining == 0 && HideCollected ? "All done!" : "No matching items";
-    public string EmptyMessage => Total == 0 ? "Add your first item above, paste a list, or send ingredients from a recipe."
+    public string ProgressText => Total == 0 ? AppLocalization.Text("Ready for your next shop") : AppLocalization.Format("{0} of {1} collected",Collected,Total);
+    public string RemainingText => Remaining == 1 ? AppLocalization.Text("1 item left") : AppLocalization.Format("{0} items left",Remaining);
+    public string EmptyTitle => Total == 0 ? AppLocalization.Text("A fresh start") : Remaining == 0 && HideCollected ? AppLocalization.Text("All done!") : AppLocalization.Text("No matching items");
+    public string EmptyMessage => Total == 0 ? AppLocalization.Text("Add your first item above, paste a list, or send ingredients from a recipe.")
         : Remaining == 0 && HideCollected ? "Everything is collected. Turn off Hide collected to review your list."
         : "Try a different search or turn off Hide collected.";
     public bool IsEditing { get => isEditing; set { if (SetProperty(ref isEditing, value)) NotifySummary(); } }

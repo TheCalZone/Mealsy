@@ -6,6 +6,10 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../RecipeApp/Services/AppLocalization.cs" Link="AppLocalization.cs" />
+    <EmbeddedResource Include="../RecipeApp/Resources/Localization/*.resx" LogicalName="RecipeApp.Resources.Localization.%(Filename).resources" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />

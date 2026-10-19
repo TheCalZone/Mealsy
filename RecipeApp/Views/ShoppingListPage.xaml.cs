@@ -36,7 +36,7 @@ public partial class ShoppingListPage : ContentPage
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
     private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Reorder sections",null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
     {
@@ -58,7 +58,7 @@ public partial class ShoppingListPage : ContentPage
     }
     private async Task OpenSectionOrder()
     {
-        if(Model.IsEditing){await DisplayAlert("Finish editing","Save or cancel your item edit before rearranging sections.","OK");return;}
+        if(Model.IsEditing){await DisplayAlert("Finish editing","Save or cancel your item edit before rearranging sections.",AppLocalization.Text("OK"));return;}
         await AppNavigation.Open(new ShoppingSectionOrderPage(Model));
     }
     private async void ReorderSections_Clicked(object sender,EventArgs e)=>await OpenSectionOrder();
@@ -78,7 +78,7 @@ public partial class ShoppingListPage : ContentPage
                 if(info.HouseholdId!=requestedHousehold||!info.FamilyEnabled)throw new InvalidOperationException("Household access ended.");
                 generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
             }
-            if (householdId == null) ListSelector.Text = uid == null ? "Device list ▾" : "Personal list ▾";
+            if (householdId == null) ListSelector.Text = uid == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
             listAccount = uid;
             // Confirm continuing membership before displaying a cached household list.
             if (householdId != null && string.IsNullOrEmpty(requestedHousehold))
@@ -100,7 +100,7 @@ public partial class ShoppingListPage : ContentPage
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++; householdId = sharedName = null; conflict = false;
         listAccount = HouseholdService.UserId;
-        Model.SelectList(null); ListSelector.Text = listAccount == null ? "Device list ▾" : "Personal list ▾";
+        Model.SelectList(null); ListSelector.Text = listAccount == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
     }
     private void StartTimer()
     {
@@ -123,7 +123,7 @@ public partial class ShoppingListPage : ContentPage
         {
             var baseline = Preferences.Get(key + ".synced", "[]");
             var changes = ShoppingListSync.Changes(baseline, sent);
-            Model.StatusText = changes.Count > 0 ? "Syncing changes…" : "Checking for updates…";
+            Model.StatusText = changes.Count > 0 ? AppLocalization.Text("Syncing changes…") : AppLocalization.Text("Checking for updates…");
             var response = await HouseholdService.CallAsync<ShoppingSyncResult>(new {
                 action = changes.Count > 0 ? "patch" : "read", scope = householdId == null ? "personal" : "household", householdId, changes
             });
@@ -134,7 +134,7 @@ public partial class ShoppingListPage : ContentPage
             // Save acknowledged server state separately so offline edits survive app restarts.
             Preferences.Set(key + ".synced", server);
             if (merged.Serialize() != Model.CurrentJson) Model.AcceptRemote(merged.Serialize());
-            Model.StatusText = householdId == null ? "Personal list synced · Only you can access it" : "Household list synced · Updates every 5 seconds";
+            Model.StatusText = householdId == null ? AppLocalization.Text("Personal list synced · Only you can access it") : AppLocalization.Text("Household list synced · Updates every 5 seconds");
         }
         catch (ShoppingSyncConflictException)
         {
@@ -148,13 +148,13 @@ public partial class ShoppingListPage : ContentPage
             else if (householdId != null && e.Code is "PERMISSION_DENIED" or "FAILED_PRECONDITION")
             { SelectPersonal(); Model.Load(true, null); Model.StatusText = "Household access ended. Your personal list is open."; }
             else Model.StatusText = "Saved on device · " + e.Message;
-            if (manual) await DisplayAlert("Shopping list sync", Model.StatusText, "OK");
+            if (manual) await DisplayAlert("Shopping list sync", Model.StatusText, AppLocalization.Text("OK"));
         }
         catch (Exception error)
         {
             var reference=AppDiagnostics.Report(error,"shopping.sync","SYNC_FAILURE");
             if (generation == currentGeneration) Model.StatusText = "Saved on device · Cloud unavailable. Will retry while this screen is open.\nReference: "+reference;
-            if (manual) await DisplayAlert("Sync unavailable", "Your changes are saved on this device. Check your connection and try syncing again.", "OK");
+            if (manual) await DisplayAlert("Sync unavailable", "Your changes are saved on this device. Check your connection and try syncing again.", AppLocalization.Text("OK"));
         }
         finally { syncing = false; }
     }
@@ -175,8 +175,8 @@ public partial class ShoppingListPage : ContentPage
                 Model.SelectList(CacheKey); Model.Load(true, null); ListSelector.Text = sharedName + " ▾";
                 await SyncAsync(true);
             }
-            catch (HouseholdException ex) { await DisplayAlert("Household", ex.Message, "OK"); }
-            catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and try again.", "OK"); }
+            catch (HouseholdException ex) { await DisplayAlert(AppLocalization.Text("Household"), ex.Message, AppLocalization.Text("OK")); }
+            catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and try again.", AppLocalization.Text("OK")); }
         }
     }
     private async void Widget_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new WidgetHelpPage());
@@ -188,14 +188,14 @@ public partial class ShoppingListPage : ContentPage
         if (!conflict)
         {
             var recovery = Preferences.Get(CacheKey + ".recovery", "");
-            if (string.IsNullOrEmpty(recovery)) { await DisplayAlert("Sync", "No conflict needs resolving and no recovery copy is stored for this list.", "OK"); return; }
-            if (await DisplayAlert("Recovery copy available", "Share the device version kept before the last conflict was resolved?", "Share copy", "Cancel"))
+            if (string.IsNullOrEmpty(recovery)) { await DisplayAlert("Sync", "No conflict needs resolving and no recovery copy is stored for this list.", AppLocalization.Text("OK")); return; }
+            if (await DisplayAlert("Recovery copy available", "Share the device version kept before the last conflict was resolved?", "Share copy", AppLocalization.Text("Cancel")))
                 await Share.Default.RequestAsync(new ShareTextRequest { Title = "Shopping list recovery", Text = ShoppingListDocument.Deserialize(recovery).PlainText() });
             return;
         }
         var choice = await DisplayActionSheet("Keep a copy before reloading", "Cancel", null, "Share my device version", "Reload latest cloud list");
         if (choice == "Share my device version") { Model.ShareCommand.Execute(null); return; }
-        if (choice != "Reload latest cloud list" || !await DisplayAlert("Reload cloud list?", "Your device version will be kept as a recovery copy. The screen will load the latest cloud version. You can then add your changes again.", "Reload", "Cancel")) return;
+        if (choice != "Reload latest cloud list" || !await DisplayAlert("Reload cloud list?", "Your device version will be kept as a recovery copy. The screen will load the latest cloud version. You can then add your changes again.", "Reload", AppLocalization.Text("Cancel"))) return;
         try
         {
             var version = generation; var uid = listAccount; var key = CacheKey;
@@ -205,7 +205,7 @@ public partial class ShoppingListPage : ContentPage
             var server = JsonSerializer.Serialize(result.Items); Preferences.Set(key + ".synced", server);
             Model.AcceptRemote(server); conflict = false; Model.StatusText = "Latest list loaded · Device recovery copy kept";
         }
-        catch (Exception) { await DisplayAlert("Unable to reload", "Your device version is still saved. Please try again when connected.", "OK"); }
+        catch (Exception) { await DisplayAlert("Unable to reload", "Your device version is still saved. Please try again when connected.", AppLocalization.Text("OK")); }
     }
     protected override void OnDisappearing()
     {

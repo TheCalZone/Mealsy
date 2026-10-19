@@ -26,7 +26,7 @@ public class FeedCommentsPage : ContentPage
             FoodFeedPage.Button("Cancel reply",()=>{parentCommentId=null;replying.Text="";pendingText=null;return Task.CompletedTask;}),
             FoodFeedPage.Button("Post comment", async () => {
                 CheckAccount();
-                if (string.IsNullOrWhiteSpace(message.Text)) { await DisplayAlert("Comment", "Enter a comment. Your public username is used automatically.", "OK"); return; }
+                if (string.IsNullOrWhiteSpace(message.Text)) { await DisplayAlert("Comment", "Enter a comment. Your public username is used automatically.", AppLocalization.Text("OK")); return; }
                 if (pendingText != message.Text) { pendingId = Guid.NewGuid().ToString("N"); pendingText = message.Text; }
                 var sent = message.Text;
                 await FoodFeedService.Call<object>(new { action = "comment", postId, id = pendingId, text = sent, parentCommentId });
@@ -58,7 +58,7 @@ public class FeedCommentsPage : ContentPage
                 item.Add(FoodFeedPage.Text(DateTimeOffset.FromUnixTimeMilliseconds(comment.CreatedAt).ToLocalTime().ToString("g"), 12));
                 item.Add(FoodFeedPage.Button("Reply",()=>{parentCommentId=comment.Id;replying.Text="Replying to "+comment.AuthorName;pendingText=null;message.Focus();return Task.CompletedTask;}));
                 if (comment.AuthorId == account || moderator) item.Add(FoodFeedPage.Button("Remove comment", async () => {
-                    if (!await DisplayAlert("Remove comment?", "This removes the shared comment.", "Remove", "Cancel")) return;
+                    if (!await DisplayAlert("Remove comment?", "This removes the shared comment.", AppLocalization.Text("Remove"), AppLocalization.Text("Cancel"))) return;
                     CheckAccount(); await FoodFeedService.Call<object>(new { action = "deleteComment", postId, commentId = comment.Id }); await Load(true);
                 }));
                 comments.Add(item);

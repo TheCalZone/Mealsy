@@ -3,14 +3,24 @@ namespace RecipeApp.Views;
 
 public class SettingsPage : ContentPage
 {
-    public SettingsPage() { Title = "Settings"; ShoppingUi.Theme(this); Render(); }
+    public SettingsPage() { Title = AppLocalization.Text("Settings"); ShoppingUi.Theme(this); Render(); }
     private void Render()
     {
         var body = new VerticalStackLayout { Padding = 16, Spacing = 18 };
         body.Add(ShoppingUi.Text("Make Mealsy yours", 28, true));
         body.Add(ShoppingUi.Button("Get started guide",()=>AppNavigation.Open(new OnboardingPage()),true));
-        body.Add(ShoppingUi.Button("Share Mealsy",OnboardingState.ShareApp,true));
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Share Mealsy"),OnboardingState.ShareApp,true));
         body.Add(ShoppingUi.Text("Saved automatically on this device, for signed-in and device mode alike.", 14));
+        var languageCodes=AppLocalization.Languages;
+        var languageNames=new[]{AppLocalization.Text("Follow device language"),"English","Español","Français","Deutsch","Português"};
+        var languagePicker=new Picker{Title=AppLocalization.Text("Language"),ItemsSource=languageNames,SelectedIndex=Array.IndexOf(languageCodes,AppSettings.Current.Language),HeightRequest=52};
+        languagePicker.SetDynamicResource(Picker.TextColorProperty,"ThemeText");
+        languagePicker.SelectedIndexChanged+=async(_,_)=>{
+            if(languagePicker.SelectedIndex<0)return;
+            try{AppSettings.Save(AppSettings.Current with{Language=languageCodes[languagePicker.SelectedIndex]});}
+            catch(Exception){await DisplayAlert(AppLocalization.Text("Language"),"Your language preference could not be saved. Please try again.",AppLocalization.Text("OK"));}
+        };
+        body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("Language"),22,true),languagePicker,ShoppingUi.Text(AppLocalization.Text("Restart Mealsy to apply a language change. Your recipes and lists are kept."),13)}}));
         var appearance = Section("Appearance", "Changes apply straight away, including screens you've already opened.");
         appearance.Add(Choice("Colour theme", SettingsOptions.Palettes, AppSettings.Current.Palette, value => AppSettings.Current with { Palette = value }));
         var swatches = new HorizontalStackLayout { Spacing = 10 };
@@ -35,8 +45,8 @@ public class SettingsPage : ContentPage
         body.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
         body.Add(ShoppingUi.Button("Premium plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
         body.Add(ShoppingUi.Text("These settings stay on this device. They don't change family members' preferences or your account data. Manage your profile and sync from Account.", 13));
-        body.Add(ShoppingUi.Button("Reset preferences…", async () => {
-            if (!await DisplayAlert("Reset preferences?", "Restore Forest, system display mode and the original preferences? Recipes, shopping lists, drafts, accounts and meal plans are kept.", "Reset preferences", "Cancel")) return;
+        body.Add(ShoppingUi.Button(AppLocalization.Text("Reset preferences…"), async () => {
+            if (!await DisplayAlert("Reset preferences?", "Restore Forest, system display mode and the original preferences? Recipes, shopping lists, drafts, accounts and meal plans are kept.", "Reset preferences", AppLocalization.Text("Cancel"))) return;
             AppSettings.Reset(); Render();
         }, true));
         body.Add(ShoppingUi.Text("Mealsy · " + AppInfo.Current.VersionString, 12));
@@ -46,12 +56,12 @@ public class SettingsPage : ContentPage
     private View Choice(string title, string[] options, string selected, Func<string, SettingsOptions> update)
     {
         var changing = false;
-        var picker = new Picker { Title = title, ItemsSource = options, SelectedItem = selected, HeightRequest = 52 };
+        var picker = new Picker { Title = title, ItemsSource = options, SelectedItem = selected, ItemDisplayBinding=new Binding(".",converter:new UiTokenConverter()), HeightRequest = 52 };
         picker.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
         picker.SelectedIndexChanged += async (_, _) => {
             if (changing || picker.SelectedItem is not string value) return;
             try { AppSettings.Save(update(value)); selected = value; }
-            catch (Exception) { await DisplayAlert("Settings weren't saved", "Try selecting the preference again.", "OK"); changing = true; picker.SelectedItem = selected; changing = false; }
+            catch (Exception) { await DisplayAlert("Settings weren't saved", "Try selecting the preference again.", AppLocalization.Text("OK")); changing = true; picker.SelectedItem = selected; changing = false; }
         };
         return new VerticalStackLayout { Children = { ShoppingUi.Text(title, 14, true), picker } };
     }
@@ -63,7 +73,7 @@ public class SettingsPage : ContentPage
         toggle.Toggled += async (_, e) => {
             if (changing) return;
             try { AppSettings.Save(update(e.Value)); }
-            catch (Exception) { changing = true; toggle.IsToggled = !e.Value; changing = false; await DisplayAlert("Settings weren't saved", "Try changing the preference again.", "OK"); }
+            catch (Exception) { changing = true; toggle.IsToggled = !e.Value; changing = false; await DisplayAlert("Settings weren't saved", "Try changing the preference again.", AppLocalization.Text("OK")); }
         };
         var row = new Grid { ColumnDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 8 };
         row.Add(new VerticalStackLayout { Spacing = 4, Children = { ShoppingUi.Text(title, 15, true), ShoppingUi.Text(description, 13) } }, 0);

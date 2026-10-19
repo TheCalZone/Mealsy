@@ -4,7 +4,11 @@ namespace RecipeApp;
 public partial class App : Application
 {
     public static bool InitialAccountReady{get;private set;}
-    public App(){InitializeComponent();
+    public App(){
+        var language=AppLocalization.Resolve(AppSettings.Current.Language,System.Globalization.CultureInfo.CurrentUICulture);
+        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture=language;
+        System.Globalization.CultureInfo.CurrentUICulture=language;
+        InitializeComponent();
 #if ANDROID
         Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.SetWindowSoftInputModeAdjust(this,Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.WindowSoftInputModeAdjust.Resize);
 #endif

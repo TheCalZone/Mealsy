@@ -1,5 +1,38 @@
 # Mealsy cloud handoff — 17 October 2026
 
+## Localization: initial five-language rollout
+
+Resources/Localization/Strings*.resx contains 262 matching messages in English,
+Spanish, French, German and Portuguese. AppLocalization uses ResourceManager and
+parent-culture fallback (es-MX → es, fr-CA → fr, pt-BR → pt). App initialization
+resolves the phone UI language before creating Shell/forms; unsupported languages
+fall back to English. Settings → Language stores a device-level override; restart
+applies it without rebuilding a live Shell or abandoning an open editor. Resetting
+preferences restores automatic language selection on the next launch.
+
+Only explicit UI literals and selected display-only converters are translated.
+Recipe text, ingredient names, account data, category IDs, sort tokens, route names
+and serialized quantities are not rewritten. Settings and category pickers retain
+canonical values and display translated labels. CurrentCulture stays regional,
+separate from CurrentUICulture; dates/number entry retain phone conventions. Existing
+comma-decimal parsing and Play's localized currency prices remain authoritative.
+Shared buttons can wrap and grow for longer labels. iOS metadata declares the five
+languages, but native iOS has not been built or tested here.
+
+Coverage is an initial core rollout, not a claim that every screen is translated:
+advanced/admin content, several long descriptions, native widgets, backend errors,
+ingredient autocomplete/classification and some dynamic messages remain English.
+User recipe content is intentionally never machine-translated. Further languages,
+RTL layouts and region-specific ingredient vocabularies need explicit follow-up.
+Add UI messages to every resx; use AppLocalization.Format for placeholders and the
+Translate markup extension for XAML. Never pass saved identifiers through translation.
+
+351 app tests pass, including real satellite-resource loading, parity/placeholder
+checks for all language catalogs, regional fallback, settings migrations and
+preserving decimal-comma input. Android builds verify the resource assemblies.
+Check long labels, dialogs, language switching/restart and native keyboard interaction
+on physical phones. No Firebase changes or deployment.
+
 ## Tester consistency pass
 
 Account/household Premium shortcuts and the feature screen no longer display fixed

@@ -9,7 +9,7 @@ public class ActivityPage:ContentPage
     private const string Endpoint="https://us-central1-mealsy-b732b.cloudfunctions.net/notifications";
     public ActivityPage(){Title="Activity";ShoppingUi.Theme(this);Content=new ScrollView{Content=body};ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Load()));
 #if ANDROID
-        ToolbarItems.Add(new ToolbarItem("Phone alerts",null,async()=>{try{var choice=await DisplayActionSheet("Activity notifications","Cancel",null,"Enable phone alerts","Turn off phone alerts");if(choice=="Enable phone alerts")await RecipeApp.Platforms.Android.ActivityNotifications.Enable();else if(choice=="Turn off phone alerts")await RecipeApp.Platforms.Android.ActivityNotifications.Disable();}catch(Exception e){await DisplayAlert("Notifications",e is HouseholdException or InvalidOperationException?e.Message:"Couldn't register this phone. Try again shortly.","OK");}}));
+        ToolbarItems.Add(new ToolbarItem("Phone alerts",null,async()=>{try{var choice=await DisplayActionSheet("Activity notifications","Cancel",null,"Enable phone alerts","Turn off phone alerts");if(choice=="Enable phone alerts")await RecipeApp.Platforms.Android.ActivityNotifications.Enable();else if(choice=="Turn off phone alerts")await RecipeApp.Platforms.Android.ActivityNotifications.Disable();}catch(Exception e){await DisplayAlert("Notifications",e is HouseholdException or InvalidOperationException?e.Message:"Couldn't register this phone. Try again shortly.",AppLocalization.Text("OK"));}}));
 #endif
     }
     protected override async void OnAppearing(){base.OnAppearing();await Load();}
