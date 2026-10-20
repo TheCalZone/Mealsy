@@ -65,6 +65,17 @@ public class ShoppingListViewModel : CustomViewModelBase
     private string editName, editQuantity, editCategory, editNote;
 
     public ObservableRangeCollection<ShoppingListGroup> Groups { get; } = new();
+    private bool showSectionIngredients=true;
+    public bool ShowSectionIngredients=>showSectionIngredients;
+    public double IngredientRowHeight=>showSectionIngredients?-1:0;
+    public void SetSectionDragPreview(bool active)
+    {
+        if(!SetProperty(ref showSectionIngredients,!active,nameof(ShowSectionIngredients)))return;
+        OnPropertyChanged(nameof(IngredientRowHeight));
+        // Rebuild presentation only: items, quantities, checks and item order stay
+        // in the document and each section keeps its actual item count.
+        RefreshGroups();
+    }
     public ObservableRangeCollection<string> Categories { get; } = new();
     public string SearchText { get => searchText; set { if (SetProperty(ref searchText, value)) RefreshGroups(); } }
     public bool HideCollected { get => hideCollected; set { if (SetProperty(ref hideCollected, value)) RefreshGroups(); } }

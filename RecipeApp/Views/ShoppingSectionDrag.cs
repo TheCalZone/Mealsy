@@ -8,17 +8,18 @@ internal sealed class ShoppingSectionDrag
     private readonly Action<List<string>> save;
     private readonly Func<bool> allowed;
     private readonly Func<string> context;
+    private readonly Action started,finished;
 #if !ANDROID
     private string source;
     private readonly List<VisualElement> highlights=new();
 
 #endif
-    public ShoppingSectionDrag(Func<List<string>> order,Action<List<string>> save,Func<bool> allowed,Func<string> context=null){this.order=order;this.save=save;this.allowed=allowed;this.context=context;}
+    public ShoppingSectionDrag(Func<List<string>> order,Action<List<string>> save,Func<bool> allowed,Func<string> context=null,Action started=null,Action finished=null){this.order=order;this.save=save;this.allowed=allowed;this.context=context;this.started=started;this.finished=finished;}
 #if ANDROID
     private RecipeApp.Platforms.Android.ShoppingDirectDrag direct;
     private RecipeApp.Platforms.Android.ShoppingDirectDrag Direct=>direct??=new(allowed,
         (from,to)=>from!=to&&order().Contains(from)&&order().Contains(to),
-        (from,to,after)=>save(ShoppingSectionOrder.Drop(order(),from,to,after)),context,()=>order());
+        (from,to,after)=>save(ShoppingSectionOrder.Drop(order(),from,to,after)),context,()=>order(),started,finished);
     public bool IsDragging=>direct?.IsDragging==true;
 #else
     public bool IsDragging=>source!=null;

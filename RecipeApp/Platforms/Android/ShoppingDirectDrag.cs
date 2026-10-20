@@ -16,6 +16,8 @@ internal sealed class ShoppingDirectDrag
     private readonly Action<string,string,bool> drop;
     private readonly Func<string> context;
     private readonly Func<IReadOnlyList<string>> order;
+    private readonly Action started,finished;
+    private bool presentationActive;
     private string capturedContext,source,account,target,candidate;
     private ShoppingDragPreview preview;
     private NativeView handle,viewport;
@@ -29,8 +31,8 @@ internal sealed class ShoppingDirectDrag
     private float startX,startY,pointerX,pointerY,density,slop;
     private bool pressed,after,suppressCancel;
     public bool IsDragging=>source!=null;
-    public ShoppingDirectDrag(Func<bool> allowed,Func<string,string,bool> canDrop,Action<string,string,bool> drop,Func<string> context=null,Func<IReadOnlyList<string>> order=null)
-    {this.allowed=allowed;this.canDrop=canDrop;this.drop=drop;this.context=context??(()=>"");this.order=order;}
+    public ShoppingDirectDrag(Func<bool> allowed,Func<string,string,bool> canDrop,Action<string,string,bool> drop,Func<string> context=null,Func<IReadOnlyList<string>> order=null,Action started=null,Action finished=null)
+    {this.allowed=allowed;this.canDrop=canDrop;this.drop=drop;this.context=context??(()=>"");this.order=order;this.started=started;this.finished=finished;}
     public void Cancel()
     {
         pressed=false;timer?.Stop();clock.Stop();remainder=0;
@@ -43,6 +45,7 @@ internal sealed class ShoppingDirectDrag
         }
         source=null;target=null;candidate=null;preview?.Dispose();preview=null;
         handle=null;viewport=null;window=null;previousCallback=null;handleKey=null;
+        if(presentationActive){presentationActive=false;finished?.Invoke();}
     }
     public void Register(MauiView row,Func<MauiView,string> key)
     {rows.RemoveAll(r=>!r.View.TryGetTarget(out _));rows.Add(new(new(row),key));}
@@ -121,6 +124,7 @@ internal sealed class ShoppingDirectDrag
                     {
                         var row=Measure().FirstOrDefault(r=>r.Key==candidate);if(row==null){Cancel();return true;}
                         source=candidate;preview=new ShoppingDragPreview(row,startY);StartCapture(motion);
+                        presentationActive=true;started?.Invoke();
                     }
                     RefreshPreview();return true;
                 case MotionEventActions.Up:

@@ -45,7 +45,7 @@ internal sealed class ShoppingDragPreview : IDisposable
     }
     public static Row Measure(string key,MauiView view)
     {
-        if(view.Handler?.PlatformView is not NativeView native||!native.IsShown||native.Width==0||native.Height==0)return null;
+        if(view.Handler?.PlatformView is not NativeView native||native.Handle==IntPtr.Zero||!native.IsShown||native.Width==0||native.Height==0)return null;
         // Animate the entire recycled cell, including its SwipeView wrapper.
         // Translating only the inner Border can clip it inside the original cell.
         var ancestor=native;

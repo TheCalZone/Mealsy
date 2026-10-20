@@ -113,7 +113,8 @@
             </CollectionView.GroupHeaderTemplate>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:ShoppingListItem">
-                    <SwipeView>
+                    <SwipeView IsVisible="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ShowSectionIngredients}"
+                               HeightRequest="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.IngredientRowHeight}" MinimumHeightRequest="0">
                         <SwipeView.RightItems>
                             <SwipeItems Mode="Reveal">
                                 <SwipeItem Text="{loc:Translate 'Edit'}" BackgroundColor="{DynamicResource ThemeAccent}" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.EditItemCommand}" CommandParameter="{Binding .}" />

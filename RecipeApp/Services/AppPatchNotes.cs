@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Move shopping sections as compact bundles", new[] {
+            "When you start dragging a section, ingredient rows temporarily fold away so they no longer obstruct the section cards or drop gaps. Each section keeps its item count.",
+            "Drop the section to expand its ingredients in the new position. Cancelling restores the expanded list without changing its order.",
+            "Move icons, floating previews and continuous edge scrolling remain available. Ingredient names, quantities, collected checks, filters and item order are kept."
+        }),
         new(new(2026,10,20), "Continuous scrolling while dragging", new[] {
             "Hold an item or section near the top or bottom edge to scroll steadily, without needing to keep wiggling your finger. Scrolling speeds up gently closer to the edge.",
             "The floating card and insertion gap keep updating as rows scroll into view, even after the original row has left the screen.",
