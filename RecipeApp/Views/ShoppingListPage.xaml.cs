@@ -40,10 +40,10 @@ public partial class ShoppingListPage : ContentPage
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
     {
-        if(sender is not View header||sectionHeaders.TryGetValue(header,out _))return;
+        if(sender is not View header||sectionHeaders.TryGetValue(header,out _)||header.FindByName<Label>("SectionMoveHandle") is not Label handle)return;
         sectionHeaders.Add(header,new object());
         sectionDrag??=new ShoppingSectionDrag(Model.SectionNames,Model.SaveSectionOrder,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId,()=>Model.SectionOrderContext);
-        sectionDrag.Attach(header,()=>(header.BindingContext as ShoppingListGroup)?.Title);
+        sectionDrag.Attach(header,handle,()=>(header.BindingContext as ShoppingListGroup)?.Title);
     }
     private ShoppingItemDrag ItemDrag=>itemDrag??=new ShoppingItemDrag(Model,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
     private void ItemHandle_Loaded(object sender,EventArgs e)

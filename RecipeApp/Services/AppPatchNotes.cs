@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Move sections using the handle only", new[] {
+            "Section dragging now starts only from the dedicated move icon, both in the shopping list and the section-order screen. Item dragging also remains handle-only.",
+            "Touching section names, counts or the rest of a section card scrolls normally. Floating previews and drop gaps remain available when using the handle."
+        }),
         new(new(2026,10,20), "Clearer animated shopping reordering", new[] {
             "Shopping items now lift into a floating preview that follows your finger, while neighbouring rows slide aside and a full-size Drop here gap shows the insertion point.",
             "The same Android drag preview now works for shopping section headers and the Reorder sections screen, without a long-press delay. Buttons remain available as an alternative on the section-order screen.",

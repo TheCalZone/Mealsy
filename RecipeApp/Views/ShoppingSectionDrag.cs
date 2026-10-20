@@ -30,10 +30,10 @@ internal sealed class ShoppingSectionDrag
         source=null;foreach(var view in highlights)view.Opacity=1;highlights.Clear();
 #endif
     }
-    public void Attach(View row,Func<string> section)
+    public void Attach(View row,View handle,Func<string> section)
     {
 #if ANDROID
-        Direct.Register(row,_=>section());Direct.Attach(row,section);
+        Direct.Register(row,_=>section());Direct.Attach(handle,section);
 #else
         var drag=new DragGestureRecognizer{CanDrag=true};
         drag.DragStarting+=(_,e)=>{Cancel();if(!allowed()){e.Cancel=true;return;}source=section();e.Data.Text=source;row.Opacity=.55;highlights.Add(row);};
@@ -46,7 +46,7 @@ internal sealed class ShoppingSectionDrag
             catch(Exception error){Cancel();_=Shell.Current.DisplayAlert("Section order",error is InvalidOperationException?error.Message:"Couldn’t save the section order. Please try again.",AppLocalization.Text("OK"));}
             finally{Cancel();}
         };
-        row.GestureRecognizers.Add(drag);row.GestureRecognizers.Add(drop);
+        handle.GestureRecognizers.Add(drag);row.GestureRecognizers.Add(drop);
 #endif
     }
 }

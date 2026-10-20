@@ -19,18 +19,20 @@ public class ShoppingSectionOrderPage:ContentPage
     private void Render()
     {
         drag.Cancel();body.Clear();body.Add(ShoppingUi.Text("Your route around the shop",27,true));
-        body.Add(ShoppingUi.Text("Touch a section and move it above or below another section. A floating card and a highlighted gap show where it will land. Changes save immediately for this list on this device; other household members keep their own layout.",14));
+        body.Add(ShoppingUi.Text("Touch the move icon and drag the section above or below another section. A floating card and a highlighted gap show where it will land. Changes save immediately for this list on this device; other household members keep their own layout.",14));
         body.Add(ShoppingUi.Text("Empty sections are included here so they're ready when you next add an item. Search and Hide collected don't change this order.",13));
         var order=model.SectionNames();
         for(var index=0;index<order.Count;index++)
         {
             var section=order[index];
-            var row=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8};
-            row.Add(ShoppingUi.Text($"☰  {section}",18,true),0);
-            SemanticProperties.SetDescription(row,section+". Touch and move to reorder. Use Move with buttons in the menu for an alternative.");
+            var row=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(new GridLength(48)),new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8};
+            row.Add(ShoppingUi.Text(section,18,true),0);
+            var handle=ShoppingUi.Text("☰",20);handle.WidthRequest=48;handle.HeightRequest=48;handle.VerticalTextAlignment=TextAlignment.Center;handle.HorizontalTextAlignment=TextAlignment.Center;
+            SemanticProperties.SetDescription(handle,"Move section: "+section);SemanticProperties.SetHint(handle,"Touch and move this icon to reorder. The rest of the card scrolls normally.");row.Add(handle,1);
+            SemanticProperties.SetDescription(row,section+". Use its move icon to reorder. Use Move with buttons in the menu for an alternative.");
             var up=ShoppingUi.Button("↑",()=>Move(section,-1),true);up.WidthRequest=52;up.IsEnabled=index>0;SemanticProperties.SetDescription(up,"Move "+section+" up");
             var down=ShoppingUi.Button("↓",()=>Move(section,1),true);down.WidthRequest=52;down.IsEnabled=index<order.Count-1;SemanticProperties.SetDescription(down,"Move "+section+" down");
-            if(showButtons){row.Add(up,1);row.Add(down,2);}var card=ShoppingUi.Card(row);drag.Attach(card,()=>section);body.Add(card);
+            if(showButtons){row.Add(up,2);row.Add(down,3);}var card=ShoppingUi.Card(row);drag.Attach(card,handle,()=>section);body.Add(card);
         }
         body.Add(ShoppingUi.Button("Restore default order…",async()=>{Check();if(!await DisplayAlert("Restore section order?","Put sections back in alphabetical order, with Other last? Your items and checkmarks are kept.","Restore","Keep my order"))return;Check();model.ResetSectionOrder();Render();},true));
         body.Add(ShoppingUi.Button("Done",AppNavigation.Back));
