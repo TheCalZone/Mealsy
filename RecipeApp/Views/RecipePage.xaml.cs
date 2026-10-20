@@ -4,7 +4,7 @@ namespace RecipeApp.Views;
 public partial class RecipePage : ContentPage
 {
     private List<Recipe> all=new();private string account,search="",tag="All",sort="Recent";private bool favourites;private CollectionView list;private Label count;
-    public RecipePage(){InitializeComponent();Title=AppLocalization.Text("Your recipes");ShoppingUi.Theme(this);}
+    public RecipePage(){InitializeComponent();Title=AppLocalization.Text("Your recipes");ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem("Use what you have",null,async()=>await AppNavigation.Open(new LeftoverRecipesPage())));}
     protected override async void OnAppearing()
     {
         base.OnAppearing();sort=AppSettings.Current.RecipeSort;var uid=AccountSession.UserId;Content=new LoadingIndicator("Opening your recipe book…");

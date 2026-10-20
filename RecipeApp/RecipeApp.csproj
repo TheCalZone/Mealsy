@@ -158,7 +158,6 @@
 		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="7.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
-		<PackageReference Include="OpenAI" Version="1.10.0" />
 		<PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
 		<PackageReference Include="SQLiteNetExtensions" Version="2.1.0" />
@@ -203,9 +202,6 @@
 	  </MauiXaml>
 	  <MauiXaml Update="Views\AddRecipePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\ChatPage.xaml">
-	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\EditdetailsPage.xaml">
 	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>

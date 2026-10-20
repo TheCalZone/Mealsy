@@ -20,7 +20,7 @@ public partial class AppShell : Shell
             [nameof(MealPlannerPage)]=typeof(MealPlannerPage),
             [nameof(EditExtraPage)]=typeof(EditExtraPage),
             [nameof(EditdetailsPage)]=typeof(EditdetailsPage),
-            [nameof(ChatPage)]=typeof(ChatPage),
+            [nameof(LeftoverRecipesPage)]=typeof(LeftoverRecipesPage),
             [nameof(FoodFeedPage)]=typeof(FoodFeedPage),
         };
         foreach(var route in NavigationCatalog.Details)Routing.RegisterRoute(route,pages[route]);

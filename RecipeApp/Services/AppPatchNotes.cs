@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Use what you have", new[] {
+            "Replaced the AI recipe creator with a free offline finder for your saved recipes, available from Home and the recipe book.",
+            "Enter leftover ingredients in everyday wording. Minced beef, beef mince and ground beef match the same ingredient. Multiple ingredients rank by how many match, with clear explanations.",
+            "Open a matching recipe or review its shopping ingredients. This searches saved ingredient lists; it does not generate recipes, infer quantities or assume you have every other ingredient."
+        }),
         new(new(2026,10,20), "Homepage recipe shortcuts", new[] {
             "Tap recipe cards to open the recipe directly. Hold a homepage recipe card on Android for View, Edit, Shop ingredients and Delete shortcuts.",
             "A visible Options button provides the same menu. Delete asks for confirmation, checks account ownership and removes the cloud copy before the local recipe."
