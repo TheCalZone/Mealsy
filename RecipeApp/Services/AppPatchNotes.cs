@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Easier shopping rows and direct dragging", new[] {
+            "Item names, quantities and notes now sit together on the left; the right side is reserved for the move handle.",
+            "On Android, touch the handle and move immediately without a long-press delay. A highlighted row shows where release will place the item, with edge scrolling while you move.",
+            "Ordering stays within the item's section and is saved for the selected list on this device. Checkboxes, item taps and swipes keep their existing actions."
+        }),
         new(new(2026,10,20), "Use what you have", new[] {
             "Replaced the AI recipe creator with a free offline finder for your saved recipes, available from Home and the recipe book.",
             "Enter leftover ingredients in everyday wording. Minced beef, beef mince and ground beef match the same ingredient. Multiple ingredients rank by how many match, with clear explanations.",

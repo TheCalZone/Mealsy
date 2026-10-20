@@ -118,7 +118,7 @@
                         </SwipeView.RightItems>
                         <Border Loaded="ItemRow_Loaded" Margin="0,0,0,7" Padding="8,10,10,10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
                                 BackgroundColor="{DynamicResource ThemeSurface}">
-                            <Grid ColumnDefinitions="48,*,Auto,48" ColumnSpacing="5" MinimumHeightRequest="48">
+                            <Grid ColumnDefinitions="48,*,48" ColumnSpacing="5" MinimumHeightRequest="48">
                                 <CheckBox IsChecked="{Binding InBasket, Mode=TwoWay}" Color="{DynamicResource ThemeAccent}" VerticalOptions="Center"
                                           SemanticProperties.Description="{Binding Name, StringFormat='Collected: {0}'}" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
@@ -133,16 +133,14 @@
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
+                                    <Label Text="{Binding Quantity}" IsVisible="{Binding HasQuantity}" FontSize="{DynamicResource ThemeFont14}" FontAttributes="Bold"
+                                           TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                     <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </VerticalStackLayout>
-                                <Border Grid.Column="2" IsVisible="{Binding HasQuantity}" Padding="8,4" VerticalOptions="Center" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource ThemeBackground}" MaximumWidthRequest="100">
-                                    <Label Text="{Binding Quantity}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
-                                </Border>
-                                <Label Grid.Column="3" Text="☰" FontSize="20" TextColor="{DynamicResource ThemeText}"
+                                <Label Grid.Column="2" Text="☰" FontSize="20" TextColor="{DynamicResource ThemeText}"
                                        HeightRequest="48" WidthRequest="48" VerticalTextAlignment="Center" HorizontalTextAlignment="Center"
                                        Loaded="ItemHandle_Loaded" SemanticProperties.Description="{Binding Name, StringFormat='Drag handle for {0}'}"
-                                       SemanticProperties.Hint="Long press and drag up or down within this section. Swipe the item to edit." />
+                                       SemanticProperties.Hint="Touch and hold the handle while moving up or down within this section. No long-press delay on Android. Swipe the item to edit." />
                             </Grid>
                         </Border>
                     </SwipeView>
