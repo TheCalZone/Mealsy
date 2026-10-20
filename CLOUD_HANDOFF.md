@@ -404,3 +404,12 @@ Physical Android checks remain: floating preview alignment across status/navigat
 ## 20 October 2026 — Handle-only section dragging
 
 Shopping section headers now separate the item count from a dedicated 48dp move icon. ShoppingSectionDrag registers the whole row as a preview/drop target but attaches gesture initiation only to the icon, on Android and the existing other-platform fallback. The same separation applies to compact section cards in Reorder sections; optional up/down buttons retain their own touch targets. Item dragging was already handle-only. Check on phone that swiping section names/counts and card backgrounds scrolls without starting a drag, icons still show animated previews, and optional section buttons work. No backend changes.
+
+
+## 20 October 2026 — Continuous drag edge scrolling
+
+Android ShoppingDirectDrag now runs a 32ms UI timer while dragging. Holding the pointer in a 64dp top/bottom edge zone scrolls continuously at 45–180dp/sec, with fractional-pixel accumulation and elapsed-time clamping. Moving to the middle/outside the viewport, reaching a scroll boundary, release, cancellation, focus loss or account/list changes stops scrolling. The shared implementation covers item handles, main section handles and Reorder sections cards.
+
+After pickup, an Android WindowCallbackWrapper captures the drag's pointer sequence so the original cell can leave the recycled viewport without losing the drag. The original view receives a cancellation; the window callback is restored when the drag ends. The preview reconstructs the offscreen source's logical slot from current model order and restores recycled cell alpha/translations so unrelated rows do not inherit preview effects. Existing section restrictions, ordering persistence and icon-only initiation remain. New tests cover speed/direction/stop boundaries, short viewports and offscreen-source positioning.
+
+Phone verification still required: hold stationary at top/bottom edge for several seconds, drag past the original cell offscreen in both directions, release on newly revealed rows, reach each end, move back to middle, cancel/background, switch accounts/lists, and confirm ordinary scrolling and touch input work after every drag. No backend changes.

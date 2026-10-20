@@ -56,6 +56,7 @@
     <Compile Include="../RecipeApp/Services/StepIngredients.cs" Link="StepIngredients.cs" />
     <Compile Include="../RecipeApp/Services/IngredientSuggestions.cs" Link="IngredientSuggestions.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingCategories.cs" Link="ShoppingCategories.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingDragScroll.cs" Link="ShoppingDragScroll.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingDragLayout.cs" Link="ShoppingDragLayout.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingItemOrder.cs" Link="ShoppingItemOrder.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingItemInput.cs" Link="ShoppingItemInput.cs" />

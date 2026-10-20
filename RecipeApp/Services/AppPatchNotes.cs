@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Continuous scrolling while dragging", new[] {
+            "Hold an item or section near the top or bottom edge to scroll steadily, without needing to keep wiggling your finger. Scrolling speeds up gently closer to the edge.",
+            "The floating card and insertion gap keep updating as rows scroll into view, even after the original row has left the screen.",
+            "Moving back toward the middle, releasing, cancelling or leaving the app stops automatic scrolling. Dragging still starts only from the move icons."
+        }),
         new(new(2026,10,20), "Move sections using the handle only", new[] {
             "Section dragging now starts only from the dedicated move icon, both in the shopping list and the section-order screen. Item dragging also remains handle-only.",
             "Touching section names, counts or the rest of a section card scrolls normally. Floating previews and drop gaps remain available when using the handle."

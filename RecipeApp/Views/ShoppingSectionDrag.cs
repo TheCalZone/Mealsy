@@ -18,7 +18,7 @@ internal sealed class ShoppingSectionDrag
     private RecipeApp.Platforms.Android.ShoppingDirectDrag direct;
     private RecipeApp.Platforms.Android.ShoppingDirectDrag Direct=>direct??=new(allowed,
         (from,to)=>from!=to&&order().Contains(from)&&order().Contains(to),
-        (from,to,after)=>save(ShoppingSectionOrder.Drop(order(),from,to,after)),context);
+        (from,to,after)=>save(ShoppingSectionOrder.Drop(order(),from,to,after)),context,()=>order());
     public bool IsDragging=>direct?.IsDragging==true;
 #else
     public bool IsDragging=>source!=null;

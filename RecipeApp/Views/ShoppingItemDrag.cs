@@ -18,7 +18,7 @@ internal sealed class ShoppingItemDrag
     private RecipeApp.Platforms.Android.ShoppingDirectDrag direct;
     private RecipeApp.Platforms.Android.ShoppingDirectDrag Direct=>direct??=new(allowed,
         (from,to)=>Guid.TryParse(from,out var a)&&Guid.TryParse(to,out var b)&&model.CanDropItem(a,b),
-        (from,to,after)=>model.DropItem(Guid.Parse(from),Guid.Parse(to),after),()=>model.SectionOrderContext);
+        (from,to,after)=>model.DropItem(Guid.Parse(from),Guid.Parse(to),after),()=>model.SectionOrderContext,()=>model.Groups.SelectMany(group=>group).Select(item=>item.Id.ToString()).ToList());
     public bool IsDragging=>direct?.IsDragging==true;
 #else
     public bool IsDragging=>source.HasValue;

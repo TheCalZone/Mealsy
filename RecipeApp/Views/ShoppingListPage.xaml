@@ -107,7 +107,7 @@
                         <Label x:Name="SectionMoveHandle" Grid.Column="2" Text="☰" FontSize="20" WidthRequest="48" HeightRequest="48"
                                VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}"
                                SemanticProperties.Description="{Binding Title, StringFormat='Move section: {0}'}"
-                               SemanticProperties.Hint="Touch and move this icon to reorder the section. The rest of the header scrolls normally." />
+                               SemanticProperties.Hint="Touch and move this icon to reorder the section. Hold near the top or bottom edge to scroll slowly. The rest of the header scrolls normally." />
                     </Grid>
                 </DataTemplate>
             </CollectionView.GroupHeaderTemplate>
@@ -144,7 +144,7 @@
                                 <Label Grid.Column="2" Text="☰" FontSize="20" TextColor="{DynamicResource ThemeText}"
                                        HeightRequest="48" WidthRequest="48" VerticalTextAlignment="Center" HorizontalTextAlignment="Center"
                                        Loaded="ItemHandle_Loaded" SemanticProperties.Description="{Binding Name, StringFormat='Drag handle for {0}'}"
-                                       SemanticProperties.Hint="Touch and hold the handle while moving up or down within this section. No long-press delay on Android. Swipe the item to edit." />
+                                       SemanticProperties.Hint="Touch and hold the handle while moving up or down within this section. Hold near the top or bottom edge to scroll slowly. No long-press delay on Android. Swipe the item to edit." />
                             </Grid>
                         </Border>
                     </SwipeView>

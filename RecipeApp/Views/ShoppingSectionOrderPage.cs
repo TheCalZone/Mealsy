@@ -19,7 +19,7 @@ public class ShoppingSectionOrderPage:ContentPage
     private void Render()
     {
         drag.Cancel();body.Clear();body.Add(ShoppingUi.Text("Your route around the shop",27,true));
-        body.Add(ShoppingUi.Text("Touch the move icon and drag the section above or below another section. A floating card and a highlighted gap show where it will land. Changes save immediately for this list on this device; other household members keep their own layout.",14));
+        body.Add(ShoppingUi.Text("Touch the move icon and drag the section above or below another section. A floating card and a highlighted gap show where it will land. Hold near the top or bottom edge to scroll slowly. Changes save immediately for this list on this device; other household members keep their own layout.",14));
         body.Add(ShoppingUi.Text("Empty sections are included here so they're ready when you next add an item. Search and Hide collected don't change this order.",13));
         var order=model.SectionNames();
         for(var index=0;index<order.Count;index++)
