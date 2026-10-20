@@ -12,7 +12,6 @@ using System.Diagnostics;
 namespace RecipeApp;
 
 [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, WindowSoftInputMode = SoftInput.AdjustResize, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
-[IntentFilter(new[]{Intent.ActionSend},Categories=new[]{Intent.CategoryDefault},DataMimeType="text/plain")]
 [IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="join")]
 [IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="welcome")]
 [IntentFilter(new[]{Intent.ActionView},Categories=new[]{Intent.CategoryDefault,Intent.CategoryBrowsable},DataScheme="mealsy",DataHost="content")]
@@ -67,21 +66,43 @@ public class MainActivity : MauiAppCompatActivity
     private static bool openingShare;
     protected override void OnResume(){base.OnResume();Services.ThemeService.ApplySystemBars();_=Platforms.Android.ActivityNotifications.Refresh();}
     private static async void OpenActivity(Intent intent){if(!Services.ProductFeatures.SocialEnabled||intent?.GetBooleanExtra("mealsy_activity",false)!=true)return;intent.RemoveExtra("mealsy_activity");for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);if(App.InitialAccountReady&&Shell.Current!=null&&RecipeApp.Services.HouseholdService.UserId!=null)await RecipeApp.Services.AppNavigation.Open(new RecipeApp.Views.ActivityPage());}
-    private static async void OpenSharedRecipe(Intent intent){
-        if(intent?.Action!=Intent.ActionSend||openingShare)return;
-        var text=intent.GetStringExtra(Intent.ExtraText);intent.RemoveExtra(Intent.ExtraText);if(string.IsNullOrWhiteSpace(text)||text.Length>10000)return;
-        var match=System.Text.RegularExpressions.Regex.Match(text,@"https://[^\s<>""']+");if(!match.Success)return;
-        try{
-            var content=Services.ContentLinks.Parse(match.Value);
-            if(!Services.ProductFeatures.SocialEnabled)return;
-            openingShare=true;
-            try{for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);if(App.InitialAccountReady&&Shell.Current!=null)await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>Services.ContentSharing.Open(content));}
-            finally{openingShare=false;}return;
-        }catch(InvalidOperationException){ }
+    private static readonly Queue<string> sharedRecipes=new();
+    private static async void OpenSharedRecipe(Intent intent)
+    {
+        if(intent?.Action!=Intent.ActionSend)return;
+        var text=intent.GetCharSequenceExtra(Intent.ExtraText)?.ToString();intent.RemoveExtra(Intent.ExtraText);
+        if(string.IsNullOrWhiteSpace(text))return;
+        try
+        {
+            var link=Services.SharedRecipeLink.Extract(text);
+            if(sharedRecipes.Count>=5)throw new InvalidOperationException("Finish opening the shared recipes, then share this link again.");
+            sharedRecipes.Enqueue(link);
+        }
+        catch(InvalidOperationException error){global::Android.Widget.Toast.MakeText(global::Android.App.Application.Context,error.Message,global::Android.Widget.ToastLength.Long).Show();return;}
+        if(openingShare)return;
         openingShare=true;
-        try{for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
-            if(!App.InitialAccountReady||Shell.Current==null)return;
-            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>RecipeApp.Services.AppNavigation.Open(new RecipeApp.Views.RecipeWebsitePage(match.Value)));
-        }finally{openingShare=false;}
+        try
+        {
+            while(sharedRecipes.Count>0)
+            {
+                var link=sharedRecipes.Dequeue();
+                for(var i=0;i<300&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
+                if(!App.InitialAccountReady||Shell.Current==null)throw new InvalidOperationException("Mealsy is still starting. Once it is ready, share your recipe link again.");
+                Services.ContentTarget content=null;
+                try{content=Services.ContentLinks.Parse(link);}catch(InvalidOperationException){ }
+                if(content!=null)
+                {
+                    if(Services.ProductFeatures.SocialEnabled)await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>Services.ContentSharing.Open(content));
+                    else global::Android.Widget.Toast.MakeText(global::Android.App.Application.Context,"Community sharing is currently unavailable.",global::Android.Widget.ToastLength.Long).Show();
+                }
+                else await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(()=>Services.AppNavigation.Open(new Views.RecipeWebsitePage(link)));
+            }
+        }
+        catch(Exception error)
+        {
+            Services.AppDiagnostics.Report(error,"navigation.recipe-share","OPEN_FAILURE");
+            global::Android.Widget.Toast.MakeText(global::Android.App.Application.Context,error is InvalidOperationException?error.Message:"Couldn't open the recipe importer. Open Mealsy and share the page again.",global::Android.Widget.ToastLength.Long).Show();
+        }
+        finally{openingShare=false;}
     }
 }

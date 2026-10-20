@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Share recipe pages straight to Mealsy", new[] {
+            "Android's Share menu now has a Save recipe to Mealsy target for browser page links. It opens the recipe importer with the shared link filled in.",
+            "Handles shared titles, formatted text and supported links among multiple URLs. Importing waits for startup and stays behind your Import & review action.",
+            "Recipe-link importing still requires Premium and a supported recipe website. Existing drafts are kept and photos remain optional."
+        }),
         new(new(2026,10,20), "Move shopping sections as compact bundles", new[] {
             "When you start dragging a section, ingredient rows temporarily fold away so they no longer obstruct the section cards or drop gaps. Each section keeps its item count.",
             "Drop the section to expand its ingredients in the new position. Cancelling restores the expanded list without changing its order.",

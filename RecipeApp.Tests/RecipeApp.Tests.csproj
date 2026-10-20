@@ -42,6 +42,7 @@
     <Compile Include="../RecipeApp/Services/NavigationCatalog.cs" Link="NavigationCatalog.cs" />
     <None Include="../RecipeApp/AppShell.xaml" Link="Navigation/AppShell.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../RecipeApp/Services/RecipeDraft.cs" Link="RecipeDraft.cs" />
+    <Compile Include="../RecipeApp/Services/SharedRecipeLink.cs" Link="SharedRecipeLink.cs" />
     <Compile Include="../RecipeApp/Services/WebsiteRecipe.cs" Link="WebsiteRecipe.cs" />
     <Compile Include="../RecipeApp/Services/RecipeDraftStore.cs" Link="RecipeDraftStore.cs" />
     <Compile Include="../RecipeApp/Services/RecipePresentation.cs" Link="RecipePresentation.cs" />

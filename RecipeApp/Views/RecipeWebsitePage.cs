@@ -23,6 +23,7 @@ public class RecipeWebsitePage:ContentPage
             ShoppingUi.Text(AppLocalization.Text("From the web to your recipe book"),25,true),
             ShoppingUi.Text(saved==null?"Paste a supported recipe link, then review it before saving privately.":"Import and review a recipe, then save it to attach it to this meal. Save your meal afterwards to keep the plan."),
             ShoppingUi.Text("Premium feature · Some sites block imports; you can paste their ingredients manually."),
+            ShoppingUi.Text("From your browser: open a recipe, choose Share, then Save recipe to Mealsy (or Mealsy). Review the shared link here, then tap Import & review. Only supported recipe websites can be imported.",13),
             link,photoOption,ShoppingUi.Text("Photos are optional. If a photo isn't available, the recipe will still import.",12),import,loading,status}}};
     }
     private async Task Import()
