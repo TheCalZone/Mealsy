@@ -13,14 +13,15 @@ public partial class ShoppingListMakerPage : ContentPage
     private readonly ProgressBar progress=new() { ProgressColor=Color.FromArgb("#D0A34F"), HeightRequest=6 };
     private readonly VerticalStackLayout footer=new() { Padding=new Thickness(16,8), Spacing=6 };
     private List<RecipeShoppingChoice> seed;
+    private readonly List<MealPlanning.TypedShoppingMeal> typedMeals;
     private int stage;
     private string recipeSearch="", librarySearch="", recipeTag="All";
     private bool librarySnacks;
     public ShoppingListMakerPage() : this((IEnumerable<RecipeShoppingChoice>)null) { }
     public ShoppingListMakerPage(bool snacks) : this() { stage=1; librarySnacks=snacks; }
-    public ShoppingListMakerPage(IEnumerable<RecipeShoppingChoice> recipes)
+    public ShoppingListMakerPage(IEnumerable<RecipeShoppingChoice> recipes, IEnumerable<MealPlanning.TypedShoppingMeal> meals = null)
     {
-        InitializeComponent(); ShoppingUi.Theme(this); seed=recipes?.ToList();
+        InitializeComponent(); ShoppingUi.Theme(this); seed=recipes?.ToList(); typedMeals=meals?.ToList() ?? new();
         var header=new VerticalStackLayout { Padding=new Thickness(16,12), Spacing=8, Children={heading,summary,progress} };
         var layout=new Grid { RowDefinitions=new() { new(GridLength.Auto),new(GridLength.Star),new(GridLength.Auto) } };
         layout.Add(header,0,0); layout.Add(pane,0,1); layout.Add(footer,0,2); Content=layout;
@@ -29,7 +30,7 @@ public partial class ShoppingListMakerPage : ContentPage
         ToolbarItems.Add(new ToolbarItem("Cupboard ingredients",null,async()=>await Navigation.PushAsync(new CupboardIngredientsPage())));
         ToolbarItems.Add(new ToolbarItem("Start over",null,async () => {
             if (!await DisplayAlert("Start a fresh plan?","Your saved shopping list and reusable checklists will be kept.","Start over","Keep planning")) return;
-            model.Reset(); stage=0; Render();
+            model.Reset(); typedMeals.Clear(); stage=0; Render();
         }) { Order=ToolbarItemOrder.Secondary });
     }
     protected override async void OnAppearing()
@@ -40,7 +41,7 @@ public partial class ShoppingListMakerPage : ContentPage
             var account=model.Account;
             if (seed!=null) { await model.UseRecipes(seed); seed=null; stage=1; }
             else await model.Load();
-            if (account!=model.Account) stage=0;
+            if (account!=model.Account) { stage=0; typedMeals.Clear(); }
             if (stage>0) model.BuildReview(); Render();
         }
         catch (Exception e) { await DisplayAlert("Creator unavailable",e is InvalidOperationException ? e.Message : "Your recipes and checklists couldn't be loaded. Please reopen this screen.",AppLocalization.Text("OK")); }
@@ -79,6 +80,7 @@ public partial class ShoppingListMakerPage : ContentPage
     private void RenderChecks()
     {
         var body=new VerticalStackLayout { Padding=16, Spacing=14 };
+        RenderTypedMealChecks(body);
         body.Add(ShoppingUi.Text(AppLocalization.Text("Already in the cupboard?"),22,true));
         body.Add(ShoppingUi.Text("These include non-main ingredients, common herbs, spices and oils, and items saved as essentials. Tick only what you need to buy. Required ingredients can be checked on the next screen.",14));
         var optional=model.Review.Where(r => r.CheckCupboard).ToList();
@@ -114,6 +116,39 @@ public partial class ShoppingListMakerPage : ContentPage
         search.TextChanged += (_,e) => {librarySearch=e.NewTextValue ?? ""; Filter();}; body.Add(search);
         body.Add(ShoppingUi.Button("+ Save a " + (librarySnacks ? "snack" : "cupboard essential"),async () => await Navigation.PushAsync(new ShoppingExtraEditorPage(model,snack:librarySnacks)),true));
         body.Add(entries); Filter(); pane.Content=new ScrollView {Content=body};
+    }
+    private void RenderTypedMealChecks(VerticalStackLayout body)
+    {
+        if (typedMeals.Count == 0) return;
+        body.Add(ShoppingUi.Text("For your typed meals",22,true));
+        body.Add(ShoppingUi.Text("Need any of these this week? Matches come from your saved essentials. Tick what you need; your usual quantity is used once for the week, not multiplied by meals. Check the amount in the final review.",14));
+        var matched = new HashSet<MealPlanning.TypedShoppingMeal>();
+        foreach (var item in model.Library.Where(i => !i.IsSnack))
+        {
+            var meals = typedMeals.Where(m => MealPlanning.MatchesEssential(m.Name,item.Name)).ToList();
+            if (meals.Count == 0) continue;
+            foreach (var meal in meals) matched.Add(meal);
+            var content = new VerticalStackLayout { Spacing=6 };
+            var line = new Grid { ColumnDefinitions=new() { new(new GridLength(44)),new(GridLength.Star) } };
+            var check=ShoppingUi.Check(item.Selected,v=>item.Selected=v);
+            check.BindingContext=item;check.SetBinding(CheckBox.IsCheckedProperty,nameof(item.Selected),BindingMode.TwoWay);
+            line.Add(check,0);
+            line.Add(ShoppingUi.Text(item.Name,17,true),1);content.Add(line);
+            content.Add(ShoppingUi.Text("Planned: "+string.Join(" · ",meals.Select(m=>m.Name).Distinct())+$" · Planned {meals.Count} "+(meals.Count==1?"time":"times"),13));
+            content.Add(ShoppingUi.Text(string.IsNullOrWhiteSpace(item.Quantity)?"Choose an amount in the final review":"Usual purchase: "+item.Quantity,13));
+            content.Add(ShoppingUi.Button("Edit essential",async()=>await Navigation.PushAsync(new ShoppingExtraEditorPage(model,item)),true));
+            body.Add(ShoppingUi.Card(content));
+        }
+        var unmatched=typedMeals.Where(m=>!matched.Contains(m)).Select(m=>m.Name).Distinct().ToList();
+        if (unmatched.Count>0)
+        {
+            body.Add(ShoppingUi.Text("No essential matches for: "+string.Join(" · ",unmatched)+". A meal name isn't a full ingredient list; check anything else you need below.",14));
+            foreach (var name in unmatched)
+            {
+                var suggestedName=name;
+                body.Add(ShoppingUi.Button("Save an essential for “"+name+"”…",async()=>await Navigation.PushAsync(new ShoppingExtraEditorPage(model,suggestedName:suggestedName)),true));
+            }
+        }
     }
     private void RenderReview()
     {

@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Shopping suggestions for typed meals", new[] {
+            "Weekly shopping review works even when no saved recipes are selected.",
+            "Typed meals without recipe attachments suggest matching saved essentials, with meal names and weekly occurrence counts. Nothing is selected automatically.",
+            "Choose your usual purchase once for the week, adjust amounts in review, or save a missing essential for next time. Meal names do not generate guessed ingredient lists."
+        }),
         new(new(2026,10,20), "Compact home-screen quick add", new[] {
             "The widget Add icon opens a small native entry dialog over the home screen, without navigating through Mealsy. Android widgets cannot host an editable text field directly.",
             "Replaced large widget buttons with accessible Add, Choose list and Open list icons. Each widget keeps its own personal or household selection.",

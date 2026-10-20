@@ -127,6 +127,33 @@ public class WidgetAndPlannerTests
         var target=new MealPlanDay {Id=20,MealDayIndex=4};MealPlanning.Copy(source,target);target.DinnerNotes[0]="Changed";
         Assert.Equal(20,target.Id);Assert.Equal(4,target.MealDayIndex);Assert.Equal("Leftovers",source.DinnerNotes[0]);Assert.Equal(3,MealPlanning.Portions(target,2)[42]);
     }
+    [Theory]
+    [InlineData("Scrambled eggs on toast", "Eggs", true)]
+    [InlineData("Boiled egg", "Eggs", true)]
+    [InlineData("Eggplant curry", "Eggs", false)]
+    [InlineData("Chickpeas and rice", "Peas", false)]
+    [InlineData("Tomato pasta", "Tomatoes", true)]
+    [InlineData("Peanut butter toast", "Peanut butter", true)]
+    [InlineData("Roast chicken", "Chicken stock", false)]
+    [InlineData("", "Eggs", false)]
+    [InlineData("Eggs", "", false)]
+    public void TypedMealsMatchWholeEssentialNames(string meal,string essential,bool expected)
+        => Assert.Equal(expected,MealPlanning.MatchesEssential(meal,essential));
+    [Fact]
+    public void OnlyTypedMealsWithoutRecipeAttachmentsPromptEssentialChecks()
+    {
+        var monday=new MealPlanDay {MealDayIndex=0,BreakfastText="Eggs",LunchText="Egg salad",DinnerText="Chicken"};
+        monday.LunchRecipesIDs.Add(42);monday.DinnerRecipeId=43;
+        monday.BreakfastNotes.Add("Buy milk");
+        var tuesday=new MealPlanDay {MealDayIndex=1,BreakfastText="Eggs"};
+        var meals=MealPlanning.TypedShoppingMeals(new[]{monday,tuesday});
+        Assert.Equal(2,meals.Count);Assert.All(meals,m=>Assert.Equal("Eggs",m.Name));
+        Assert.Equal(new long[]{0,1},meals.Select(m=>m.Day));Assert.All(meals,m=>Assert.Equal(0,m.Slot));
+        var matches=meals.Where(m=>MealPlanning.MatchesEssential(m.Name,"Eggs")).ToList();
+        Assert.Equal(2,matches.Count);
+        var rows=ShoppingPlan.Build(Array.Empty<RecipeShoppingChoice>(),Array.Empty<Snack>(),new[]{new Staple{Name="Eggs",Quantity="6"}},Array.Empty<string>());
+        Assert.Equal("6",Assert.Single(rows).Item.Quantity);
+    }
     [Fact]
     public void ShoppingUsesPlannedPortionsAcrossSlotsAndDays()
     {
