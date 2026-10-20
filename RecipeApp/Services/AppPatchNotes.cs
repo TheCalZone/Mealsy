@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Compact home-screen quick add", new[] {
+            "The widget Add icon opens a small native entry dialog over the home screen, without navigating through Mealsy. Android widgets cannot host an editable text field directly.",
+            "Replaced large widget buttons with accessible Add, Choose list and Open list icons. Each widget keeps its own personal or household selection.",
+            "Quick add recognises quantities such as 500g minced beef, keeps offline personal saves and checks household access before adding."
+        }),
         new(new(2026,10,19), "Language support", new[] {
             "Added automatic device-language selection for English, Spanish, French, German and Portuguese, with English fallback.",
             "Choose a language in Settings and restart Mealsy to apply it. Recipes, lists and saved identifiers are kept unchanged.",

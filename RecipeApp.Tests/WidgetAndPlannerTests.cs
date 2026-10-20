@@ -65,6 +65,21 @@ public class WidgetAndPlannerTests
         WidgetShoppingStore.Delete(101);Assert.Null(WidgetShoppingStore.Target(101));Assert.Equal("bob",WidgetShoppingStore.Target(102).Account);
     }
     [Fact]
+    public void WidgetEntryParsesQuantityAndNotifiesTheSelectedListAfterSaving()
+    {
+        Preferences.Clear();ShoppingListStore.AccountId=()=>null;
+        var target=new WidgetListTarget(null,null,"Device");string notified=null;
+        void Updated(string key){notified=key;Assert.NotEmpty(Preferences.Get(key,""));}
+        WidgetShoppingStore.Changed+=Updated;
+        try
+        {
+            WidgetShoppingStore.Add(target,null,new(){Name="500g minced beef",Quantity="",Category="Other"});
+            var item=Assert.Single(ShoppingListDocument.Deserialize(Preferences.Get(target.StorageKey,"")).Items);
+            Assert.Equal("500 g",item.Quantity);Assert.Equal("minced beef",item.Name);Assert.Equal("Meat",item.Category);Assert.Equal(target.StorageKey,notified);
+        }
+        finally{WidgetShoppingStore.Changed-=Updated;Preferences.Clear();}
+    }
+    [Fact]
     public void WidgetRetryCannotDuplicateAnItemOrChangeCollectedPurchases()
     {
         Preferences.Clear();ShoppingListStore.AccountId=()=>null;var list=new ShoppingListDocument();list.Add(new(){Name="Milk",Quantity="2 L",InBasket=true});ShoppingListStore.Save(list);

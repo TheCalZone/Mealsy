@@ -66,6 +66,8 @@ public partial class ShoppingListPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing(); visible = true;
+        WidgetShoppingStore.Changed -= WidgetChanged;
+        WidgetShoppingStore.Changed += WidgetChanged;
         try
         {
             var uid = HouseholdService.UserId;
@@ -207,8 +209,15 @@ public partial class ShoppingListPage : ContentPage
         }
         catch (Exception) { await DisplayAlert("Unable to reload", "Your device version is still saved. Please try again when connected.", AppLocalization.Text("OK")); }
     }
+    private void WidgetChanged(string key) => MainThread.BeginInvokeOnMainThread(() =>
+    {
+        if (!visible || listAccount != HouseholdService.UserId || key != CacheKey) return;
+        generation++;
+        Model.AcceptRemote(Preferences.Get(key, Model.CurrentJson));
+    });
     protected override void OnDisappearing()
     {
+        WidgetShoppingStore.Changed -= WidgetChanged;
         SetShoppingMode(false);
         _ = SyncAsync(); // Flush pending online edits when leaving; failures remain saved for retry.
         visible = false; timer?.Stop();

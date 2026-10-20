@@ -12,6 +12,8 @@ public record WidgetListTarget(string Account,string HouseholdId,string Name)
 }
 public static class WidgetShoppingStore
 {
+    public static event Action<string> Changed;
+    public static void NotifyChanged(string key)=>Changed?.Invoke(key);
     private static string Key(int id)=>"Mealsy.widget."+id;
     public static WidgetListTarget Target(int id){try{return JsonSerializer.Deserialize<WidgetListTarget>(Preferences.Get(Key(id),"null"));}catch(JsonException){return null;}}
     public static void SetTarget(int id,WidgetListTarget target)=>Preferences.Set(Key(id),JsonSerializer.Serialize(target));
@@ -32,6 +34,7 @@ public static class WidgetShoppingStore
         // Stable item IDs make a retry safe even if storage failed after writing the main JSON.
         if(!document.Items.Any(i=>i.Id==item.Id))document.Add(item);
         if(target.HouseholdId==null)ShoppingListStore.Save(document);else Preferences.Set(target.StorageKey,document.Serialize());
+        NotifyChanged(target.StorageKey);
         return document.Serialize();
     }
 }

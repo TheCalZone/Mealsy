@@ -43,7 +43,18 @@ public class ShoppingListViewModel : CustomViewModelBase
         QuickName = QuickQuantity = QuickNote = EditName = EditQuantity = EditCategory = EditNote = "";
         SearchText = ""; ShowDetails = false;
     }
-    public void AcceptRemote(string json) { document = ShoppingListDocument.Deserialize(json); ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist(); }
+    public void AcceptRemote(string json)
+    {
+        var editId = editingItem?.Id;
+        document = ShoppingListDocument.Deserialize(json);
+        // Keep the form values, but point Save at the refreshed document's item.
+        if (editId != null)
+        {
+            editingItem = document.Items.FirstOrDefault(item => item.Id == editId);
+            if (editingItem == null) IsEditing = false;
+        }
+        ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist();
+    }
     private string ExportKey => ShoppingListStore.ExportKey;
     private ShoppingListDocument document = new();
     private readonly List<ShoppingListItem> subscriptions = new();

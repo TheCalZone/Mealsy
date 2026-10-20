@@ -359,3 +359,12 @@ and main loading screens; slower shared actions show a working caption. Account
 load generations block obsolete responses after account/page changes. No backend
 deployment is needed. This change is on the Android branch; iOS can merge the
 shared fix separately. Automated checks now include 217 shared app tests.
+
+
+## 20 October 2026 — Compact Android shopping widget
+
+The Add icon now launches `WidgetQuickAddActivity`, a non-exported native dialog over the launcher, rather than the MAUI app navigation. Standard Android RemoteViews widgets cannot embed EditText. Choose-list and open-list icons intentionally open Mealsy. Widget sizing is now 3×2 cells (launcher dependent), with 48dp icon targets. Existing widget instances may need resizing or removing and adding again.
+
+The dialog initialises Firebase independently for cold-process entry, checks the selected account and household entitlement, saves personal entries offline, and attempts the existing shopping sync. Failed sync leaves a local copy for retry from the list. Widget writes refresh an already-visible shopping page while retaining any item-edit fields. No Firebase backend/schema changes. Native widget wording is currently English.
+
+Device checks: add from launcher with Mealsy closed, keyboard/IME Done, cancel/back, rotate while entering, offline personal save, household permission failure, signed-out/account-switched widget, multiple independently configured widgets, and return to an already-open shopping list. Verify sizing and focus on the target phone launcher.

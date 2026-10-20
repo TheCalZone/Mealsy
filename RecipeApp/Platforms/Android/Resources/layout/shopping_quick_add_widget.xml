@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp" android:background="@drawable/shopping_widget_background">
- <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Mealsy · Quick add" android:textSize="18sp" android:textStyle="bold" android:textColor="#FFFFFF" />
- <TextView android:id="@+id/widget_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Choose your shopping list" android:textSize="13sp" android:textColor="#D6E8D8" android:layout_marginTop="4dp" />
- <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
-  <Button android:id="@+id/widget_add" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="+ Add item" android:textAllCaps="false" android:contentDescription="Quickly add a shopping item" />
-  <Button android:id="@+id/widget_choose" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Choose list" android:textAllCaps="false" android:contentDescription="Choose the shopping list for this widget" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp" android:gravity="center_vertical" android:background="@drawable/shopping_widget_background">
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Mealsy · Quick add" android:textSize="14sp" android:textStyle="bold" android:textColor="#FFFFFF" />
+ <TextView android:id="@+id/widget_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Choose a shopping list" android:textSize="12sp" android:maxLines="1" android:ellipsize="end" android:textColor="#D6E8D8" />
+ <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal">
+  <ImageButton android:id="@+id/widget_add" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:padding="12dp" android:src="@drawable/widget_add" android:background="?android:attr/selectableItemBackground" android:contentDescription="Add a shopping item" />
+  <ImageButton android:id="@+id/widget_choose" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:padding="12dp" android:src="@drawable/widget_choose" android:background="?android:attr/selectableItemBackground" android:contentDescription="Choose the shopping list for this widget" />
+  <ImageButton android:id="@+id/widget_open" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:padding="12dp" android:src="@drawable/widget_open" android:background="?android:attr/selectableItemBackground" android:contentDescription="Open the selected shopping list" />
  </LinearLayout>
- <Button android:id="@+id/widget_open" android:layout_width="match_parent" android:layout_height="48dp" android:text="Open chosen list" android:textAllCaps="false" android:contentDescription="Open the shopping list selected for this widget" />
 </LinearLayout>
