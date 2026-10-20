@@ -101,7 +101,7 @@
             </CollectionView.EmptyView>
             <CollectionView.GroupHeaderTemplate>
                 <DataTemplate x:DataType="vm:ShoppingListGroup">
-                    <Grid Padding="4,12,4,8" ColumnDefinitions="*,Auto" Loaded="SectionHeader_Loaded" SemanticProperties.Hint="Long press and drag to reorder sections">
+                    <Grid Padding="4,12,4,8" ColumnDefinitions="*,Auto" Loaded="SectionHeader_Loaded" SemanticProperties.Hint="Touch and move to reorder sections. Follow the floating header and Drop here gap.">
                         <Label Text="{Binding Title, Converter={StaticResource UiToken}}" FontSize="{DynamicResource ThemeFont16}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" />
                         <Label Grid.Column="1" Text="{Binding Summary, StringFormat='☰  {0}'}" FontSize="{DynamicResource ThemeFont12}" VerticalOptions="Center" TextColor="{DynamicResource ThemeText}" />
                     </Grid>

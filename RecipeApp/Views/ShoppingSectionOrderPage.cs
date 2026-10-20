@@ -19,7 +19,7 @@ public class ShoppingSectionOrderPage:ContentPage
     private void Render()
     {
         drag.Cancel();body.Clear();body.Add(ShoppingUi.Text("Your route around the shop",27,true));
-        body.Add(ShoppingUi.Text("Long-press a section, then drag it above or below another section to match the way you shop. Changes save immediately for this list on this device; other household members keep their own layout.",14));
+        body.Add(ShoppingUi.Text("Touch a section and move it above or below another section. A floating card and a highlighted gap show where it will land. Changes save immediately for this list on this device; other household members keep their own layout.",14));
         body.Add(ShoppingUi.Text("Empty sections are included here so they're ready when you next add an item. Search and Hide collected don't change this order.",13));
         var order=model.SectionNames();
         for(var index=0;index<order.Count;index++)
@@ -27,7 +27,7 @@ public class ShoppingSectionOrderPage:ContentPage
             var section=order[index];
             var row=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8};
             row.Add(ShoppingUi.Text($"☰  {section}",18,true),0);
-            SemanticProperties.SetDescription(row,section+". Long press and drag to reorder. Use Move with buttons in the menu for an alternative.");
+            SemanticProperties.SetDescription(row,section+". Touch and move to reorder. Use Move with buttons in the menu for an alternative.");
             var up=ShoppingUi.Button("↑",()=>Move(section,-1),true);up.WidthRequest=52;up.IsEnabled=index>0;SemanticProperties.SetDescription(up,"Move "+section+" up");
             var down=ShoppingUi.Button("↓",()=>Move(section,1),true);down.WidthRequest=52;down.IsEnabled=index<order.Count-1;SemanticProperties.SetDescription(down,"Move "+section+" down");
             if(showButtons){row.Add(up,1);row.Add(down,2);}var card=ShoppingUi.Card(row);drag.Attach(card,()=>section);body.Add(card);

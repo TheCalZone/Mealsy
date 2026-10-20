@@ -42,7 +42,7 @@ public partial class ShoppingListPage : ContentPage
     {
         if(sender is not View header||sectionHeaders.TryGetValue(header,out _))return;
         sectionHeaders.Add(header,new object());
-        sectionDrag??=new ShoppingSectionDrag(Model.SectionNames,Model.SaveSectionOrder,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
+        sectionDrag??=new ShoppingSectionDrag(Model.SectionNames,Model.SaveSectionOrder,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId,()=>Model.SectionOrderContext);
         sectionDrag.Attach(header,()=>(header.BindingContext as ShoppingListGroup)?.Title);
     }
     private ShoppingItemDrag ItemDrag=>itemDrag??=new ShoppingItemDrag(Model,()=>visible&&!Model.IsEditing&&!syncing&&listAccount==AccountSession.UserId);
