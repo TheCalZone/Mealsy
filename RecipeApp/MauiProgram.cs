@@ -42,6 +42,7 @@ public static class MauiProgram
         {
             handlers.AddHandler(typeof(CustomEditor), typeof(CustomEditorHandler));
 #if ANDROID
+            handlers.AddHandler(typeof(RecipeApp.Views.RecipePressLayout), typeof(RecipeApp.Platforms.Android.RecipePressHandler));
             handlers.AddHandler(typeof(RecipeApp.Controls.AdBanner), typeof(RecipeApp.Platforms.Android.AdBannerHandler));
 #endif
         });

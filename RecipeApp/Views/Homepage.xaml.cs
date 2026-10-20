@@ -9,6 +9,33 @@ public partial class Homepage : ContentPage
         base.OnAppearing();var uid=AccountSession.UserId;Content=new LoadingIndicator("Getting your kitchen ready…");
         try{await RecipeService.GetRecipesForLocal();AccountSession.Check(uid);await Render(uid);}catch(Exception){Content=ShoppingUi.Text("Your local dashboard couldn't load. Open Shopping or Account from the tabs to continue.");}
     }
+    private bool recipeBusy;
+    private async Task RecipeAction(long id,string account,bool options)
+    {
+        if(recipeBusy)return;recipeBusy=true;
+        try
+        {
+            AccountSession.Check(account);
+            var recipe=await RecipeService.GetRecipe(id);AccountSession.Check(account);
+            if(recipe==null||!AccountSession.Owns(recipe.FirebaseUID))throw new InvalidOperationException("This recipe is no longer available in your account.");
+            var action=options?await DisplayActionSheet(recipe.RecipeName,AppLocalization.Text("Cancel"),"Delete recipe","View recipe","Edit recipe","Shop ingredients"):"View recipe";
+            AccountSession.Check(account);
+            switch(action)
+            {
+                case "View recipe": await AppNavigation.Recipe(id);break;
+                case "Edit recipe": await AppNavigation.Open(new EditRecipePage{RecipeId=id.ToString()});break;
+                case "Shop ingredients": await AppNavigation.Open(new ShoppingListMakerPage(new[]{new RecipeShoppingChoice(recipe){Selected=true}}));break;
+                case "Delete recipe":
+                    if(!await DisplayAlert("Delete this recipe?","Remove it from your recipe book? Planned meals referring to it will need a replacement.",AppLocalization.Text("Delete"),AppLocalization.Text("Keep")))return;
+                    AccountSession.Check(account);
+                    if(account!=null)await FirestoreService.DeleteRecipe(recipe);
+                    AccountSession.Check(account);await RecipeService.RemoveRecipe(id);
+                    await RecipeService.GetRecipesForLocal();AccountSession.Check(account);await Render(account);break;
+            }
+        }
+        catch(Exception error){await DisplayAlert("Recipe",error is InvalidOperationException?error.Message:"That action couldn't finish. Check your connection and try again. Reopen your recipe book to check its latest state.",AppLocalization.Text("OK"));}
+        finally{recipeBusy=false;}
+    }
     private async Task Render(string account)
     {
         var recipes=RecipeBrowser.Visible(RecipeService.Recipes,account).ToList();var body=new VerticalStackLayout{Padding=16,Spacing=18};var first=AccountSession.CachedProfile?.FirstName;
@@ -29,7 +56,7 @@ public partial class Homepage : ContentPage
             var names=MealPlanning.MealNames(today,slot,recipes).Concat(MealPlanning.Notes(today,slot)).ToList();if(names.Count==0)continue;planned=true;meals.Add(ShoppingUi.Text(MealPlanning.Slots[slot],12,true));meals.Add(ShoppingUi.Text(string.Join(" · ",names),15));
         }
         if(!planned)meals.Add(ShoppingUi.Text("Leave room for inspiration, leftovers, or something you've been meaning to cook.",14));meals.Add(ShoppingUi.Button(AppLocalization.Text("Plan your week"),()=>AppNavigation.Root("MealPlanOverviewPage"),true));body.Add(ShoppingUi.Card(meals));
-        body.Add(ShoppingUi.Text(AppLocalization.Text("Back to your favourites"),23,true));foreach(var recipe in recipes.OrderByDescending(r=>RecipeBrowser.Tags(r).Contains("favourites")).ThenByDescending(r=>r.LastUpdated).Take(2))body.Add(RecipeCardView.Card(recipe,()=>AppNavigation.Recipe(recipe.Id)));
+        body.Add(ShoppingUi.Text(AppLocalization.Text("Back to your favourites"),23,true));body.Add(ShoppingUi.Text("Tap a recipe to open it. Hold for quick options, or use ⋯ Options.",12));foreach(var recipe in recipes.OrderByDescending(r=>RecipeBrowser.Tags(r).Contains("favourites")).ThenByDescending(r=>r.LastUpdated).Take(2))body.Add(RecipeCardView.Card(recipe,()=>RecipeAction(recipe.Id,account,false),()=>RecipeAction(recipe.Id,account,true)));
         if(recipes.Count==0)body.Add(ShoppingUi.Text("Save your first recipe to build a collection that's yours.",14));
         if(ProductFeatures.SocialEnabled)body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Text("Pull up a chair",23,true),ShoppingUi.Text("Discover what other Mealsy cooks are making, save a recipe, or share your own kitchen win.",14),ShoppingUi.Button("Visit the food community",()=>AppNavigation.Open(new FoodFeedPage()))}}));
         body.Add(ShoppingUi.Button("AI recipe ideas · Your AI service key",()=>AppNavigation.Open(new ChatPage()),true));if(ClientPlatform.HomeScreenWidgetAvailable)body.Add(ShoppingUi.Button("Home-screen shopping widget",()=>AppNavigation.Open(new WidgetHelpPage()),true));

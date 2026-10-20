@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,20), "Homepage recipe shortcuts", new[] {
+            "Tap recipe cards to open the recipe directly. Hold a homepage recipe card on Android for View, Edit, Shop ingredients and Delete shortcuts.",
+            "A visible Options button provides the same menu. Delete asks for confirmation, checks account ownership and removes the cloud copy before the local recipe."
+        }),
         new(new(2026,10,20), "Shopping suggestions for typed meals", new[] {
             "Weekly shopping review works even when no saved recipes are selected.",
             "Typed meals without recipe attachments suggest matching saved essentials, with meal names and weekly occurrence counts. Nothing is selected automatically.",
