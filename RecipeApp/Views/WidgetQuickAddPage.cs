@@ -40,7 +40,7 @@ public class WidgetQuickAddPage : ContentPage
     private WidgetListTarget Selected(){Check();if(picker.SelectedIndex<0)throw new InvalidOperationException("Choose a shopping list first.");return targets[picker.SelectedIndex];}
     private async Task Verify(WidgetListTarget target)
     {
-        if(target.HouseholdId==null)return;var household=await HouseholdService.StatusAsync();Check();
+        if(target.HouseholdId==null)return;var household=await HouseholdService.StatusAsync(true);Check();
         if(household.HouseholdId!=target.HouseholdId||!household.FamilyEnabled)throw new InvalidOperationException("Access to this household list has ended. Choose another list explicitly.");
     }
     private async Task Run(Func<Task> action)

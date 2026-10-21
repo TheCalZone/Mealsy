@@ -35,7 +35,7 @@ public static class AccountSession
         var address=AccountInput.Email(email);if(string.IsNullOrEmpty(password))throw new InvalidOperationException("Enter your password.");
         try{await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(address,password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.sign-in",e.Reason.ToString()));}
         catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.sign-in"));}
-        ClearOldPassword();_=SyncSafely();
+        ClearOldPassword();_=HouseholdWarmup.Start();_=SyncSafely();
     }
     public static async Task Register(string email,string password,string confirmation,string first,string last,string diet,string cuisines)
     {
@@ -46,7 +46,7 @@ public static class AccountSession
         catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.register"));}
         // Creating the Auth account succeeded. Profile or sync failure must not suggest registering again.
         try{SaveProfile(new AppUser {FirebaseUID=UserId,Email=Email,FirstName=first.Trim(),LastName=last?.Trim()??"",DietRestrictions=diet?.Trim()??"",FavouriteCuisines=cuisines?.Trim()??""});}catch(Exception){ }
-        ClearOldPassword();_=SyncSafely();
+        ClearOldPassword();_=HouseholdWarmup.Start();_=SyncSafely();
     }
     public static async Task ResetPassword(string email)
     {
@@ -59,7 +59,7 @@ public static class AccountSession
 #if ANDROID
         await RecipeApp.Platforms.Android.ActivityNotifications.Disable();
 #endif
-        await CrossFirebaseAuth.Current.SignOutAsync();ClearOldPassword();}
+        await CrossFirebaseAuth.Current.SignOutAsync();HouseholdWarmup.ResetSession();ClearOldPassword();}
     public static Task SendVerification() => CrossFirebaseAuth.Current.CurrentUser.SendEmailVerificationAsync();
     public static void ClearOldPassword(){try{SecureStorage.Remove("email");SecureStorage.Remove("password");}catch(Exception){}}
     public static async Task<string> SyncSafely()

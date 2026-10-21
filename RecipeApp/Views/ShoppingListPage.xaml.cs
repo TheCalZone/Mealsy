@@ -16,6 +16,8 @@ public partial class ShoppingListPage : ContentPage
     public string IngredientsJson { get; set; }
     private ShoppingListViewModel Model => (ShoppingListViewModel)BindingContext;
     private IDispatcherTimer timer;
+    private string retryScope;
+    private DateTimeOffset retryAfter;
     private string householdId, sharedName, listAccount;
     private int generation;
     private bool syncing, conflict, visible;
@@ -113,10 +115,12 @@ public partial class ShoppingListPage : ContentPage
     private async void Timer_Tick(object sender, EventArgs e) => await SyncAsync();
     private async Task SyncAsync(bool manual = false)
     {
-        if (!visible) return;
+        if (!visible || !App.IsForeground) return;
         if (HouseholdService.UserId != listAccount) { SelectPersonal(); Model.Load(true, null); }
         if (syncing || conflict || Model.IsEditing || sectionDrag?.IsDragging==true || itemDrag?.IsDragging==true || listAccount == null) return;
+        if(!manual&&retryScope==CacheKey&&DateTimeOffset.UtcNow<retryAfter)return;
         syncing = true;
+        var failed=false;
         var currentGeneration = generation;
         var uid = listAccount;
         var key = CacheKey;
@@ -128,7 +132,7 @@ public partial class ShoppingListPage : ContentPage
             Model.StatusText = changes.Count > 0 ? AppLocalization.Text("Syncing changes…") : AppLocalization.Text("Checking for updates…");
             var response = await HouseholdService.CallAsync<ShoppingSyncResult>(new {
                 action = changes.Count > 0 ? "patch" : "read", scope = householdId == null ? "personal" : "household", householdId, changes
-            });
+            },bypassReadCache:manual);
             if (generation != currentGeneration || HouseholdService.UserId != uid || Model.IsEditing) return;
             var server = JsonSerializer.Serialize(response.Items);
             var latest=Preferences.Get(key,Model.CurrentJson);
@@ -136,7 +140,7 @@ public partial class ShoppingListPage : ContentPage
             // Save acknowledged server state separately so offline edits survive app restarts.
             Preferences.Set(key + ".synced", server);
             if (merged.Serialize() != Model.CurrentJson) Model.AcceptRemote(merged.Serialize());
-            Model.StatusText = householdId == null ? AppLocalization.Text("Personal list synced · Only you can access it") : AppLocalization.Text("Household list synced · Updates every 5 seconds");
+            Model.StatusText = householdId == null ? AppLocalization.Text("Personal list synced · Only you can access it") : AppLocalization.Text("Household list synced · Checks once a minute");
         }
         catch (ShoppingSyncConflictException)
         {
@@ -145,6 +149,7 @@ public partial class ShoppingListPage : ContentPage
         }
         catch (HouseholdException e)
         {
+            failed=true;
             if (generation != currentGeneration || HouseholdService.UserId != uid) return;
             if (e.Code == "ABORTED") { conflict = true; Model.StatusText = "Conflicting edits kept on this device. Open Resolve sync conflict."; }
             else if (householdId != null && e.Code is "PERMISSION_DENIED" or "FAILED_PRECONDITION")
@@ -154,17 +159,23 @@ public partial class ShoppingListPage : ContentPage
         }
         catch (Exception error)
         {
+            failed=true;
             var reference=AppDiagnostics.Report(error,"shopping.sync","SYNC_FAILURE");
-            if (generation == currentGeneration) Model.StatusText = "Saved on device · Cloud unavailable. Will retry while this screen is open.\nReference: "+reference;
+            if (generation == currentGeneration) Model.StatusText = "Saved on device · Cloud unavailable. Will retry in a minute while this screen is open.\nReference: "+reference;
             if (manual) await DisplayAlert("Sync unavailable", "Your changes are saved on this device. Check your connection and try syncing again.", AppLocalization.Text("OK"));
         }
-        finally { syncing = false; }
+        finally
+        {
+            syncing=false;
+            if(failed&&generation==currentGeneration){retryScope=key;retryAfter=DateTimeOffset.UtcNow.AddMinutes(1);}
+            else if(!failed)retryScope=null;
+        }
     }
     private async void ListSelector_Clicked(object sender, EventArgs e)
     {
         if (Model.IsEditing) return;
         var choice = await DisplayActionSheet("Choose shopping list", "Cancel", null, "Personal list", "Household list", "Manage household");
-        if (choice == "Personal list") { Model.Persist(); SelectPersonal(); Model.Load(true, null); await SyncAsync(true); }
+        if (choice == "Personal list") { Model.Persist(); SelectPersonal(); Model.Load(true, null); await SyncAsync(); }
         else if (choice == "Manage household") await Navigation.PushAsync(new HouseholdPage());
         else if (choice == "Household list")
         {
@@ -175,7 +186,7 @@ public partial class ShoppingListPage : ContentPage
                 if (!info.FamilyEnabled) { await Navigation.PushAsync(new PlanPage()); return; }
                 Model.Persist(); generation++; conflict = false; householdId = info.HouseholdId; sharedName = info.Name; listAccount = HouseholdService.UserId;
                 Model.SelectList(CacheKey); Model.Load(true, null); ListSelector.Text = sharedName + " ▾";
-                await SyncAsync(true);
+                await SyncAsync();
             }
             catch (HouseholdException ex) { await DisplayAlert(AppLocalization.Text("Household"), ex.Message, AppLocalization.Text("OK")); }
             catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and try again.", AppLocalization.Text("OK")); }
@@ -201,7 +212,7 @@ public partial class ShoppingListPage : ContentPage
         try
         {
             var version = generation; var uid = listAccount; var key = CacheKey;
-            var result = await HouseholdService.CallAsync<ShoppingSyncResult>(new { action = "read", scope = householdId == null ? "personal" : "household", householdId });
+            var result = await HouseholdService.CallAsync<ShoppingSyncResult>(new { action = "read", scope = householdId == null ? "personal" : "household", householdId },bypassReadCache:true);
             if (version != generation || uid != HouseholdService.UserId) return;
             Preferences.Set(key + ".recovery", Model.CurrentJson);
             var server = JsonSerializer.Serialize(result.Items); Preferences.Set(key + ".synced", server);

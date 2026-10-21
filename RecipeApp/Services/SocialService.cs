@@ -22,7 +22,7 @@ public static class SocialService
 public static class HouseholdMealsService
 {
     public const string Endpoint="https://us-central1-mealsy-b732b.cloudfunctions.net/householdMeals";
-    public static Task<T> Call<T>(object data)=>HouseholdService.CallEndpointAsync<T>(Endpoint,data);
+    public static Task<T> Call<T>(object data,bool force=false)=>HouseholdService.CallEndpointAsync<T>(Endpoint,data,bypassReadCache:force);
     public static async Task Require()
     {
         try{var capability=await Call<HouseholdMealsCapabilities>(new{action="capabilities"});if(capability.Version>=1)return;}

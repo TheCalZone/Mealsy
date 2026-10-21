@@ -3,6 +3,7 @@ using RecipeApp.Services;
 namespace RecipeApp;
 public partial class App : Application
 {
+    public static bool IsForeground{get;private set;}=true;
     public static bool InitialAccountReady{get;private set;}
     public App(){
         var language=AppLocalization.Resolve(AppSettings.Current.Language,System.Globalization.CultureInfo.CurrentUICulture);
@@ -20,6 +21,8 @@ public partial class App : Application
         catch(Exception){await MainPage.DisplayAlert("Local data unavailable","Your local data couldn't be loaded. Restart the app before editing it.","OK");}
         finally{AccountSession.ClearOldPassword();InitialAccountReady=true;}
         // Firebase's native SDK restores its own session; passwords are never stored/replayed by Mealsy.
-        if(AccountSession.UserId!=null)await AccountSession.SyncSafely();
+        if(AccountSession.UserId!=null){await HouseholdWarmup.Start();await AccountSession.SyncSafely();}
     }
+    protected override void OnResume(){base.OnResume();IsForeground=true;_=HouseholdWarmup.Start();}
+    protected override void OnSleep(){IsForeground=false;base.OnSleep();}
 }

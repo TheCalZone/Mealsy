@@ -24,6 +24,7 @@
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../RecipeApp/Services/CloudReadCache.cs" Link="CloudReadCache.cs" />
     <Compile Include="../RecipeApp/Services/ProductFeatures.cs" Link="ProductFeatures.cs" />
     <Compile Include="../RecipeApp/Services/ContentLinks.cs" Link="ContentLinks.cs" />
     <Compile Include="../RecipeApp/Services/CreatorPlanSelection.cs" Link="CreatorPlanSelection.cs" />

@@ -7,6 +7,12 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,21), "Faster household overview with fewer repeat reads", new[] {
+            "Household shopping and the current shared meal week preload before the existing account sync. Home shows today's household meals, items left to buy, saved-view timestamps and direct shortcuts.",
+            "Screens share recent read results and simultaneous requests. Unchanged shopping checks reuse results for a minute instead of contacting the server every five seconds; edits and manual refresh still reach the backend.",
+            "Shopping polling pauses in the background and backs off for a minute after connection failures. Household preload is read-only and skips history and separate photo downloads.",
+            "Cached snapshots are account/household specific and displayed only after a recent membership check. Writes always use server permission checks; widget additions retain their fresh access check. Existing offline edits and account syncing are kept."
+        }),
         new(new(2026,10,20), "Share recipe pages straight to Mealsy", new[] {
             "Android's Share menu now has a Save recipe to Mealsy target for browser page links. It opens the recipe importer with the shared link filled in.",
             "Handles shared titles, formatted text and supported links among multiple URLs. Importing waits for startup and stays behind your Import & review action.",

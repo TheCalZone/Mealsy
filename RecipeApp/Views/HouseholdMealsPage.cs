@@ -6,18 +6,26 @@ public class HouseholdMealsPage:SocialPage
 {
     private DateTime weekStart=DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek+6)%7));
     private HouseholdWeek week;private HouseholdInfo household;
-    public HouseholdMealsPage():base("Household meal plan"){Body.Add(ShoppingUi.Text("What’s for dinner?",28,true));Body.Add(ShoppingUi.Text("Share meals, portions, recipe snapshots and notes with your household. Your personal plan stays separate."));Body.Add(ShoppingUi.Button("Sign in or manage my household",()=>Account==null?AppNavigation.Root("AccountPage"):AppNavigation.Open(new HouseholdPage()),true));Body.Add(ShoppingUi.Button("Use my personal meal planner",()=>AppNavigation.Root("MealPlanOverviewPage"),true));ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Run(Load)));}
-    protected override async void OnAppearing(){base.OnAppearing();await Run(Load);}
-    private async Task Load()
+    public HouseholdMealsPage():base("Household meal plan"){Body.Add(ShoppingUi.Text("What’s for dinner?",28,true));Body.Add(ShoppingUi.Text("Share meals, portions, recipe snapshots and notes with your household. Your personal plan stays separate."));Body.Add(ShoppingUi.Button("Sign in or manage my household",()=>Account==null?AppNavigation.Root("AccountPage"):AppNavigation.Open(new HouseholdPage()),true));Body.Add(ShoppingUi.Button("Use my personal meal planner",()=>AppNavigation.Root("MealPlanOverviewPage"),true));ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Run(()=>Load(true))));}
+    protected override async void OnAppearing(){base.OnAppearing();await Run(()=>Load());}
+    private async Task Load(bool force=false)
     {
-        await HouseholdMealsService.Require();household=await HouseholdService.StatusAsync();Check();
+        household=await HouseholdService.StatusAsync(force);Check();
         if(household.HouseholdId==null)throw new InvalidOperationException("Join or create a household from Account first. Your personal meal plan stays separate.");
         if(!household.FamilyEnabled)throw new InvalidOperationException("Your household owner's Premium plan needs to be active to use the shared planner.");
-        week=await HouseholdMealsService.Call<HouseholdWeek>(new{action="readWeek",householdId=household.HouseholdId,weekStart=SocialPolicy.DateKey(weekStart)});Check();
+        var cached=HouseholdWarmup.Cached;
+        if(!force&&cached?.Week?.WeekStart==SocialPolicy.DateKey(weekStart)){week=cached.Week;Render("Saved on this device · "+cached.MealsChecked.ToLocalTime().ToString("g"));}
+        week=await HouseholdMealsService.Call<HouseholdWeek>(new{action="readWeek",householdId=household.HouseholdId,weekStart=SocialPolicy.DateKey(weekStart)},force);Check();
         if(week.HouseholdId!=household.HouseholdId)throw new InvalidOperationException("This household plan could not be verified.");
-        Body.Clear();Body.Add(ShoppingUi.Text("What's for dinner? Sorted.",28,true));Body.Add(ShoppingUi.Text(household.Name+" · Shared by everyone in your household",14));
+        HouseholdWarmup.RecordWeek(Account,week);
+        Render("Current view · Shared reads are reused for up to a minute. Use Refresh for the latest changes.");
+    }
+    private void Render(string freshness)
+    {
+        Body.Clear();Body.Add(ShoppingUi.Text("What's for dinner? Sorted.",28,true));
+        Body.Add(ShoppingUi.Text(freshness,12));Body.Add(ShoppingUi.Text(household.Name+" · Shared by everyone in your household",14));
         Body.Add(ShoppingUi.Text("Meals here are separate from your personal planner. Changes are saved to the household; refresh to see another person's latest edits.",13));
-        var picker=new DatePicker{Date=weekStart,Format="ddd d MMM yyyy"};picker.DateSelected+=async(_,e)=>{weekStart=e.NewDate.Date;await Run(Load);};Body.Add(ShoppingUi.Text("Week starts",12,true));Body.Add(picker);
+        var picker=new DatePicker{Date=weekStart,Format="ddd d MMM yyyy"};picker.DateSelected+=async(_,e)=>{weekStart=e.NewDate.Date;await Run(()=>Load());};Body.Add(ShoppingUi.Text("Week starts",12,true));Body.Add(picker);
         var jump=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};jump.Add(ShoppingUi.Button("Previous week",()=>Run(async()=>{weekStart=weekStart.AddDays(-7);await Load();}),true),0);jump.Add(ShoppingUi.Button("Next week",()=>Run(async()=>{weekStart=weekStart.AddDays(7);await Load();}),true),1);Body.Add(jump);
         for(var day=0;day<7;day++)
         {
@@ -66,7 +74,7 @@ public class HouseholdMealEditorPage:SocialPage
         },true));
         Body.Add(ShoppingUi.Button("Copy my meal draft",async()=>{Check();await Clipboard.Default.SetTextAsync($"{title.Text} · {this.date.Date:d} · {slot.SelectedItem} · {servings.Text} portions\n{note.Text}");await DisplayAlert("Draft copied","Your meal text is on the clipboard.",AppLocalization.Text("OK"));},true));
         Body.Add(ShoppingUi.Button("Review latest server version",()=>Run(async()=>{
-            await HouseholdMealsService.Require();var latest=await HouseholdMealsService.Call<HouseholdWeek>(new{action="readWeek",householdId,weekStart=SocialPolicy.DateKey(weekStart)});Check();var current=latest.Meals.FirstOrDefault(m=>m.Id==id);
+            await HouseholdMealsService.Require();var latest=await HouseholdMealsService.Call<HouseholdWeek>(new{action="readWeek",householdId,weekStart=SocialPolicy.DateKey(weekStart)},true);Check();var current=latest.Meals.FirstOrDefault(m=>m.Id==id);
             if(current==null){await DisplayAlert("No current meal","This meal has not been saved, or someone removed it. Your draft remains open. Reopen the week before creating a replacement.",AppLocalization.Text("OK"));return;}
             if(await DisplayAlert("Review latest meal",$"{current.Title} · {current.Servings} portions\n{current.Note}\n\nKeep your form's draft and use it to replace this version on the next Save? Another edit will still cause a conflict.","Use my draft","Keep reviewing"))version=current.Version;
         }),true));

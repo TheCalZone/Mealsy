@@ -79,7 +79,7 @@ public class WidgetQuickAddActivity : Activity
             if(target.HouseholdId!=null)
             {
                 status.Text="Checking household access…";
-                var household=await HouseholdService.StatusAsync();Check();
+                var household=await HouseholdService.StatusAsync(true);Check();
                 if(household.HouseholdId!=target.HouseholdId||!household.FamilyEnabled)throw new InvalidOperationException("Household access ended. Choose another list in the widget settings.");
             }
             Check();
