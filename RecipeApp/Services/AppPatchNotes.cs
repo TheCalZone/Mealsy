@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,21), "iPhone widget and recipe sharing", new[] {
+            "Native iOS extension source now supplies a medium quick-shopping widget. Add opens Mealsy's quick-add screen; checklist and sliders open the selected list and list selection.",
+            "Share to Mealsy accepts browser recipe links into a local inbox. Open Mealsy to review or discard a link before using the existing importer. Apple App Group/signing setup and native Mac verification are required."
+        }),
         new(new(2026,10,21), "iOS client handoff refreshed", new[] {
             "The iOS client branch now includes the latest shared shopping, recipe, meal-plan and household loading improvements.",
             "iOS section dragging uses compact-section callbacks and checks that its account and list remain unchanged. Native device verification and release setup remain required."

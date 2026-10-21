@@ -20,9 +20,16 @@ public partial class App : Application
         try{await RecipeService.GetRecipesForLocal();await RecipeService.GetSnacksForLocal();await RecipeService.GetStaplesForLocal();}
         catch(Exception){await MainPage.DisplayAlert("Local data unavailable","Your local data couldn't be loaded. Restart the app before editing it.","OK");}
         finally{AccountSession.ClearOldPassword();InitialAccountReady=true;}
+#if IOS_EXTENSIONS
+        _=Platforms.iOS.ExtensionNavigation.ReviewInbox();
+#endif
         // Firebase's native SDK restores its own session; passwords are never stored/replayed by Mealsy.
         if(AccountSession.UserId!=null){await HouseholdWarmup.Start();await AccountSession.SyncSafely();}
     }
-    protected override void OnResume(){base.OnResume();IsForeground=true;_=HouseholdWarmup.Start();}
+    protected override void OnResume(){base.OnResume();IsForeground=true;_=HouseholdWarmup.Start();
+#if IOS_EXTENSIONS
+        _=Platforms.iOS.ExtensionNavigation.ReviewInbox();
+#endif
+    }
     protected override void OnSleep(){IsForeground=false;base.OnSleep();}
 }

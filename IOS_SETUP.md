@@ -1,5 +1,23 @@
 # Mealsy iOS client branch
 
+## Native extensions follow-up — 21 October 2026
+
+WidgetKit and browser share-extension **source is now implemented** on this branch.
+See [native/ios/README.md](native/ios/README.md) for behaviour, signing and testing.
+The build helper includes them by default after the toolchain preflight passes;
+`IOS_INCLUDE_EXTENSIONS=0` explicitly omits them and hides their Settings entries.
+The native medium widget opens app quick-add/list/selection; it does not host an
+editable field. Browser sharing saves a local App Group link inbox for explicit
+review on startup/resume or from Settings; it never auto-imports or fetches.
+
+Register the additional `.share` and `.widget` App IDs. Enable the shared App
+Group on the host and share extension, install all three profiles, and complete
+the native checklist in that README before claiming they work on an iPhone.
+The release/toolchain blockers below remain. Swift compilation, signed embedding,
+App Group storage and iOS runtime are **not verified in this Linux environment**.
+Earlier mentions below of missing native extensions describe the prior baseline
+and are superseded by this source implementation, not by a verified native build.
+
 ## Latest handoff — 21 October 2026
 
 Use **`codex/ios-client-support`** for the iOS handoff. It now merges the Android
@@ -22,9 +40,10 @@ branch stays separate; iOS-specific follow-up work is committed here.
   compact-preview/restore callbacks and reject a drag if its account/list changes.
   Android's custom floating preview and continuous edge scrolling are Android-only;
   equivalent iOS animation/autoscroll is not implemented or verified.
-- Browser Share to Mealsy and the home-screen quick-add widget remain Android-only.
-  iOS uses link paste in the importer; no iOS share extension or WidgetKit target
-  is supplied. Social entry points remain hidden on both platforms.
+- Native iOS WidgetKit quick-add links and an App Group browser-link inbox now
+  have source in native/ios; the Mac helper bundles both extensions by default.
+  Native build/signing/device validation remains required. Social entry points
+  remain hidden on both platforms.
 
 ### Mac hookup and deployment entry point
 
@@ -101,8 +120,8 @@ App Store release configuration.
    two-account shared shopping, shared dinner editing/conflicts, offline drafts,
    photos, safe areas, iPad layout and invitation links. No signing keys belong in Git.
 5. Add Apple transaction verification and StoreKit purchases/restoration before
-   advertising iOS Premium purchases. APNs, native share extensions and WidgetKit
-   remain separate work. This first iPhone test milestone doesn't depend on them.
+   advertising iOS Premium purchases. APNs remains separate work. Native widget/share source is now supplied;
+   finish its signing and device checks using native/ios/README.md. This first iPhone test milestone doesn't depend on them.
 
 On the updated Mac, run `python3 scripts/ios-preflight.py` and
 `python3 scripts/check-ios-config.py` from the repository. The preflight is read-only
@@ -139,8 +158,8 @@ purchases have been implemented.
 - `mealsy://join?code=…` and `mealsy://welcome` are registered and routed through
   the AppDelegate to Get started, including app startup. Invitation validation,
   retained codes and confirmation use the shared code. This is a custom scheme,
-  not verified universal links or deferred installation attribution. No iOS
-  share extension is included; paste website links in the in-app import screen.
+  not verified universal links or deferred installation attribution. The new native share extension saves browser URL attachments for review
+  through the App Group inbox; in-app link paste remains available.
 - Pages using the shared theme helper enable iOS safe areas. Existing iOS photo
   resizing and permission text remain in place. The optional banner is a renderable
   empty ContentView on iOS; no iOS ad request or unsupported native banner is made.
@@ -149,8 +168,8 @@ purchases have been implemented.
   Existing covered household members and administrator grants use that status.
   Basic recipes, shopping, planner, social activity and administration use the
   shared client and current backend. These paths still require device checks.
-- Android widget menus are hidden on iOS and direct widget-help navigation gives
-  a shopping shortcut. The Activity inbox remains available; iOS background phone
+- iOS widget/inbox Settings entries are enabled only when the native extensions
+  are explicitly included in the build. The widget opens the shared quick-add UI. The Activity inbox remains available; iOS background phone
   alerts and promotional-credit purchases are explicitly unavailable.
 - An app privacy manifest declares the app-specific Preferences and file-timestamp
   required-reason APIs. This is not a complete privacy disclosure or an audit of
@@ -210,8 +229,9 @@ in app resources.
    identifiers, applicable consent/ATT handling, and privacy manifests before
    enabling ads. Do not use Android IDs or request tracking permission without an
    implemented need. This branch serves no iOS ads.
-4. **Widgets/sharing:** WidgetKit and an iOS share extension are separate native
-   targets with app-group/signing requirements. Neither is implemented here.
+4. **Widgets/sharing:** native targets and app bridges are supplied in native/ios.
+   Configure their App IDs/App Group/signing and complete Mac/device validation
+   before distributing; source checks cannot verify signed extension behaviour.
 5. **Distribution:** create the App Store Connect app, configure TestFlight testers,
    privacy/support/account-deletion disclosures and a supported release toolchain.
    The existing public invitation landing page currently advertises Android only;

@@ -41,6 +41,9 @@ public class SettingsPage : ContentPage
         recipes.Add(Choice("Default recipe order", SettingsOptions.Sorts, AppSettings.Current.RecipeSort, value => AppSettings.Current with { RecipeSort = value }));
         recipes.Add(Toggle("Keep screen awake while cooking", "Starts enabled when you open a recipe. Stops when you leave it; you can switch it off inside the recipe.", AppSettings.Current.KeepAwake, value => AppSettings.Current with { KeepAwake = value }));
         body.Add(ShoppingUi.Card(recipes));
+#if IOS_EXTENSIONS
+        body.Add(ShoppingUi.Button("Review shared recipe links",()=>Platforms.iOS.ExtensionNavigation.ReviewInbox(true),true));
+#endif
         if(ClientPlatform.HomeScreenWidgetAvailable)body.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
         body.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
         body.Add(ShoppingUi.Button("Premium plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));

@@ -383,3 +383,7 @@ credentials.json
 *.p8
 *.ipa
 *.xcarchive/
+
+# Generated native iOS extension projects and build output
+native/ios/build/
+native/ios/*.xcodeproj/

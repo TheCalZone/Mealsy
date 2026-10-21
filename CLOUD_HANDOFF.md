@@ -454,3 +454,16 @@ signed archive build; it refuses the current legacy toolchain. No native iOS
 build, deployment, StoreKit, ads, APNs, WidgetKit or share extension is claimed.
 Native MAUI section dragging now uses the compact-preview lifecycle and checks
 the account/list context. Android custom preview/autoscroll stays Android-only.
+
+
+## iOS WidgetKit and Share source — 21 October 2026
+
+The iOS branch now contains `native/ios` Swift targets, XcodeGen configuration,
+MAUI AdditionalAppExtensions embedding, opt-in `IOS_EXTENSIONS` capabilities,
+App Group link inbox review, and widget deep-link routing to existing quick add.
+The Mac build helper builds/bundles both targets by default after its toolchain
+checks pass. See native/ios/README.md for exact Apple App IDs/group/profiles.
+No Firebase credentials/data are exported to extensions; sharing makes no recipe
+request until explicit import. Widget opens the main app; it does not accept
+inline text. No backend deployment required. Native build/signing/phone tests
+and the existing supported-toolchain migration remain mandatory.

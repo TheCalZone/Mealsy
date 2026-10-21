@@ -9,6 +9,7 @@ if [[ "$(uname -s)" != Darwin ]]; then
     exit 2
 fi
 python3 scripts/check-ios-config.py
+python3 scripts/check-ios-extensions.py
 # Intentionally refuses an unsupported release baseline. Fix the migration;
 # do not bypass this check and mistake a legacy archive for store readiness.
 python3 scripts/ios-preflight.py
@@ -25,13 +26,21 @@ args=("$project" -f "$ios_target" "-p:TargetFrameworks=$ios_target")
 if [[ "$mode" == simulator ]]; then
     runtime=iossimulator-x64
     if [[ "$(uname -m)" == arm64 ]]; then runtime=iossimulator-arm64; fi
+    if [[ "${IOS_INCLUDE_EXTENSIONS:-1}" == 1 ]]; then
+        bash scripts/build-ios-extensions.sh simulator Debug
+        args+=(-p:EnableIosExtensions=true "-p:IosExtensionsDirectory=$PWD/native/ios/build/Build/Products/Debug-iphonesimulator")
+    fi
     dotnet build "${args[@]}" -c Debug -r "$runtime" -p:EnableCodeSigning=false
 else
     : "${IOS_SIGNING_IDENTITY:?Set IOS_SIGNING_IDENTITY to your Apple Distribution certificate name}"
     : "${IOS_PROVISIONING_PROFILE:?Set IOS_PROVISIONING_PROFILE to your installed distribution profile name}"
     : "${IOS_BUILD_NUMBER:?Set IOS_BUILD_NUMBER to a new App Store Connect build number}"
     [[ "$IOS_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] || { echo 'IOS_BUILD_NUMBER must be a positive integer.' >&2; exit 2; }
+    if [[ "${IOS_INCLUDE_EXTENSIONS:-1}" == 1 ]]; then
+        bash scripts/build-ios-extensions.sh device Release
+        args+=(-p:EnableIosExtensions=true "-p:IosExtensionsDirectory=$PWD/native/ios/build/Build/Products/Release-iphoneos")
+    fi
     dotnet publish "${args[@]}" -c Release -r ios-arm64 -p:ArchiveOnBuild=true -p:BuildIpa=true \
         "-p:CodesignKey=$IOS_SIGNING_IDENTITY" "-p:CodesignProvision=$IOS_PROVISIONING_PROFILE" \
-        "-p:ApplicationVersion=$IOS_BUILD_NUMBER"
+        "-p:ApplicationVersion=$IOS_BUILD_NUMBER" "-p:ApplicationDisplayVersion=${IOS_APP_VERSION:-1.0}"
 fi

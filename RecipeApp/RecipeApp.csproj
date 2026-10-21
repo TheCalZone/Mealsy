@@ -256,4 +256,25 @@
     <Target Name="ValidateIosFirebaseConfiguration" BeforeTargets="PrepareForBuild" Condition="'$(TargetFramework)' == 'net8.0-ios'">
         <Error Condition="!Exists('Platforms/iOS/GoogleService-Info.plist')" Text="Add the Firebase iOS app configuration to Platforms/iOS/GoogleService-Info.plist before building. See IOS_SETUP.md." />
     </Target>
+
+    <!-- Swift extensions are built on the Mac before bundling. Opt in explicitly
+         so legacy development builds do not claim to include missing extensions. -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableIosExtensions)' == 'true'">
+        <DefineConstants>$(DefineConstants);IOS_EXTENSIONS</DefineConstants>
+        <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableIosExtensions)' == 'true'">
+        <AdditionalAppExtensions Include="$(IosExtensionsDirectory)">
+            <Name>MealsyShare</Name>
+            <CodesignEntitlements>$(MSBuildProjectDirectory)/../native/ios/MealsyShare/MealsyShare.entitlements</CodesignEntitlements>
+        </AdditionalAppExtensions>
+        <AdditionalAppExtensions Include="$(IosExtensionsDirectory)">
+            <Name>MealsyWidget</Name>
+            <CodesignWarnIfNoEntitlements>false</CodesignWarnIfNoEntitlements>
+        </AdditionalAppExtensions>
+    </ItemGroup>
+    <Target Name="ValidateIosExtensions" BeforeTargets="PrepareForBuild" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableIosExtensions)' == 'true'">
+        <Error Condition="!Exists('$(IosExtensionsDirectory)/MealsyShare.appex/Info.plist') or !Exists('$(IosExtensionsDirectory)/MealsyWidget.appex/Info.plist')" Text="Build Swift extensions first and pass IosExtensionsDirectory. See native/ios/README.md." />
+    </Target>
+
 </Project>
