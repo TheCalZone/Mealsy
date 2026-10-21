@@ -23,10 +23,41 @@ public static class HouseholdService
     private static readonly HttpClient client = new() { Timeout = TimeSpan.FromSeconds(40) };
     private static readonly JsonSerializerOptions json = new() { PropertyNameCaseInsensitive = true };
     public static string UserId => AccountSession.UserId;
-    public static Task<T> CallAsync<T>(object data) => CallEndpointAsync<T>(Endpoint, data);
-    public static async Task<T> CallEndpointAsync<T>(string endpoint, object data, bool forceRefresh = false)
+    internal static readonly CloudReadCache Reads=new();
+    public static Task<T> CallAsync<T>(object data,bool bypassReadCache=false) => CallEndpointAsync<T>(Endpoint,data,bypassReadCache:bypassReadCache);
+    public static async Task<T> CallEndpointAsync<T>(string endpoint,object data,bool forceRefresh=false,bool bypassReadCache=false)
     {
-        var service=endpoint==Endpoint?"household":endpoint==FoodFeedService.Endpoint?"foodFeed":endpoint==AdminService.Endpoint?"administration":endpoint==BusinessService.Endpoint?"business":endpoint==RecipeApp.Views.CampaignWalletPage.Endpoint?"promotions":endpoint.EndsWith("/notifications",StringComparison.Ordinal)?"notifications":"billing";
+        var uid=UserId;var request=JsonSerializer.SerializeToElement(data);
+        var key=HouseholdReadPolicy.Key(uid,endpoint,request);
+        if(key!=null)
+        {
+            for(var attempt=0;;attempt++)
+            {
+                try{var value=await Reads.Read(key,async()=>{AccountSession.Check(uid);var fetched=await CallEndpointUncachedAsync<T>(endpoint,data,forceRefresh);AccountSession.Check(uid);return fetched;},HouseholdReadPolicy.MaxAge,bypassReadCache);AccountSession.Check(uid);return value;}
+                catch(CloudReadInvalidatedException) when(attempt==0&&UserId==uid){ }
+            }
+        }
+        var action=request.TryGetProperty("action",out var a)?a.GetString():null;
+        string Text(string name)=>request.TryGetProperty(name,out var value)&&value.ValueKind==JsonValueKind.String?value.GetString():null;
+        var listKey=endpoint==Endpoint&&action=="patch"?HouseholdReadPolicy.List(uid,Text("scope")=="household"?Text("householdId"):null):null;
+        var weekKey=endpoint==HouseholdMealsService.Endpoint&&action is "upsertMeal" or "deleteMeal"?HouseholdReadPolicy.Week(uid,Text("householdId"),Text("weekStart")):null;
+        var membership=endpoint==Endpoint&&action is "create" or "join" or "leave" or "remove" or "delete";
+        if(listKey!=null)Reads.Invalidate(listKey);if(weekKey!=null)Reads.Invalidate(weekKey);if(membership)Reads.Clear();
+        var result=await CallEndpointUncachedAsync<T>(endpoint,data,forceRefresh);
+        if(listKey!=null){Reads.Invalidate(listKey);Reads.Store(listKey,result,HouseholdReadPolicy.MaxAge);}
+        if(weekKey!=null)Reads.Invalidate(weekKey);
+        if(membership)Reads.Clear();
+        if(membership||listKey!=null||weekKey!=null)HouseholdWarmup.Invalidate(uid,membership,weekKey!=null);
+        if(listKey!=null&&Text("scope")=="household")
+        {
+            var payload=JsonSerializer.SerializeToElement(result);
+            if(payload.TryGetProperty("Items",out var items)||payload.TryGetProperty("items",out items))HouseholdWarmup.RecordList(uid,Text("householdId"),items.GetRawText());
+        }
+        return result;
+    }
+    private static async Task<T> CallEndpointUncachedAsync<T>(string endpoint, object data, bool forceRefresh = false)
+    {
+        var service=endpoint==HouseholdMealsService.Endpoint?"householdMeals":endpoint==Endpoint?"household":endpoint==FoodFeedService.Endpoint?"foodFeed":endpoint==AdminService.Endpoint?"administration":endpoint==BusinessService.Endpoint?"business":endpoint==RecipeApp.Views.CampaignWalletPage.Endpoint?"promotions":endpoint.EndsWith("/notifications",StringComparison.Ordinal)?"notifications":"billing";
         var action=JsonSerializer.SerializeToElement(data).TryGetProperty("action",out var property)?property.GetString():null;
         var operation=DiagnosticPolicy.Operation(service,action);
         try {
@@ -62,6 +93,7 @@ public static class HouseholdService
         }
         return body.RootElement.GetProperty("result").Deserialize<T>(json);
         } catch(HouseholdException error){
+            if(error.Code is "UNAUTHENTICATED" or "PERMISSION_DENIED" or "FAILED_PRECONDITION"){Reads.Clear();HouseholdWarmup.Invalidate(UserId,true,false);}
             if(DiagnosticPolicy.Operational(error.Code) && error.Data["Mealsy.DiagnosticReference"]==null){
                 var reference=AppDiagnostics.Report(error,operation,error.Code,error.Reason??"NONE",error.Reference);
                 throw new HouseholdException(error.Code,error.Message+"\nReference: "+reference,error.Reason,reference);
@@ -75,5 +107,5 @@ public static class HouseholdService
             failure.Data["Mealsy.DiagnosticReference"]=reference;throw failure;
         }
     }
-    public static Task<HouseholdInfo> StatusAsync() => CallAsync<HouseholdInfo>(new { action = "status" });
+    public static Task<HouseholdInfo> StatusAsync(bool force=false) => CallAsync<HouseholdInfo>(new { action = "status" },force);
 }

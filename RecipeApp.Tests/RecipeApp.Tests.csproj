@@ -6,6 +6,10 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../RecipeApp/Services/AppLocalization.cs" Link="AppLocalization.cs" />
+    <EmbeddedResource Include="../RecipeApp/Resources/Localization/*.resx" LogicalName="RecipeApp.Resources.Localization.%(Filename).resources" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
@@ -20,6 +24,13 @@
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../RecipeApp/Services/CloudReadCache.cs" Link="CloudReadCache.cs" />
+    <Compile Include="../RecipeApp/Services/ProductFeatures.cs" Link="ProductFeatures.cs" />
+    <Compile Include="../RecipeApp/Services/ContentLinks.cs" Link="ContentLinks.cs" />
+    <Compile Include="../RecipeApp/Services/CreatorPlanSelection.cs" Link="CreatorPlanSelection.cs" />
+    <Compile Include="../RecipeApp/Models/SocialModels.cs" Link="SocialModels.cs" />
+    <Compile Include="../RecipeApp/Services/SocialPolicy.cs" Link="SocialPolicy.cs" />
+    <Compile Include="../RecipeApp/Services/LoadGeneration.cs" Link="LoadGeneration.cs" />
     <Compile Include="../RecipeApp/Services/PastedListText.cs" Link="PastedListText.cs" />
     <Compile Include="../RecipeApp/Services/InvitationLinks.cs" Link="InvitationLinks.cs" />
     <Compile Include="../RecipeApp/Services/PlanStatus.cs" Link="PlanStatus.cs" />
@@ -27,10 +38,12 @@
     <Compile Include="../RecipeApp/Services/SubscriptionPricing.cs" Link="SubscriptionPricing.cs" />
     <Compile Include="../RecipeApp/Services/SettingsOptions.cs" Link="SettingsOptions.cs" />
     <Compile Include="../RecipeApp/Services/AccountInput.cs" Link="AccountInput.cs" />
+    <Compile Include="../RecipeApp/Services/LeftoverRecipes.cs" Link="LeftoverRecipes.cs" />
     <Compile Include="../RecipeApp/Services/RecipeBrowser.cs" Link="RecipeBrowser.cs" />
     <Compile Include="../RecipeApp/Services/NavigationCatalog.cs" Link="NavigationCatalog.cs" />
     <None Include="../RecipeApp/AppShell.xaml" Link="Navigation/AppShell.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../RecipeApp/Services/RecipeDraft.cs" Link="RecipeDraft.cs" />
+    <Compile Include="../RecipeApp/Services/SharedRecipeLink.cs" Link="SharedRecipeLink.cs" />
     <Compile Include="../RecipeApp/Services/WebsiteRecipe.cs" Link="WebsiteRecipe.cs" />
     <Compile Include="../RecipeApp/Services/RecipeDraftStore.cs" Link="RecipeDraftStore.cs" />
     <Compile Include="../RecipeApp/Services/RecipePresentation.cs" Link="RecipePresentation.cs" />
@@ -42,6 +55,14 @@
     <Compile Include="../RecipeApp/Services/CupboardRules.cs" Link="CupboardRules.cs" />
     <Compile Include="../RecipeApp/Services/DiagnosticPolicy.cs" Link="DiagnosticPolicy.cs" />
     <Compile Include="../RecipeApp/Services/AppDiagnostics.cs" Link="AppDiagnostics.cs" />
+    <Compile Include="../RecipeApp/Services/StepIngredients.cs" Link="StepIngredients.cs" />
+    <Compile Include="../RecipeApp/Services/IngredientSuggestions.cs" Link="IngredientSuggestions.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingCategories.cs" Link="ShoppingCategories.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingDragScroll.cs" Link="ShoppingDragScroll.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingDragLayout.cs" Link="ShoppingDragLayout.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingItemOrder.cs" Link="ShoppingItemOrder.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingItemInput.cs" Link="ShoppingItemInput.cs" />
+    <Compile Include="../RecipeApp/Services/ShoppingSectionOrder.cs" Link="ShoppingSectionOrder.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />

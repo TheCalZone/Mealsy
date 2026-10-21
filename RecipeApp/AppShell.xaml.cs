@@ -6,7 +6,7 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
-        Navigating += (_, _) => AppNavigation.DismissKeyboard();
+        Navigating += (_, e) => { AppNavigation.DismissKeyboard();if(!ProductFeatures.RouteAvailable(e.Target.Location.OriginalString)&&e.CanCancel)e.Cancel(); };
         // Tab roots are declared only in XAML. Registering them again creates ambiguous routes.
         var pages=new Dictionary<string,Type>{
             [nameof(SettingsPage)]=typeof(SettingsPage),
@@ -20,7 +20,7 @@ public partial class AppShell : Shell
             [nameof(MealPlannerPage)]=typeof(MealPlannerPage),
             [nameof(EditExtraPage)]=typeof(EditExtraPage),
             [nameof(EditdetailsPage)]=typeof(EditdetailsPage),
-            [nameof(ChatPage)]=typeof(ChatPage),
+            [nameof(LeftoverRecipesPage)]=typeof(LeftoverRecipesPage),
             [nameof(FoodFeedPage)]=typeof(FoodFeedPage),
         };
         foreach(var route in NavigationCatalog.Details)Routing.RegisterRoute(route,pages[route]);

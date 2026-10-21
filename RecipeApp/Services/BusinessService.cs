@@ -34,30 +34,29 @@ public static class BusinessService
     public static readonly JsonSerializerOptions Json=new(){PropertyNamingPolicy=JsonNamingPolicy.CamelCase,PropertyNameCaseInsensitive=true};
 }
 
-public class BusinessPlanChoice
-{
-    public FoodPost Post{get;set;}public bool Selected{get;set;}=true;public int Day{get;set;}public int Slot{get;set;}public string Servings{get;set;}
-}
 public static class BusinessPlanImport
 {
     public static List<BusinessPlanChoice> Validate(IEnumerable<BusinessPlanChoice> choices)
     {
-        var selected=choices.Where(c=>c.Selected).ToList();if(selected.Count==0)throw new InvalidOperationException("Choose at least one meal.");
-        if(selected.Any(c=>c.Post?.Recipe==null||c.Day<0||c.Day>6||c.Slot<0||c.Slot>2||!int.TryParse(c.Servings,out var n)||n<1||n>1000))throw new InvalidOperationException("Choose a recipe, day, meal slot and 1–1,000 servings for every meal.");
-        if(selected.Select(c=>$"{c.Day}:{c.Slot}:{c.Post.Id}").Distinct().Count()!=selected.Count)throw new InvalidOperationException("Choose each recipe only once per meal slot.");return selected;
+        return CreatorPlanSelection.Validate(choices);
     }
     public static async Task Apply(IEnumerable<BusinessPlanChoice> choices,string account)
     {
         var selected=Validate(choices);AccountSession.Check(account);await RecipeService.CreateMealPlan(account);var plan=await RecipeService.GetMealPlan(account);AccountSession.Check(account);
-        var available=await RecipeService.GetAllRecipes();var imported=new Dictionary<string,Recipe>();
+        var imported=await SaveRecipes(selected,account);
+        AccountSession.Check(account);var days=plan.Days.Select(d=>MealPlanning.Copy(d)).ToList();
+        foreach(var choice in selected){var day=days.Single(d=>d.MealDayIndex==choice.Day);var local=imported[choice.Post.Id];var ids=MealPlanning.Ids(day,choice.Slot);if(!ids.Contains(local.Id))ids.Add(local.Id);MealPlanning.SetServings(day,choice.Slot,local.Id,int.Parse(choice.Servings));MealPlanning.Serialize(day);}
+        await RecipeService.SaveMealPlanDays(days,plan.Id);AccountSession.Check(account);if(account!=null)_=AccountSession.SyncSafely();
+    }
+    public static async Task<Dictionary<string,Recipe>> SaveRecipes(IEnumerable<BusinessPlanChoice> choices,string account)
+    {
+        var selected=Validate(choices);AccountSession.Check(account);var available=await RecipeService.GetAllRecipes();AccountSession.Check(account);var imported=new Dictionary<string,Recipe>();
         foreach(var choice in selected){
             AccountSession.Check(account);var key="business-copy-"+choice.Post.Id;
             var local=available.FirstOrDefault(r=>r.FirebaseUID==account&&r.CloudKey==key);
             if(local==null){local=choice.Post.PrivateCopy(account);local.CloudKey=key;await RecipeService.AddRecipe(local);available.Add(local);}
             imported[choice.Post.Id]=local;
         }
-        AccountSession.Check(account);var days=plan.Days.Select(d=>MealPlanning.Copy(d)).ToList();
-        foreach(var choice in selected){var day=days.Single(d=>d.MealDayIndex==choice.Day);var local=imported[choice.Post.Id];var ids=MealPlanning.Ids(day,choice.Slot);if(!ids.Contains(local.Id))ids.Add(local.Id);MealPlanning.SetServings(day,choice.Slot,local.Id,int.Parse(choice.Servings));MealPlanning.Serialize(day);}
-        await RecipeService.SaveMealPlanDays(days,plan.Id);AccountSession.Check(account);if(account!=null)_=AccountSession.SyncSafely();
+        AccountSession.Check(account);if(account!=null)_=AccountSession.SyncSafely();return imported;
     }
 }

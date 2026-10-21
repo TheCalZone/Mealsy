@@ -2,6 +2,7 @@
 <Shell
     x:Class="RecipeApp.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:loc="clr-namespace:RecipeApp.Views"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:RecipeApp.Views"
     xmlns:local1="clr-namespace:RecipeApp.Controls"
@@ -81,28 +82,28 @@
 
     <TabBar>
         <ShellContent
-            Title="Home"
+            Title="{loc:Translate 'Home'}"
             ContentTemplate="{DataTemplate local:Homepage}"
             Icon="icon_feed.png"
             Route="Homepage" />
         <ShellContent
-            Title="Recipes"
+            Title="{loc:Translate 'Recipes'}"
             ContentTemplate="{DataTemplate local:RecipePage}"
             Icon="icon_menu.png"
             Route="RecipePage" />
         <ShellContent
-            Title="Shopping"
+            Title="{loc:Translate 'Shopping'}"
             ContentTemplate="{DataTemplate local:ShoppingListPage}"
             Icon="add_to_shopping.png"
             Route="ShoppingListPage" />
-        <!--<ShellContent Title="Shopping" Icon="icon_list.png" Route="ShoppingListPage" ContentTemplate="{DataTemplate local:ShoppingListPage}" />-->
+        <!--<ShellContent Title="{loc:Translate 'Shopping'}" Icon="icon_list.png" Route="ShoppingListPage" ContentTemplate="{DataTemplate local:ShoppingListPage}" />-->
         <ShellContent
-            Title="Meals"
+            Title="{loc:Translate 'Meals'}"
             ContentTemplate="{DataTemplate local:MealPlanOverviewPage}"
             Icon="restaurant.png"
             Route="MealPlanOverviewPage" />
         <ShellContent
-            Title="Account"
+            Title="{loc:Translate 'Account'}"
             ContentTemplate="{DataTemplate local:AccountPage}"
             Route="AccountPage" />
     </TabBar>

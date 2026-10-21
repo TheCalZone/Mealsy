@@ -21,12 +21,12 @@ public class CupboardIngredientsPage : ContentPage
         body.Add(ShoppingUi.Text("This recognition list is saved on this device, separately for each account and device mode. Your existing Essentials checklist also supplies cupboard suggestions.",13));
         body.Add(name);body.Add(ShoppingUi.Button("Add cupboard ingredient",async()=>{
             Check();var values=CupboardRules.Validate(rules.Append(name.Text??""));
-            if(values.Count==rules.Count){await DisplayAlert("Already recognised","That ingredient is already on your recognition list.","OK");return;}
+            if(values.Count==rules.Count){await DisplayAlert("Already recognised","That ingredient is already on your recognition list.",AppLocalization.Text("OK"));return;}
             CupboardStore.Save(account,values);rules=values;name.Text="";changed?.Invoke();Render();
         }));
         body.Add(search);search.TextChanged+=(_,_)=>Render();body.Add(status);body.Add(rows);
         body.Add(ShoppingUi.Button("Restore suggested ingredients",async()=>{
-            Check();if(!await DisplayAlert("Restore suggestions?","Replace this recognition list with Mealsy's suggested herbs, spices, oils and staples? Your recipes and Essentials checklist are kept.","Restore","Cancel"))return;
+            Check();if(!await DisplayAlert("Restore suggestions?","Replace this recognition list with Mealsy's suggested herbs, spices, oils and staples? Your recipes and Essentials checklist are kept.","Restore",AppLocalization.Text("Cancel")))return;
             Check();CupboardStore.Reset(account);rules=CupboardStore.Load(account);changed?.Invoke();Render();
         },true));
         Content=new ScrollView{Content=body};
@@ -43,7 +43,7 @@ public class CupboardIngredientsPage : ContentPage
         rows.Clear();status.Text=$"{rules.Count} recognised ingredients";
         foreach(var rule in rules.Where(r=>r.Contains(search.Text??"",StringComparison.OrdinalIgnoreCase)).OrderBy(r=>r)) {
             var grid=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Auto)},ColumnSpacing=8};
-            grid.Add(ShoppingUi.Text(rule,16),0);grid.Add(ShoppingUi.Button("Remove",()=>{
+            grid.Add(ShoppingUi.Text(rule,16),0);grid.Add(ShoppingUi.Button(AppLocalization.Text("Remove"),()=>{
                 Check();var values=rules.Where(r=>r!=rule).ToList();CupboardStore.Save(account,values);rules=values;changed?.Invoke();Render();return Task.CompletedTask;
             },true),1);rows.Add(grid);
         }

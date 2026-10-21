@@ -1,5 +1,60 @@
 # Mealsy iOS client branch
 
+## Current assessment — 18 October 2026
+
+The preparation commit has now been integrated into the latest Android branch,
+including the newer shopping drag/autocomplete and account loading fixes. Social
+and creator features remain paused on iOS too. Shared household shopping and the
+new authenticated household meal-plan backend use the same accounts on Android
+and iPhone; no second subscription per family member is required.
+
+**The next milestone is a signed iPhone test build of recipes, shopping and shared
+household plans, not enabling social, ads or Apple purchases.** This Windows host
+has no connected Mac, XcodeBuildMCP or iPhone simulator. No IPA/native iOS success
+is claimed. The existing preparation is a development baseline, not a current
+App Store release configuration.
+
+### Release blockers, in order
+
+1. Migrate the app to a supported .NET/MAUI 10 toolchain. .NET/MAUI 8 and the old
+   Firebase wrappers/native bindings are the main blockers. Upgrade related UI
+   packages together and remove the obsolete Xamarin CommunityToolkit compatibility
+   package if its remaining use can be replaced. Keep Android regression tests
+   passing throughout; don't merely rename the target framework and declare success.
+2. Migrate Firebase Core/Auth/Firestore/Crashlytics together to a compatible current
+   binding family. The maintainer's current Plugin.Firebase guidance targets .NET 10
+   and uses AdamE iOS bindings. Avoid mixing old Xamarin.Firebase.iOS and AdamE
+   bindings for the same native frameworks. Check actual APIs and native linking
+   on the Mac before choosing/pinning the final dependency set.
+3. Choose a matching Xcode/.NET iOS workload, rather than updating Xcode independently.
+   Apple uploads require Xcode 26+ and iOS SDK 26+. The .NET iOS release notes also
+   warn that apps built using Xcode 27 must adopt UIScene lifecycle support or crash
+   at launch. A current compatible MAUI workload must supply that lifecycle support;
+   the retained MAUI 8 AppDelegate is not evidence of compatibility.
+4. Build/run first on Simulator, then sign an `ios-arm64` build using your Apple
+   development team and exact bundle ID. Verify Firebase startup, sign-in,
+   two-account shared shopping, shared dinner editing/conflicts, offline drafts,
+   photos, safe areas, iPad layout and invitation links. No signing keys belong in Git.
+5. Add Apple transaction verification and StoreKit purchases/restoration before
+   advertising iOS Premium purchases. APNs, native share extensions and WidgetKit
+   remain separate work. This first iPhone test milestone doesn't depend on them.
+
+On the updated Mac, run `python3 scripts/ios-preflight.py` and
+`python3 scripts/check-ios-config.py` from the repository. The preflight is read-only
+and reports the migration blocker until the actual target/dependencies are upgraded.
+Return its output for the next native build step. The older commands below describe
+the legacy development target; they do not meet today's App Store release needs.
+
+Primary references checked on 18 October 2026:
+
+- [Apple upload requirements](https://developer.apple.com/news/upcoming-requirements/)
+- [MAUI support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/maui)
+- [.NET iOS/Xcode release compatibility and UIScene notes](https://github.com/dotnet/macios/releases)
+- [Xcode workload matching](https://learn.microsoft.com/en-gb/dotnet/ios/troubleshooting/xcode-requirement)
+- [Firebase wrapper maintainer guidance](https://github.com/TobiasBuchholz/Plugin.Firebase)
+
+The following section records what the original preparation branch supplied.
+
 Branch: **codex/ios-client-support**, based on the Android/client work through
 `909d8df`. Backend source, Firestore rules, Functions, production accounts and
 commercial flags are unchanged. Do not merge this branch assuming App Store
@@ -54,7 +109,7 @@ requirements.
 On a compatible Mac, from the repository root:
 
 ```sh
-git switch codex/ios-client-support
+git switch codex/android-runtime-fixes
 python3 scripts/check-ios-config.py
 dotnet workload restore RecipeApp/RecipeApp.csproj -p:TargetFrameworks=net8.0-ios
 dotnet build RecipeApp/RecipeApp.csproj -f net8.0-ios -p:TargetFrameworks=net8.0-ios -c Debug -r iossimulator-arm64 -p:EnableCodeSigning=false

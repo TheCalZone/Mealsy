@@ -1,0 +1,795 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="Home" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="Recipes" xml:space="preserve">
+    <value>Recetas</value>
+  </data>
+  <data name="Shopping" xml:space="preserve">
+    <value>Compras</value>
+  </data>
+  <data name="Meals" xml:space="preserve">
+    <value>Comidas</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>Cuenta</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="Follow device language" xml:space="preserve">
+    <value>Usar el idioma del dispositivo</value>
+  </data>
+  <data name="Restart Mealsy to apply a language change. Your recipes and lists are kept." xml:space="preserve">
+    <value>Reinicia Mealsy para aplicar el cambio de idioma. Tus recetas y listas se conservan.</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Atrás</value>
+  </data>
+  <data name="Continue" xml:space="preserve">
+    <value>Continuar</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>Aceptar</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="Keep" xml:space="preserve">
+    <value>Conservar</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Quitar</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Options" xml:space="preserve">
+    <value>Opciones</value>
+  </data>
+  <data name="⚙ Options" xml:space="preserve">
+    <value>⚙ Opciones</value>
+  </data>
+  <data name="Your account" xml:space="preserve">
+    <value>Tu cuenta</value>
+  </data>
+  <data name="Sign in" xml:space="preserve">
+    <value>Iniciar sesión</value>
+  </data>
+  <data name="Sign out" xml:space="preserve">
+    <value>Cerrar sesión</value>
+  </data>
+  <data name="Email address" xml:space="preserve">
+    <value>Correo electrónico</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Contraseña</value>
+  </data>
+  <data name="Password · 8+ characters" xml:space="preserve">
+    <value>Contraseña · 8 caracteres o más</value>
+  </data>
+  <data name="Your password" xml:space="preserve">
+    <value>Tu contraseña</value>
+  </data>
+  <data name="Confirm password" xml:space="preserve">
+    <value>Confirmar contraseña</value>
+  </data>
+  <data name="Enter it again" xml:space="preserve">
+    <value>Escríbela de nuevo</value>
+  </data>
+  <data name="First name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="Last name" xml:space="preserve">
+    <value>Apellidos</value>
+  </data>
+  <data name="Last name · optional" xml:space="preserve">
+    <value>Apellidos · opcional</value>
+  </data>
+  <data name="What should we call you?" xml:space="preserve">
+    <value>¿Cómo te llamas?</value>
+  </data>
+  <data name="Show password" xml:space="preserve">
+    <value>Mostrar contraseña</value>
+  </data>
+  <data name="Create my account" xml:space="preserve">
+    <value>Crear mi cuenta</value>
+  </data>
+  <data name="Forgot your password?" xml:space="preserve">
+    <value>¿Olvidaste tu contraseña?</value>
+  </data>
+  <data name="Already have an account? Sign in" xml:space="preserve">
+    <value>¿Ya tienes cuenta? Inicia sesión</value>
+  </data>
+  <data name="New here? Create an account" xml:space="preserve">
+    <value>¿Eres nuevo? Crea una cuenta</value>
+  </data>
+  <data name="Continue with my device" xml:space="preserve">
+    <value>Continuar en este dispositivo</value>
+  </data>
+  <data name="Welcome back to your kitchen" xml:space="preserve">
+    <value>Bienvenido de nuevo a tu cocina</value>
+  </data>
+  <data name="A little less planning. A lot more good food." xml:space="preserve">
+    <value>Menos planificación. Mucha más buena comida.</value>
+  </data>
+  <data name="Create your own Mealsy account. Keep your recipes and personal shopping separate, and join a family when you're ready." xml:space="preserve">
+    <value>Crea tu cuenta de Mealsy. Conserva tus recetas y compras personales por separado y únete a un hogar cuando quieras.</value>
+  </data>
+  <data name="Sign in to sync your personal recipes and checklists, and share shopping with your household." xml:space="preserve">
+    <value>Inicia sesión para sincronizar tus recetas y listas y compartir las compras con tu hogar.</value>
+  </data>
+  <data name="Personal tools are free. Family sharing is optional and paid; creating an account does not start a subscription." xml:space="preserve">
+    <value>Las herramientas personales son gratuitas. Compartir con el hogar es opcional y de pago; crear una cuenta no inicia una suscripción.</value>
+  </data>
+  <data name="Creating your account…" xml:space="preserve">
+    <value>Creando tu cuenta…</value>
+  </data>
+  <data name="Signing in…" xml:space="preserve">
+    <value>Iniciando sesión…</value>
+  </data>
+  <data name="Opening your account…" xml:space="preserve">
+    <value>Abriendo tu cuenta…</value>
+  </data>
+  <data name="Sending reset instructions…" xml:space="preserve">
+    <value>Enviando instrucciones…</value>
+  </data>
+  <data name="Good food starts here" xml:space="preserve">
+    <value>La buena comida empieza aquí</value>
+  </data>
+  <data name="A calmer kitchen, one meal at a time." xml:space="preserve">
+    <value>Una cocina más tranquila, comida a comida.</value>
+  </data>
+  <data name="Your next shopping trip" xml:space="preserve">
+    <value>Tu próxima compra</value>
+  </data>
+  <data name="Open personal shopping list" xml:space="preserve">
+    <value>Abrir lista personal</value>
+  </data>
+  <data name="Quick add an item" xml:space="preserve">
+    <value>Añadir un artículo rápidamente</value>
+  </data>
+  <data name="+ New recipe" xml:space="preserve">
+    <value>+ Nueva receta</value>
+  </data>
+  <data name="+ Create recipe" xml:space="preserve">
+    <value>+ Crear receta</value>
+  </data>
+  <data name="Plan a shop" xml:space="preserve">
+    <value>Planificar una compra</value>
+  </data>
+  <data name="Recipe book" xml:space="preserve">
+    <value>Recetario</value>
+  </data>
+  <data name="Weekly meals" xml:space="preserve">
+    <value>Comidas semanales</value>
+  </data>
+  <data name="On the menu today" xml:space="preserve">
+    <value>El menú de hoy</value>
+  </data>
+  <data name="Plan your week" xml:space="preserve">
+    <value>Planifica tu semana</value>
+  </data>
+  <data name="Back to your favourites" xml:space="preserve">
+    <value>Tus favoritos</value>
+  </data>
+  <data name="Sign in or create an account" xml:space="preserve">
+    <value>Iniciar sesión o crear cuenta</value>
+  </data>
+  <data name="Your recipes" xml:space="preserve">
+    <value>Tus recetas</value>
+  </data>
+  <data name="Keep the meals you love" xml:space="preserve">
+    <value>Guarda tus comidas favoritas</value>
+  </data>
+  <data name="Import recipe link" xml:space="preserve">
+    <value>Importar enlace de receta</value>
+  </data>
+  <data name="Import a recipe link" xml:space="preserve">
+    <value>Importar una receta por enlace</value>
+  </data>
+  <data name="Search names, descriptions or tags" xml:space="preserve">
+    <value>Buscar nombres, descripciones o etiquetas</value>
+  </data>
+  <data name="Favourites only" xml:space="preserve">
+    <value>Solo favoritos</value>
+  </data>
+  <data name="Clear filters" xml:space="preserve">
+    <value>Borrar filtros</value>
+  </data>
+  <data name="Shopping list" xml:space="preserve">
+    <value>Lista de compras</value>
+  </data>
+  <data name="Personal list ▾" xml:space="preserve">
+    <value>Lista personal ▾</value>
+  </data>
+  <data name="What do you need?" xml:space="preserve">
+    <value>¿Qué necesitas?</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Categoría</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>Nota</value>
+  </data>
+  <data name="Item name" xml:space="preserve">
+    <value>Nombre del artículo</value>
+  </data>
+  <data name="Search your list" xml:space="preserve">
+    <value>Buscar en tu lista</value>
+  </data>
+  <data name="Hide collected" xml:space="preserve">
+    <value>Ocultar recogidos</value>
+  </data>
+  <data name="Show details" xml:space="preserve">
+    <value>Mostrar detalles</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>Deshacer</value>
+  </data>
+  <data name="Redo" xml:space="preserve">
+    <value>Rehacer</value>
+  </data>
+  <data name="Save changes" xml:space="preserve">
+    <value>Guardar cambios</value>
+  </data>
+  <data name="Save item" xml:space="preserve">
+    <value>Guardar artículo</value>
+  </data>
+  <data name="Clear list" xml:space="preserve">
+    <value>Vaciar lista</value>
+  </data>
+  <data name="Paste list" xml:space="preserve">
+    <value>Pegar lista</value>
+  </data>
+  <data name="Sync now" xml:space="preserve">
+    <value>Sincronizar ahora</value>
+  </data>
+  <data name="Household" xml:space="preserve">
+    <value>Hogar</value>
+  </data>
+  <data name="Exit shopping" xml:space="preserve">
+    <value>Salir de las compras</value>
+  </data>
+  <data name="Tools" xml:space="preserve">
+    <value>Herramientas</value>
+  </data>
+  <data name="Start shopping" xml:space="preserve">
+    <value>Empezar a comprar</value>
+  </data>
+  <data name="Ready for your next shop" xml:space="preserve">
+    <value>Todo listo para tu próxima compra</value>
+  </data>
+  <data name="1 item" xml:space="preserve">
+    <value>1 artículo</value>
+  </data>
+  <data name="{0} items" xml:space="preserve">
+    <value>{0} artículos</value>
+  </data>
+  <data name="1 item left" xml:space="preserve">
+    <value>Queda 1 artículo</value>
+  </data>
+  <data name="{0} items left" xml:space="preserve">
+    <value>Quedan {0} artículos</value>
+  </data>
+  <data name="{0} of {1} collected" xml:space="preserve">
+    <value>{0} de {1} recogidos</value>
+  </data>
+  <data name="A fresh start" xml:space="preserve">
+    <value>Un nuevo comienzo</value>
+  </data>
+  <data name="All done!" xml:space="preserve">
+    <value>¡Todo listo!</value>
+  </data>
+  <data name="No matching items" xml:space="preserve">
+    <value>No hay artículos coincidentes</value>
+  </data>
+  <data name="Changes save automatically" xml:space="preserve">
+    <value>Los cambios se guardan automáticamente</value>
+  </data>
+  <data name="Add your first item above, paste a list, or send ingredients from a recipe." xml:space="preserve">
+    <value>Añade tu primer artículo arriba, pega una lista o envía ingredientes de una receta.</value>
+  </data>
+  <data name="Snacks" xml:space="preserve">
+    <value>Aperitivos</value>
+  </data>
+  <data name="Essentials" xml:space="preserve">
+    <value>Básicos</value>
+  </data>
+  <data name="Meal planner" xml:space="preserve">
+    <value>Planificador de comidas</value>
+  </data>
+  <data name="Breakfast" xml:space="preserve">
+    <value>Desayuno</value>
+  </data>
+  <data name="Lunch" xml:space="preserve">
+    <value>Almuerzo</value>
+  </data>
+  <data name="Dinner" xml:space="preserve">
+    <value>Cena</value>
+  </data>
+  <data name="Save day" xml:space="preserve">
+    <value>Guardar día</value>
+  </data>
+  <data name="Cancel changes" xml:space="preserve">
+    <value>Cancelar cambios</value>
+  </data>
+  <data name="+ Choose recipes" xml:space="preserve">
+    <value>+ Elegir recetas</value>
+  </data>
+  <data name="+ Import recipe from link" xml:space="preserve">
+    <value>+ Importar receta por enlace</value>
+  </data>
+  <data name="+ Add a note" xml:space="preserve">
+    <value>+ Añadir nota</value>
+  </data>
+  <data name="Choose recipes" xml:space="preserve">
+    <value>Elegir recetas</value>
+  </data>
+  <data name="Use selected recipes" xml:space="preserve">
+    <value>Usar recetas elegidas</value>
+  </data>
+  <data name="Remove recipe" xml:space="preserve">
+    <value>Quitar receta</value>
+  </data>
+  <data name="Save recipe" xml:space="preserve">
+    <value>Guardar receta</value>
+  </data>
+  <data name="Preview recipe" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="Recipe name" xml:space="preserve">
+    <value>Nombre de la receta</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Descripción</value>
+  </data>
+  <data name="Ingredients" xml:space="preserve">
+    <value>Ingredientes</value>
+  </data>
+  <data name="Method" xml:space="preserve">
+    <value>Preparación</value>
+  </data>
+  <data name="Servings" xml:space="preserve">
+    <value>Raciones</value>
+  </data>
+  <data name="Add ingredient" xml:space="preserve">
+    <value>Añadir ingrediente</value>
+  </data>
+  <data name="Add step" xml:space="preserve">
+    <value>Añadir paso</value>
+  </data>
+  <data name="Remove photo" xml:space="preserve">
+    <value>Quitar foto</value>
+  </data>
+  <data name="Your household" xml:space="preserve">
+    <value>Tu hogar</value>
+  </data>
+  <data name="Household meal plan" xml:space="preserve">
+    <value>Plan de comidas del hogar</value>
+  </data>
+  <data name="My household" xml:space="preserve">
+    <value>Mi hogar</value>
+  </data>
+  <data name="My recipes" xml:space="preserve">
+    <value>Mis recetas</value>
+  </data>
+  <data name="Edit my profile" xml:space="preserve">
+    <value>Editar mi perfil</value>
+  </data>
+  <data name="Sync my account" xml:space="preserve">
+    <value>Sincronizar mi cuenta</value>
+  </data>
+  <data name="Get started" xml:space="preserve">
+    <value>Primeros pasos</value>
+  </data>
+  <data name="Share Mealsy" xml:space="preserve">
+    <value>Compartir Mealsy</value>
+  </data>
+  <data name="Finish setup" xml:space="preserve">
+    <value>Finalizar configuración</value>
+  </data>
+  <data name="Skip setup for now" xml:space="preserve">
+    <value>Omitir por ahora</value>
+  </data>
+  <data name="Continue without joining" xml:space="preserve">
+    <value>Continuar sin unirse</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Apariencia</value>
+  </data>
+  <data name="Colour theme" xml:space="preserve">
+    <value>Tema de color</value>
+  </data>
+  <data name="Display mode" xml:space="preserve">
+    <value>Modo de pantalla</value>
+  </data>
+  <data name="Default recipe order" xml:space="preserve">
+    <value>Orden de recetas por defecto</value>
+  </data>
+  <data name="Reset preferences…" xml:space="preserve">
+    <value>Restablecer preferencias…</value>
+  </data>
+  <data name="Checking store price…" xml:space="preserve">
+    <value>Consultando precio…</value>
+  </data>
+  <data name="Price unavailable" xml:space="preserve">
+    <value>Precio no disponible</value>
+  </data>
+  <data name="Mealsy Premium" xml:space="preserve">
+    <value>Mealsy Premium</value>
+  </data>
+  <data name="Monthly membership" xml:space="preserve">
+    <value>Suscripción mensual</value>
+  </data>
+  <data name="Annual membership" xml:space="preserve">
+    <value>Suscripción anual</value>
+  </data>
+  <data name="Restore purchases" xml:space="preserve">
+    <value>Restaurar compras</value>
+  </data>
+  <data name="Premium features" xml:space="preserve">
+    <value>Funciones Premium</value>
+  </data>
+  <data name="MONTHLY" xml:space="preserve">
+    <value>MENSUAL</value>
+  </data>
+  <data name="ANNUAL" xml:space="preserve">
+    <value>ANUAL</value>
+  </data>
+  <data name="Import &amp; review" xml:space="preserve">
+    <value>Importar y revisar</value>
+  </data>
+  <data name="Save recipe photo, if available" xml:space="preserve">
+    <value>Guardar foto de la receta si está disponible</value>
+  </data>
+  <data name="Reading recipe…" xml:space="preserve">
+    <value>Leyendo receta…</value>
+  </data>
+  <data name="Go shopping" xml:space="preserve">
+    <value>Ir de compras</value>
+  </data>
+  <data name="Qty" xml:space="preserve">
+    <value>Cant.</value>
+  </data>
+  <data name="Reorder sections" xml:space="preserve">
+    <value>Reordenar secciones</value>
+  </data>
+  <data name="Category &amp; note" xml:space="preserve">
+    <value>Categoría y nota</value>
+  </data>
+  <data name="Optional note, e.g. ripe or gluten-free" xml:space="preserve">
+    <value>Nota opcional, p. ej. maduro o sin gluten</value>
+  </data>
+  <data name="Find an item" xml:space="preserve">
+    <value>Buscar un artículo</value>
+  </data>
+  <data name="Plan from recipes &amp; checklists" xml:space="preserve">
+    <value>Planificar con recetas y listas</value>
+  </data>
+  <data name="Home-screen quick add" xml:space="preserve">
+    <value>Añadir desde la pantalla de inicio</value>
+  </data>
+  <data name="Resolve sync conflict" xml:space="preserve">
+    <value>Resolver conflicto de sincronización</value>
+  </data>
+  <data name="Produce" xml:space="preserve">
+    <value>Frutas y verduras</value>
+  </data>
+  <data name="Dairy" xml:space="preserve">
+    <value>Lácteos</value>
+  </data>
+  <data name="Meat" xml:space="preserve">
+    <value>Carne</value>
+  </data>
+  <data name="Pantry" xml:space="preserve">
+    <value>Despensa</value>
+  </data>
+  <data name="Bakery" xml:space="preserve">
+    <value>Panadería</value>
+  </data>
+  <data name="Frozen" xml:space="preserve">
+    <value>Congelados</value>
+  </data>
+  <data name="Drinks" xml:space="preserve">
+    <value>Bebidas</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Otros</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="Light" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="Dark" xml:space="preserve">
+    <value>Oscuro</value>
+  </data>
+  <data name="Forest" xml:space="preserve">
+    <value>Bosque</value>
+  </data>
+  <data name="Ocean" xml:space="preserve">
+    <value>Océano</value>
+  </data>
+  <data name="Berry" xml:space="preserve">
+    <value>Frutos rojos</value>
+  </data>
+  <data name="Terracotta" xml:space="preserve">
+    <value>Terracota</value>
+  </data>
+  <data name="Slate" xml:space="preserve">
+    <value>Pizarra</value>
+  </data>
+  <data name="Recent" xml:space="preserve">
+    <value>Recientes</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="Quickest" xml:space="preserve">
+    <value>Más rápidas</value>
+  </data>
+  <data name="Top rated" xml:space="preserve">
+    <value>Mejor valoradas</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Etiquetas</value>
+  </data>
+  <data name="Sort" xml:space="preserve">
+    <value>Ordenar</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>Todas</value>
+  </data>
+  <data name="Search your recipes" xml:space="preserve">
+    <value>Buscar en tus recetas</value>
+  </data>
+  <data name="Capture the details once. Cook it your way." xml:space="preserve">
+    <value>Guarda los detalles una vez. Cocina a tu manera.</value>
+  </data>
+  <data name="01  THE BASICS" xml:space="preserve">
+    <value>01  LO BÁSICO</value>
+  </data>
+  <data name="02  INGREDIENTS" xml:space="preserve">
+    <value>02  INGREDIENTES</value>
+  </data>
+  <data name="03  THE METHOD" xml:space="preserve">
+    <value>03  PREPARACIÓN</value>
+  </data>
+  <data name="04  MAKE IT EASY TO FIND" xml:space="preserve">
+    <value>04  FÁCIL DE ENCONTRAR</value>
+  </data>
+  <data name="A PHOTO TO MAKE IT YOURS" xml:space="preserve">
+    <value>UNA FOTO PARA TU RECETA</value>
+  </data>
+  <data name="Choose or replace photo" xml:space="preserve">
+    <value>Elegir o cambiar foto</value>
+  </data>
+  <data name="A short introduction · optional" xml:space="preserve">
+    <value>Breve introducción · opcional</value>
+  </data>
+  <data name="Serves" xml:space="preserve">
+    <value>Raciones</value>
+  </data>
+  <data name="Prep · min" xml:space="preserve">
+    <value>Preparación · min</value>
+  </data>
+  <data name="Cook · min" xml:space="preserve">
+    <value>Cocción · min</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>Opcional</value>
+  </data>
+  <data name="Paste from clipboard" xml:space="preserve">
+    <value>Pegar del portapapeles</value>
+  </data>
+  <data name="Add pasted ingredients" xml:space="preserve">
+    <value>Añadir ingredientes pegados</value>
+  </data>
+  <data name="+ Add ingredient section" xml:space="preserve">
+    <value>+ Añadir sección de ingredientes</value>
+  </data>
+  <data name="+ Add method step" xml:space="preserve">
+    <value>+ Añadir paso</value>
+  </data>
+  <data name="Paste method from clipboard" xml:space="preserve">
+    <value>Pegar preparación del portapapeles</value>
+  </data>
+  <data name="Remove section" xml:space="preserve">
+    <value>Quitar sección</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Detalles</value>
+  </data>
+  <data name="Discard draft / changes" xml:space="preserve">
+    <value>Descartar borrador o cambios</value>
+  </data>
+  <data name="From the web to your recipe book" xml:space="preserve">
+    <value>De la web a tu recetario</value>
+  </data>
+  <data name="Your next favourite meal" xml:space="preserve">
+    <value>Tu próxima comida favorita</value>
+  </data>
+  <data name="Make it even better" xml:space="preserve">
+    <value>Hazla aún mejor</value>
+  </data>
+  <data name="Edit recipe" xml:space="preserve">
+    <value>Editar receta</value>
+  </data>
+  <data name="New recipe" xml:space="preserve">
+    <value>Nueva receta</value>
+  </data>
+  <data name="Go to Account" xml:space="preserve">
+    <value>Ir a Cuenta</value>
+  </data>
+  <data name="Personal tools are free" xml:space="preserve">
+    <value>Las herramientas personales son gratuitas</value>
+  </data>
+  <data name="Meal note" xml:space="preserve">
+    <value>Nota de la comida</value>
+  </data>
+  <data name="Save to household" xml:space="preserve">
+    <value>Guardar para el hogar</value>
+  </data>
+  <data name="Your place at the table" xml:space="preserve">
+    <value>Tu lugar en la mesa</value>
+  </data>
+  <data name="Private account · Each family member uses their own login" xml:space="preserve">
+    <value>Cuenta privada · Cada miembro usa su propio acceso</value>
+  </data>
+  <data name="Email confirmation" xml:space="preserve">
+    <value>Confirmación de correo</value>
+  </data>
+  <data name="Send confirmation email" xml:space="preserve">
+    <value>Enviar correo de confirmación</value>
+  </data>
+  <data name="Keep your email address confirmed for household invitations and account access." xml:space="preserve">
+    <value>Confirma tu correo para las invitaciones al hogar y el acceso a tu cuenta.</value>
+  </data>
+  <data name="A week worth looking forward to" xml:space="preserve">
+    <value>Una semana para disfrutar</value>
+  </data>
+  <data name="Week starts" xml:space="preserve">
+    <value>La semana empieza</value>
+  </data>
+  <data name="Plan this day" xml:space="preserve">
+    <value>Planificar este día</value>
+  </data>
+  <data name="Make space for good food" xml:space="preserve">
+    <value>Haz sitio para la buena comida</value>
+  </data>
+  <data name="Type a meal · no recipe needed" xml:space="preserve">
+    <value>Escribe una comida · no hace falta receta</value>
+  </data>
+  <data name="Edit / remove note" xml:space="preserve">
+    <value>Editar o quitar nota</value>
+  </data>
+  <data name="1  Choose your meals" xml:space="preserve">
+    <value>1  Elige tus comidas</value>
+  </data>
+  <data name="2  Check the cupboard" xml:space="preserve">
+    <value>2  Revisa la despensa</value>
+  </data>
+  <data name="3  Ready for your shop" xml:space="preserve">
+    <value>3  Todo listo para comprar</value>
+  </data>
+  <data name="Already in the cupboard?" xml:space="preserve">
+    <value>¿Ya lo tienes en la despensa?</value>
+  </data>
+  <data name="Your reusable checklists" xml:space="preserve">
+    <value>Tus listas reutilizables</value>
+  </data>
+  <data name="Nothing here is added automatically. Tick what's running low for this trip." xml:space="preserve">
+    <value>Nada se añade automáticamente. Marca lo que falta para esta compra.</value>
+  </data>
+  <data name="Nothing here yet. Save items you like to check before a shop." xml:space="preserve">
+    <value>Aún no hay nada. Guarda artículos que quieras revisar antes de comprar.</value>
+  </data>
+  <data name="No cupboard checks from these recipes. You can still add snacks or essentials below." xml:space="preserve">
+    <value>Estas recetas no tienen artículos de despensa que revisar. Puedes añadir aperitivos o básicos abajo.</value>
+  </data>
+  <data name="Tick what you need; adjust amounts before adding. Compatible quantities combine. Different units or preparation notes stay separate." xml:space="preserve">
+    <value>Marca lo que necesitas y ajusta las cantidades. Las cantidades compatibles se suman. Las unidades o notas distintas se mantienen separadas.</value>
+  </data>
+  <data name="Your plan is empty. Go back to choose meals, snacks or essentials." xml:space="preserve">
+    <value>Tu plan está vacío. Vuelve para elegir comidas, aperitivos o básicos.</value>
+  </data>
+  <data name="Servings per batch" xml:space="preserve">
+    <value>Raciones por tanda</value>
+  </data>
+  <data name="Ingredient" xml:space="preserve">
+    <value>Ingrediente</value>
+  </data>
+  <data name="Section name" xml:space="preserve">
+    <value>Nombre de sección</value>
+  </data>
+  <data name="Ingredient note · optional" xml:space="preserve">
+    <value>Nota del ingrediente · opcional</value>
+  </data>
+  <data name="Paste ingredients · optional" xml:space="preserve">
+    <value>Pegar ingredientes · opcional</value>
+  </data>
+  <data name="Tags · comma separated" xml:space="preserve">
+    <value>Etiquetas · separadas por comas</value>
+  </data>
+  <data name="Your rating · optional, 0–5" xml:space="preserve">
+    <value>Tu valoración · opcional, 0–5</value>
+  </data>
+  <data name="Source link · private, optional" xml:space="preserve">
+    <value>Enlace de origen · privado, opcional</value>
+  </data>
+  <data name="Cooking notes · private, optional" xml:space="preserve">
+    <value>Notas de cocina · privadas, opcionales</value>
+  </data>
+  <data name="Photos are resized for quick saving; location metadata is removed." xml:space="preserve">
+    <value>Las fotos se reducen para guardarlas rápido y se eliminan los datos de ubicación.</value>
+  </data>
+  <data name="One action per step. Use the arrows to put them in order." xml:space="preserve">
+    <value>Una acción por paso. Usa las flechas para ordenarlos.</value>
+  </data>
+  <data name="Device list ▾" xml:space="preserve">
+    <value>Lista del dispositivo ▾</value>
+  </data>
+  <data name="Syncing changes…" xml:space="preserve">
+    <value>Sincronizando cambios…</value>
+  </data>
+  <data name="Checking for updates…" xml:space="preserve">
+    <value>Buscando cambios…</value>
+  </data>
+  <data name="Personal list synced · Only you can access it" xml:space="preserve">
+    <value>Lista personal sincronizada · Solo tú tienes acceso</value>
+  </data>
+  <data name="Household list synced · Updates every 5 seconds" xml:space="preserve">
+    <value>Lista del hogar sincronizada · Se actualiza cada 5 segundos</value>
+  </data>
+  <data name="Enter a complete email address." xml:space="preserve">
+    <value>Introduce un correo electrónico completo.</value>
+  </data>
+  <data name="Use at least 8 characters for your new password." xml:space="preserve">
+    <value>Usa al menos 8 caracteres para tu nueva contraseña.</value>
+  </data>
+  <data name="The two passwords don't match." xml:space="preserve">
+    <value>Las contraseñas no coinciden.</value>
+  </data>
+  <data name="The email or password wasn't accepted. Check both, or request a password reset." xml:space="preserve">
+    <value>No se ha aceptado el correo o la contraseña. Revísalos o solicita un restablecimiento.</value>
+  </data>
+  <data name="Couldn't reach the account service. Check your connection and try again." xml:space="preserve">
+    <value>No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.</value>
+  </data>
+  <data name="An account already uses that email. Sign in or reset its password." xml:space="preserve">
+    <value>Ya existe una cuenta con ese correo. Inicia sesión o restablece la contraseña.</value>
+  </data>
+  <data name="Your sign-in expired. Sign in again." xml:space="preserve">
+    <value>Tu sesión ha caducado. Inicia sesión de nuevo.</value>
+  </data>
+</root>

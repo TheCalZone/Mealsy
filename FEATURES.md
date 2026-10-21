@@ -1,5 +1,10 @@
 # Current Mealsy features
 
+**Current release:** Social, friends, creator tools and post/creator-plan sharing are
+paused and inaccessible through the app UI. Their code remains below as an inventory
+of retained work. Shopping, private recipes, essentials and household tools remain
+available. See [social pause](SOCIAL_PAUSE.md).
+
 This inventory describes implemented code, not confirmation that every remote service
 has been deployed. Firebase, Google Play, AdMob and OpenAI require the configuration
 noted below. The active app target is Android; iOS/Windows are not active build targets.
@@ -10,9 +15,53 @@ and [widget, plans and meal planner checks](WIDGET_AND_MEAL_PLANNER.md) for setu
 See [account/navigation changes and Firebase recovery](FIREBASE_RECOVERY_AND_NAVIGATION.md)
 for the latest sign-in, dashboard and recipe-screen upgrade.
 
+## Recent usability improvements
+
+- Android forms resize above the keyboard; recipe Preview and Save stay in a fixed footer.
+- Recipe-link importing offers an optional photo checkbox. Available photos are saved
+  as compressed copies; a missing or blocked photo does not stop the recipe import.
+- Import a recipe link directly from a personal meal slot or household meal editor.
+  Review/save the recipe to attach it, then save the meal plan. Household attachments
+  require confirmation before sharing their recipe snapshot. Importing remains Premium.
+
+## Friends and household meals — frontend ready, backend required
+
+- Search people, view/edit profiles and bios, manage friend requests, remove friends,
+  block/unblock accounts and report profiles or posts.
+- Friends-only feed, profile posts, likes, comments/replies and saving recipe copies.
+- Choose Everyone, Friends only or Only me when posting; drafts retain privacy.
+  Protected publishing requires the new privacy service and never falls back to public.
+- Shared household week with breakfast/lunch/dinner, servings, notes, recipe snapshots,
+  editing and conflict review. Personal plans remain separate. Family entitlement applies.
+- Activity can open friend profiles and privacy-managed conversations.
+
+These screens require the new Firebase endpoints; they are not deployed by this change.
+See [Firebase implementation handoff](FIREBASE_HANDOFF.md) for contracts, permissions,
+privacy migration and rollout tests. Existing public feed services remain in use.
+
+## Creator plan and social sharing
+
+- Share published creator collections/weekly plans or community posts through
+  Android's share sheet (available social/messaging apps).
+- Open exact posts or plans in Mealsy; sign-in retains the shared destination.
+  Private links preserve the author's access restrictions.
+- Save selected creator recipes and shop selected meals directly, combining repeated
+  recipe portions before cupboard review. Importing to a personal week is optional.
+- Mobile download/open-app landing page and generic social preview artwork.
+
+Code is ready; Hosting, `foodFeed.getPost` deployment, Play availability and Android
+App Links certificate association are required. Private links also depend on the
+new social backend. See [content sharing setup](CONTENT_SHARING.md).
+
 ## Free personal features
 
 **Recipe book**
+- Cooking steps suggest ingredient checklists by matching names locally, including
+  plurals and preparation words. Each step has its own temporary addition ticks;
+  prep checks and shopping items are unchanged. Add/remove step ingredients manually
+  for ambiguous instructions. Quantities are whole-recipe totals, update with
+  serving adjustments and do not infer per-step portions. Shared reading screens
+  and editor previews use the same feature; no AI or Firebase calls.
 - Create, view, edit and delete recipes using one shared editor, with a photo,
   introduction, servings, separate prep/cook times, rating and tags.
 - Preview before saving; local account-specific drafts recover after navigation.
@@ -34,6 +83,30 @@ for the latest sign-in, dashboard and recipe-screen upgrade.
 - Explicitly share an independent recipe snapshot to the food community.
 
 **Personal shopping list**
+- Offline ingredient autocomplete in shopping quick-add and the widget entry screen.
+  Type two or more characters for up to five suggestions from common ingredients,
+  your account's local recipes/checklists, current list and usage history. Selecting
+  a suggestion fills the name, keeps explicit quantities and suggests a section;
+  it doesn't add the item until you tap Add. No AI or Firebase calls are used.
+- Each item has a drag handle: long-press and drag above/below another item in the
+  same section. Checkboxes and item taps keep working; swipe to edit/change section.
+  Order saves per list/account on this device, persists through sync and filters,
+  and is used in copy/share exports.
+- New uncategorized items are placed automatically using local ingredient rules:
+  `500g minced beef` → Meat; fresh produce, dairy, pantry, frozen, drinks, bakery,
+  household/pet products and chilled alternatives are recognized. Assigned categories
+  are kept; existing saved lists are not silently reclassified.
+- Recognize leading quantities such as `500 g beef` in quick-add, pasted items,
+  widget additions and recipe shopping. A filled quantity field takes precedence;
+  recipe amounts are extracted before serving adjustments. Saved recipe names
+  stay unchanged.
+- Long-press shopping section headers and drag them above/below another section,
+  or use Shopping → Reorder sections (also in shopping tools). Drag custom categories
+  too; optional movement buttons are available in the reorder menu. Restore default
+  alphabetical order with Other last. The layout saves per list/account on this
+  device, including household lists, without changing another member's layout.
+  Search, collected filters, sync and new shops retain the layout; copy/share uses
+  the selected order too.
 - Quick-add an item, quantity, category and optional note; edit or remove items.
 - Category groups, collected checkboxes, crossed-out collected names, progress and
   remaining-item counts, search and Hide collected.

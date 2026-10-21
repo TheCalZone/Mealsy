@@ -9,6 +9,7 @@ public class RecipeEditorViewModel : ObservableObject
 {
     public RecipeDraft Draft { get; private set; } = new();
     public event Action StructureChanged;
+    public Func<Recipe, Task> RecipeSaved { get; set; }
     private readonly string account = HouseholdService.UserId;
     public string EditorAccount => account;
     private CancellationTokenSource debounce;
@@ -20,7 +21,7 @@ public class RecipeEditorViewModel : ObservableObject
     public string Error { get => error; set => SetProperty(ref error, value); }
     public bool Busy { get => busy; set => SetProperty(ref busy, value); }
     public bool IsEditing => Draft.Recipe.Id != 0;
-    public string Heading => IsEditing ? "Make it even better" : "Your next favourite meal";
+    public string Heading => IsEditing ? AppLocalization.Text("Make it even better") : AppLocalization.Text("Your next favourite meal");
     public string Summary => $"{Draft.IngredientCount} ingredients · {Draft.Steps.Count(s => !string.IsNullOrWhiteSpace(s.Text))} steps";
     public double Progress => ((string.IsNullOrWhiteSpace(Draft.Recipe.RecipeName) ? 0 : 1) + (Draft.IngredientCount > 0 ? 1 : 0) + (Draft.Steps.Any(s => !string.IsNullOrWhiteSpace(s.Text)) ? 1 : 0)) / 3d;
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Draft.Recipe.RecipeImage);
@@ -106,6 +107,7 @@ public class RecipeEditorViewModel : ObservableObject
                 catch (Exception) { await Shell.Current.DisplayAlert("Saved on this device", "Cloud sync couldn't finish. Your recipe is safely saved locally.", "OK"); }
             }
             await AppNavigation.Back();
+            if (RecipeSaved != null) await RecipeSaved(recipe);
         });
     }
     public async Task Discard()

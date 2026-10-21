@@ -20,6 +20,12 @@ public static class MealPlanning
         return copies;
     }
     public static string SimpleMeal(MealPlanDay day,int slot)=>(slot switch{0=>day.BreakfastText,1=>day.LunchText,_=>day.DinnerText})??"";
+    public static IReadOnlyList<string> MealNames(MealPlanDay day,int slot,IEnumerable<Recipe> recipes)
+    {
+        var available=recipes.ToDictionary(r=>r.Id);
+        return Ids(day,slot).Select(id=>available.TryGetValue(id,out var recipe)?recipe.RecipeName:"Recipe unavailable")
+            .Concat(new[]{SimpleMeal(day,slot)}).Where(name=>!string.IsNullOrWhiteSpace(name)).ToList();
+    }
     public static void SetSimpleMeal(MealPlanDay day,int slot,string text) {
         text=(text??"").Trim();if(text.Length>200)throw new InvalidOperationException("Keep the meal name within 200 characters.");
         if(slot==0)day.BreakfastText=text;else if(slot==1)day.LunchText=text;else day.DinnerText=text;
@@ -65,6 +71,32 @@ public static class MealPlanning
     }
     public static void Clear(MealPlanDay day){for(var slot=0;slot<3;slot++){Ids(day,slot).Clear();Notes(day,slot).Clear();SetSimpleMeal(day,slot,"");}day.BreakfastPortionsJson=day.LunchPortionsJson=day.DinnerPortionsJson="{}";Serialize(day);}
     public static string State(MealPlanDay day)=>JsonSerializer.Serialize(new {ids=Enumerable.Range(0,3).Select(s=>Ids(day,s).ToArray()).ToArray(),notes=Enumerable.Range(0,3).Select(s=>Notes(day,s).ToArray()).ToArray(),simpleMeals=Enumerable.Range(0,3).Select(s=>SimpleMeal(day,s)).ToArray(),day.BreakfastPortionsJson,day.LunchPortionsJson,day.DinnerPortionsJson});
+    public record TypedShoppingMeal(string Name, long Day, int Slot);
+    public static List<TypedShoppingMeal> TypedShoppingMeals(IEnumerable<MealPlanDay> days)
+    {
+        var result = new List<TypedShoppingMeal>();
+        foreach (var day in days) for (var slot = 0; slot < 3; slot++)
+            if (!Ids(day, slot).Any(id => id > 0) &&
+                (slot switch { 0 => day.BreakfastRecipeId, 1 => day.LunchRecipeId, _ => day.DinnerRecipeId }) <= 0 &&
+                !string.IsNullOrWhiteSpace(SimpleMeal(day, slot)))
+                result.Add(new(SimpleMeal(day, slot).Trim(), day.MealDayIndex, slot));
+        return result;
+    }
+    // Whole ingredient phrases only: eggs matches egg, but never eggplant.
+    // Suggestions do not infer a recipe, amount, or hidden ingredients.
+    public static bool MatchesEssential(string meal, string essential)
+    {
+        string[] Words(string value) => System.Text.RegularExpressions.Regex.Matches((value ?? "").ToLowerInvariant(), @"[\p{L}]+")
+            .Select(m => m.Value switch {
+                "tomatoes" => "tomato", "potatoes" => "potato",
+                var word when word.EndsWith("s") && !word.EndsWith("ss") && word.Length > 3 => word[..^1],
+                var word => word
+            }).ToArray();
+        var name = Words(ShoppingItemInput.Parse(essential, "").Name);
+        var text = Words(meal);
+        return name.Length > 0 && Enumerable.Range(0, Math.Max(0, text.Length - name.Length + 1))
+            .Any(start => name.SequenceEqual(text.Skip(start).Take(name.Length)));
+    }
     public static List<RecipeShoppingChoice> ShoppingChoices(IEnumerable<MealPlanDay> days,IEnumerable<Recipe> recipes)
     {
         var available=recipes.ToDictionary(r=>r.Id);var totals=new Dictionary<long,int>();

@@ -6,6 +6,16 @@ using Xunit;
 public class WidgetAndPlannerTests
 {
     [Fact]
+    public void DashboardMealNamesKeepTypedMealsAlongsideRecipesWithoutAddingNotesAsRecipes()
+    {
+        var day=new MealPlanDay();MealPlanning.SetSimpleMeal(day,2,"Leftovers");
+        Assert.Equal(new[]{"Leftovers"},MealPlanning.MealNames(day,2,Array.Empty<Recipe>()));
+        MealPlanning.Ids(day,2).AddRange(new long[]{4,99});MealPlanning.Notes(day,2).Add("Home late");
+        Assert.Equal(new[]{"Pasta","Recipe unavailable","Leftovers"},MealPlanning.MealNames(day,2,new[]{new Recipe{Id=4,RecipeName="Pasta"}}));
+        Assert.Empty(MealPlanning.MealNames(day,0,Array.Empty<Recipe>()));
+        Assert.Equal("Home late",Assert.Single(MealPlanning.Notes(day,2)));
+    }
+    [Fact]
     public void BatchOfEightForTwoCreatesFourMealsAndShopsEightPortions()
     {
         var recipe=new Recipe{Id=40,Serving=8,RecipeName="Chilli"};
@@ -55,6 +65,21 @@ public class WidgetAndPlannerTests
         WidgetShoppingStore.Delete(101);Assert.Null(WidgetShoppingStore.Target(101));Assert.Equal("bob",WidgetShoppingStore.Target(102).Account);
     }
     [Fact]
+    public void WidgetEntryParsesQuantityAndNotifiesTheSelectedListAfterSaving()
+    {
+        Preferences.Clear();ShoppingListStore.AccountId=()=>null;
+        var target=new WidgetListTarget(null,null,"Device");string notified=null;
+        void Updated(string key){notified=key;Assert.NotEmpty(Preferences.Get(key,""));}
+        WidgetShoppingStore.Changed+=Updated;
+        try
+        {
+            WidgetShoppingStore.Add(target,null,new(){Name="500g minced beef",Quantity="",Category="Other"});
+            var item=Assert.Single(ShoppingListDocument.Deserialize(Preferences.Get(target.StorageKey,"")).Items);
+            Assert.Equal("500 g",item.Quantity);Assert.Equal("minced beef",item.Name);Assert.Equal("Meat",item.Category);Assert.Equal(target.StorageKey,notified);
+        }
+        finally{WidgetShoppingStore.Changed-=Updated;Preferences.Clear();}
+    }
+    [Fact]
     public void WidgetRetryCannotDuplicateAnItemOrChangeCollectedPurchases()
     {
         Preferences.Clear();ShoppingListStore.AccountId=()=>null;var list=new ShoppingListDocument();list.Add(new(){Name="Milk",Quantity="2 L",InBasket=true});ShoppingListStore.Save(list);
@@ -101,6 +126,33 @@ public class WidgetAndPlannerTests
         var source=new MealPlanDay {Id=10,MealDayIndex=0};source.DinnerRecipesIDs.Add(42);source.DinnerNotes.Add("Leftovers");MealPlanning.SetServings(source,2,42,3);
         var target=new MealPlanDay {Id=20,MealDayIndex=4};MealPlanning.Copy(source,target);target.DinnerNotes[0]="Changed";
         Assert.Equal(20,target.Id);Assert.Equal(4,target.MealDayIndex);Assert.Equal("Leftovers",source.DinnerNotes[0]);Assert.Equal(3,MealPlanning.Portions(target,2)[42]);
+    }
+    [Theory]
+    [InlineData("Scrambled eggs on toast", "Eggs", true)]
+    [InlineData("Boiled egg", "Eggs", true)]
+    [InlineData("Eggplant curry", "Eggs", false)]
+    [InlineData("Chickpeas and rice", "Peas", false)]
+    [InlineData("Tomato pasta", "Tomatoes", true)]
+    [InlineData("Peanut butter toast", "Peanut butter", true)]
+    [InlineData("Roast chicken", "Chicken stock", false)]
+    [InlineData("", "Eggs", false)]
+    [InlineData("Eggs", "", false)]
+    public void TypedMealsMatchWholeEssentialNames(string meal,string essential,bool expected)
+        => Assert.Equal(expected,MealPlanning.MatchesEssential(meal,essential));
+    [Fact]
+    public void OnlyTypedMealsWithoutRecipeAttachmentsPromptEssentialChecks()
+    {
+        var monday=new MealPlanDay {MealDayIndex=0,BreakfastText="Eggs",LunchText="Egg salad",DinnerText="Chicken"};
+        monday.LunchRecipesIDs.Add(42);monday.DinnerRecipeId=43;
+        monday.BreakfastNotes.Add("Buy milk");
+        var tuesday=new MealPlanDay {MealDayIndex=1,BreakfastText="Eggs"};
+        var meals=MealPlanning.TypedShoppingMeals(new[]{monday,tuesday});
+        Assert.Equal(2,meals.Count);Assert.All(meals,m=>Assert.Equal("Eggs",m.Name));
+        Assert.Equal(new long[]{0,1},meals.Select(m=>m.Day));Assert.All(meals,m=>Assert.Equal(0,m.Slot));
+        var matches=meals.Where(m=>MealPlanning.MatchesEssential(m.Name,"Eggs")).ToList();
+        Assert.Equal(2,matches.Count);
+        var rows=ShoppingPlan.Build(Array.Empty<RecipeShoppingChoice>(),Array.Empty<Snack>(),new[]{new Staple{Name="Eggs",Quantity="6"}},Array.Empty<string>());
+        Assert.Equal("6",Assert.Single(rows).Item.Quantity);
     }
     [Fact]
     public void ShoppingUsesPlannedPortionsAcrossSlotsAndDays()

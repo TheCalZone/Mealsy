@@ -25,10 +25,10 @@ public class ShoppingQuickAddWidget : AppWidgetProvider
     public static void Update(Context context,int id)
     {
         var views=new RemoteViews(context.PackageName,Resource.Layout.shopping_quick_add_widget);
-        var target=WidgetShoppingStore.Target(id);views.SetTextViewText(Resource.Id.widget_list,target?.HouseholdId==null?"Personal shopping list":"Household shopping list");
+        var target=WidgetShoppingStore.Target(id);views.SetTextViewText(Resource.Id.widget_list,target==null?"Choose a shopping list":target.HouseholdId==null?"Personal shopping list":"Household shopping list");
         PendingIntent Open(string action)
         {
-            var intent=new Intent(context,typeof(MainActivity));intent.SetAction("com.mealsy.widget."+id+"."+action);
+            var intent=new Intent(context,action=="add"?typeof(WidgetQuickAddActivity):typeof(MainActivity));intent.SetAction("com.mealsy.widget."+id+"."+action);
             intent.SetData(global::Android.Net.Uri.Parse($"mealsy://widget/{id}/{action}"));
             intent.PutExtra("mealsy_widget_id",id);intent.PutExtra("mealsy_widget_configure",action=="configure");intent.PutExtra("mealsy_widget_open",action=="open");intent.AddFlags(ActivityFlags.ClearTop|ActivityFlags.SingleTop);
             return PendingIntent.GetActivity(context,id,intent,PendingIntentFlags.UpdateCurrent|PendingIntentFlags.Immutable);

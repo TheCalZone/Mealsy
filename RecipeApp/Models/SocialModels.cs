@@ -1,0 +1,11 @@
+namespace RecipeApp.Models;
+public record SocialCapabilities(int Version,int PrivacyEnforcedVersion);
+public record SocialProfile(string UserId,string Username,string Bio,string Avatar,string Relationship,int FriendCount,bool Discoverable=true);
+public record FriendPerson(string UserId,string Username,string Bio="",string Avatar="");
+public record FriendPeople(List<FriendPerson> People,string Cursor=null);
+public record SocialPosts(List<FoodPost> Posts,string Cursor=null);
+public record SocialPostResult(FoodPost Post);
+public record SocialComments(List<FoodComment> Comments,string Cursor=null);
+public record HouseholdMealsCapabilities(int Version);
+public record HouseholdMeal(string Id,string Date,string Slot,string Title,int Servings,string Note,FeedRecipe Recipe,long Version=0,string UpdatedBy="");
+public record HouseholdWeek(string HouseholdId,string WeekStart,List<HouseholdMeal> Meals,long Revision);

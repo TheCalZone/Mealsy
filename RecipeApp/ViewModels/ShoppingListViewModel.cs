@@ -9,7 +9,7 @@ namespace RecipeApp.ViewModels;
 public class ShoppingListGroup : ObservableRangeCollection<ShoppingListItem>
 {
     public string Title { get; }
-    public string Summary => Count == 1 ? "1 item" : $"{Count} items";
+    public string Summary => Count == 1 ? AppLocalization.Text("1 item") : AppLocalization.Format("{0} items",Count);
     public ShoppingListGroup(string title, IEnumerable<ShoppingListItem> items) : base(items) => Title = title;
 }
 
@@ -19,6 +19,23 @@ public class ShoppingListViewModel : CustomViewModelBase
     private string sharedKey;
     private string loadedKey;
     public string CurrentJson => document.Serialize();
+    public string SectionOrderContext=>StorageKey;
+    private string ItemOrderKey=>StorageKey+".itemOrder";
+    public bool CanDropItem(Guid source,Guid target)=>!IsEditing&&Groups.Any(group=>group.Any(item=>item.Id==source)&&group.Any(item=>item.Id==target));
+    public void DropItem(Guid source,Guid target,bool after)
+    {
+        if(!CanDropItem(source,target))return;
+        var order=ShoppingItemOrder.Drop(document.Items,ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]")),source,target,after,document.Visible(SearchText,HideCollected).Select(item=>item.Id));
+        Preferences.Set(ItemOrderKey,JsonSerializer.Serialize(order));RefreshGroups();StatusText="Item order saved on this device";
+    }
+    private string SectionOrderKey=>StorageKey+".sectionOrder";
+    public List<string> SectionNames()=>ShoppingSectionOrder.Sort(Categories.Concat(document.Items.Select(i=>i.Category)),ShoppingSectionOrder.Read(Preferences.Get(SectionOrderKey,"[]")));
+    public void SaveSectionOrder(IEnumerable<string> order)
+    {
+        Preferences.Set(SectionOrderKey,JsonSerializer.Serialize(ShoppingSectionOrder.Sort(SectionNames(),order)));
+        RefreshGroups();StatusText="Section order saved for this list on this device";
+    }
+    public void ResetSectionOrder(){Preferences.Remove(SectionOrderKey);RefreshGroups();StatusText="Default section order restored";}
     public bool IsShared => sharedKey != null;
     public void SelectList(string key)
     {
@@ -26,7 +43,18 @@ public class ShoppingListViewModel : CustomViewModelBase
         QuickName = QuickQuantity = QuickNote = EditName = EditQuantity = EditCategory = EditNote = "";
         SearchText = ""; ShowDetails = false;
     }
-    public void AcceptRemote(string json) { document = ShoppingListDocument.Deserialize(json); ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist(); }
+    public void AcceptRemote(string json)
+    {
+        var editId = editingItem?.Id;
+        document = ShoppingListDocument.Deserialize(json);
+        // Keep the form values, but point Save at the refreshed document's item.
+        if (editId != null)
+        {
+            editingItem = document.Items.FirstOrDefault(item => item.Id == editId);
+            if (editingItem == null) IsEditing = false;
+        }
+        ConnectItems(); UpdateCategories(); RefreshGroups(); NotifySummary(); Persist();
+    }
     private string ExportKey => ShoppingListStore.ExportKey;
     private ShoppingListDocument document = new();
     private readonly List<ShoppingListItem> subscriptions = new();
@@ -37,6 +65,17 @@ public class ShoppingListViewModel : CustomViewModelBase
     private string editName, editQuantity, editCategory, editNote;
 
     public ObservableRangeCollection<ShoppingListGroup> Groups { get; } = new();
+    private bool showSectionIngredients=true;
+    public bool ShowSectionIngredients=>showSectionIngredients;
+    public double IngredientRowHeight=>showSectionIngredients?-1:0;
+    public void SetSectionDragPreview(bool active)
+    {
+        if(!SetProperty(ref showSectionIngredients,!active,nameof(ShowSectionIngredients)))return;
+        OnPropertyChanged(nameof(IngredientRowHeight));
+        // Rebuild presentation only: items, quantities, checks and item order stay
+        // in the document and each section keeps its actual item count.
+        RefreshGroups();
+    }
     public ObservableRangeCollection<string> Categories { get; } = new();
     public string SearchText { get => searchText; set { if (SetProperty(ref searchText, value)) RefreshGroups(); } }
     public bool HideCollected { get => hideCollected; set { if (SetProperty(ref hideCollected, value)) RefreshGroups(); } }
@@ -50,10 +89,10 @@ public class ShoppingListViewModel : CustomViewModelBase
     public int Collected => document.Items.Count(i => i.InBasket);
     public int Remaining => Total - Collected;
     public double Progress => Total == 0 ? 0 : (double)Collected / Total;
-    public string ProgressText => Total == 0 ? "Ready for your next shop" : $"{Collected} of {Total} collected";
-    public string RemainingText => Remaining == 1 ? "1 item left" : $"{Remaining} items left";
-    public string EmptyTitle => Total == 0 ? "A fresh start" : Remaining == 0 && HideCollected ? "All done!" : "No matching items";
-    public string EmptyMessage => Total == 0 ? "Add your first item above, paste a list, or send ingredients from a recipe."
+    public string ProgressText => Total == 0 ? AppLocalization.Text("Ready for your next shop") : AppLocalization.Format("{0} of {1} collected",Collected,Total);
+    public string RemainingText => Remaining == 1 ? AppLocalization.Text("1 item left") : AppLocalization.Format("{0} items left",Remaining);
+    public string EmptyTitle => Total == 0 ? AppLocalization.Text("A fresh start") : Remaining == 0 && HideCollected ? AppLocalization.Text("All done!") : AppLocalization.Text("No matching items");
+    public string EmptyMessage => Total == 0 ? AppLocalization.Text("Add your first item above, paste a list, or send ingredients from a recipe.")
         : Remaining == 0 && HideCollected ? "Everything is collected. Turn off Hide collected to review your list."
         : "Try a different search or turn off Hide collected.";
     public bool IsEditing { get => isEditing; set { if (SetProperty(ref isEditing, value)) NotifySummary(); } }
@@ -149,10 +188,12 @@ public class ShoppingListViewModel : CustomViewModelBase
     private void AddItem()
     {
         if (string.IsNullOrWhiteSpace(QuickName)) return;
+        var addedName=QuickName;
         document.Add(new() { Name = QuickName, Quantity = QuickQuantity?.Trim() ?? "", Category = SelectedCategory, Note = QuickNote?.Trim() ?? "" });
         QuickName = QuickQuantity = QuickNote = "";
         SearchText = "";
         Changed("Item added");
+        IngredientSuggestionStore.Remember(HouseholdService.UserId,addedName);
     }
 
     private void BeginEdit(ShoppingListItem item)
@@ -182,7 +223,7 @@ public class ShoppingListViewModel : CustomViewModelBase
         batching = true;
         try
         {
-            editingItem.Name = EditName.Trim(); editingItem.Quantity = EditQuantity?.Trim() ?? "";
+            var input=ShoppingItemInput.Parse(EditName,EditQuantity);editingItem.Name=input.Name;editingItem.Quantity=input.Quantity;
             editingItem.Category = ShoppingListDocument.CategoryName(EditCategory); editingItem.Note = EditNote?.Trim() ?? "";
         }
         finally { batching = false; }
@@ -223,8 +264,9 @@ public class ShoppingListViewModel : CustomViewModelBase
     }
     private void RefreshGroups()
     {
-        Groups.ReplaceRange(document.Visible(SearchText, HideCollected).GroupBy(i => i.Category)
-            .OrderBy(g => g.Key == "Other").ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+        var order=SectionNames();
+        Groups.ReplaceRange(ShoppingItemOrder.Sort(document.Visible(SearchText, HideCollected),ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]"))).GroupBy(i => i.Category)
+            .OrderBy(g=>order.FindIndex(name=>name.Equals(g.Key,StringComparison.OrdinalIgnoreCase)))
             .Select(g => new ShoppingListGroup(g.Key, g)));
         OnPropertyChanged(nameof(EmptyTitle)); OnPropertyChanged(nameof(EmptyMessage));
     }
@@ -258,7 +300,7 @@ public class ShoppingListViewModel : CustomViewModelBase
     {
         var choice = await Shell.Current.DisplayActionSheet("Send your shopping list", "Cancel", null, "Share remaining", "Share full list", "Copy remaining", "Copy full list");
         if (choice == null || choice == "Cancel") return;
-        var text = document.PlainText(remainingOnly: choice.EndsWith("remaining", StringComparison.Ordinal));
+        var text = document.PlainText(remainingOnly: choice.EndsWith("remaining", StringComparison.Ordinal),sectionOrder:SectionNames(),itemOrder:ShoppingItemOrder.Read(Preferences.Get(ItemOrderKey,"[]")));
         if (string.IsNullOrWhiteSpace(text)) { await Shell.Current.DisplayAlert("Nothing left to buy", "All items are collected.", "OK"); return; }
         if (choice.StartsWith("Copy")) { await Clipboard.Default.SetTextAsync(text); StatusText = "List copied"; }
         else await Share.Default.RequestAsync(new ShareTextRequest { Title = "Shopping list", Text = text });

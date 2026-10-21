@@ -12,6 +12,8 @@ public record FeedRecipe(string Title, string Method, int Servings, int PrepMinu
 }
 public class FoodPost
 {
+    public string Audience { get; set; } = "public";
+    public bool PrivacyManaged { get; set; }
     public string Id { get; set; }
     public string Caption { get; set; }
     public string AuthorId { get; set; }
@@ -28,7 +30,7 @@ public class FoodPost
     public bool BusinessVerified { get; set; }
     public string PromotionCampaignId { get; set; }
     public List<string> Topics { get; set; } = new();
-    public Recipe PrivateCopy(string account){var copy=Recipe.ToRecipe(Photo);copy.FirebaseUID=account;copy.Notes=$"Shared by {AuthorName} on Mealsy · Public post {Id}";if(!string.IsNullOrEmpty(BusinessId))copy.CloudKey="business-copy-"+Id;return copy;}
+    public Recipe PrivateCopy(string account){var copy=Recipe.ToRecipe(Photo);copy.FirebaseUID=account;copy.Notes=$"Shared by {AuthorName} on Mealsy · Shared post {Id}";if(!string.IsNullOrEmpty(BusinessId))copy.CloudKey="business-copy-"+Id;return copy;}
 }
 public record FollowedCook(string Id, string Name);
 public record CommunityProfile(string Username, string Discriminator, bool EmailVerified, bool PromotionCheckoutEnabled);

@@ -47,15 +47,14 @@ These tests exercise the production service and models against a temporary SQLit
 database; only the platform data-directory lookup is replaced. They do not test
 native UI or Firebase connectivity.
 
-Firebase account/sync features and AI chat require their configured remote
-services. A successful local build or offline launch does not validate those
-integrations.
+Firebase account/sync features require their configured remote services. A
+successful local build or offline launch does not validate those integrations.
 
-AI chat uses your own OpenAI API key. Enter it on the Recipe Creator screen and
-choose **Save API key on this device**. The key is kept in secure storage. The
-previously hard-coded key should be revoked/rotated because it remains in Git
-history. Firebase mobile configuration remains in the project; verify your
-Firebase Authentication provider and Firestore rules in your own project.
+Use what you have replaces the AI recipe creator with a free offline ingredient
+search of the current account’s saved recipes. No API key is needed. Historical
+AI keys should still be revoked because earlier versions remain in Git history.
+Firebase mobile configuration remains in the project; verify your Firebase
+Authentication provider and Firestore rules in your own project.
 
 Debug builds now use the normal Android development signing key. To upgrade an
 existing installation, use the same signing key as that installation. Back up

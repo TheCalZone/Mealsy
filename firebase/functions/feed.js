@@ -57,7 +57,7 @@ function cursor(value) {
 function createFeedHandler(db, clock = Date.now, moderate = require('./moderation').moderate) {
   return async request => {
     if (!request.auth) fail('unauthenticated', 'Sign in to explore the food feed.');
-    const uid = request.auth.uid, data = requestData(request, ['profile', 'setUsername', 'requestPromotion', 'activatePromotion', 'preferences', 'savePreferences', 'follow', 'unfollow', 'list', 'moderation', 'publish', 'comments', 'delete', 'moderate', 'resolveReport', 'like', 'comment', 'deleteComment', 'report']), moderator = request.auth.token?.feedModerator === true;
+    const uid = request.auth.uid, data = requestData(request, ['getPost', 'profile', 'setUsername', 'requestPromotion', 'activatePromotion', 'preferences', 'savePreferences', 'follow', 'unfollow', 'list', 'moderation', 'publish', 'comments', 'delete', 'moderate', 'resolveReport', 'like', 'comment', 'deleteComment', 'report']), moderator = request.auth.token?.feedModerator === true;
     if (data.action === 'profile') return {...(await db.doc(`communityProfiles/${uid}`).get()).data(), emailVerified: request.auth.token?.email_verified === true, promotionCheckoutEnabled: false};
     if (data.action === 'setUsername') return community.setUsername(db, uid, data.username, moderate);
     const accountRef = db.doc(`feedAccounts/${uid}`);
@@ -96,6 +96,17 @@ function createFeedHandler(db, clock = Date.now, moderate = require('./moderatio
       });
     }
     const posts = db.collection('feedPosts');
+    if (data.action === 'getPost') {
+      const ref=posts.doc(id(data.postId));
+      return db.runTransaction(async tx=>{
+        const doc=await tx.get(ref),post=doc.data();requireVisible(post);
+        // This legacy namespace serves public posts only. Never use it as a
+        // fallback when a privacy-aware social read fails.
+        if((post.audience!=null&&post.audience!=='public')||post.privacyManaged===true)fail('not-found','This post is no longer available.');
+        const liked=await tx.get(ref.collection('likes').doc(uid));
+        return {post:{...publicPost(doc),audience:'public',privacyManaged:false,liked:liked.exists}};
+      },{readOnly:true});
+    }
     if (data.action === 'list') {
       const terms = discovery.searchTerms(data.search);
       const mode = terms.length ? 'search' : data.mode ?? 'latest';

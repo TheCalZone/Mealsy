@@ -52,5 +52,18 @@ public static class ThemeService
         foreach (var entry in colors) app.Resources[entry.Key] = Color.FromArgb(entry.Value);
         for (var size = 10; size <= 36; size++) app.Resources["ThemeFont" + size] = size * (AppSettings.Current.LargerText ? 1.18 : 1.0);
         app.Resources["ThemeShowPhotos"] = AppSettings.Current.ShowPhotos;
+        ApplySystemBars();
     }
+    public static void ApplySystemBars()
+    {
+#if ANDROID
+        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(()=>{
+            var window=Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.Window;if(window==null)return;
+            var color=Application.Current?.Resources.TryGetValue("ThemePrimary",out var value)==true&&value is Color selected?selected:Color.FromArgb("#214D35");
+            window.SetStatusBarColor(global::Android.Graphics.Color.Argb((int)(color.Alpha*255),(int)(color.Red*255),(int)(color.Green*255),(int)(color.Blue*255)));
+            new AndroidX.Core.View.WindowInsetsControllerCompat(window,window.DecorView).AppearanceLightStatusBars=false;
+        });
+#endif
+    }
+
 }

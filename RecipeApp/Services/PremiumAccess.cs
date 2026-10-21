@@ -21,7 +21,7 @@ public static class PremiumAccess
             try{var plan=await PlanService.RefreshAsync();AccountSession.Check(account);if(PremiumEntitlement.IsActive(plan,DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()))return true;}
             catch(Exception){AccountSession.Check(account);if(HasCached)return true;throw new InvalidOperationException("Your Premium access could not be checked. Connect and retry; your saved recipes and libraries are kept.");}
         }
-        if(await Shell.Current.DisplayAlert("Mealsy Premium",feature+" is included in Premium, for solo cooks and households. Basic recipes, shopping and meal planning remain free.\n\n"+SubscriptionPricing.Summary+" at the UK reference price.","View Premium","Keep using free"))await AppNavigation.Open(new RecipeApp.Views.PlanPage());
+        if(await Shell.Current.DisplayAlert("Mealsy Premium",feature+" is included in Premium, for solo cooks and households. Basic recipes, shopping and meal planning remain free.\n\n"+"View Premium for the current app-store price and available plans.","View Premium","Keep using free"))await AppNavigation.Open(new RecipeApp.Views.PlanPage());
         return false;
     }
 }

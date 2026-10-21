@@ -9,6 +9,7 @@ public class FoodFeedPage : ContentPage
     private readonly ObservableCollection<FoodPost> posts = new();
     private readonly Label status = Text("Discover what’s cooking", 16);
     private readonly Button more;
+    private readonly LoadingIndicator loading=new("Loading the food community…",false);
     private FeedCursor cursor;
     private bool busy, moderator;
     private string account;
@@ -31,9 +32,11 @@ public class FoodFeedPage : ContentPage
                 Button("For you",()=>{mode="forYou";return Load(true);}),
                 Button("Following",()=>{mode="following";return Load(true);}),
                 Button("Latest",()=>{mode="latest";return Load(true);})}}, search,
+            Button("Friends feed",()=>AppNavigation.Open(new FriendsPage("feed"))),
+            Button("Friends & requests",()=>AppNavigation.Open(new FriendsPage())),
             Button("Search all posts", SearchPosts),
             Button("Businesses & recipe creators",()=>Navigation.PushAsync(new BusinessDirectoryPage())),
-            status, new RecipeApp.Controls.AdBanner() } };
+            status, loading, new RecipeApp.Controls.AdBanner() } };
         search.SearchButtonPressed += async (_, _) => await SearchPosts();
         search.TextChanged += async (_, e) => { if (string.IsNullOrEmpty(e.NewTextValue) && activeSearch.Length>0) await SearchPosts(); };
         var collection = new CollectionView { ItemsSource = posts, SelectionMode = SelectionMode.None, Header = layout, Footer = more,
@@ -49,19 +52,19 @@ public class FoodFeedPage : ContentPage
         ToolbarItems.Add(new ToolbarItem("Activity",null,async()=>await Navigation.PushAsync(new ActivityPage())));
         ToolbarItems.Add(new ToolbarItem("Food interests & following", null, async () => {
             try { await Navigation.PushAsync(new FeedPreferencesPage(await FoodFeedService.Preferences())); }
-            catch (Exception) { await DisplayAlert("Food interests", "Sign in and connect to update your interests.", "OK"); }
+            catch (Exception) { await DisplayAlert("Food interests", "Sign in and connect to update your interests.", AppLocalization.Text("OK")); }
         }));
     }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        visible=true;
+        visible=true;loading.Message="Opening your food community…";loading.IsBusy=true;
         var uid = AccountSession.UserId;
         if (uid != null && promptedAccount != uid)
         {
             try {
                 var preferences = await FoodFeedService.Preferences(); AccountSession.Check(uid); promptedAccount = uid;
-                if (!preferences.SetupComplete) { await Navigation.PushAsync(new FeedPreferencesPage(preferences)); return; }
+                if (!preferences.SetupComplete) { loading.IsBusy=false;await Navigation.PushAsync(new FeedPreferencesPage(preferences)); return; }
             } catch (Exception) { status.Text = "Interests unavailable. You can try again from the menu."; }
         }
         await Load(true);
@@ -73,9 +76,9 @@ public class FoodFeedPage : ContentPage
         button.SetDynamicResource(VisualElement.BackgroundColorProperty, "ThemeAccent");
         button.Clicked += async (_, _) => {
             button.IsEnabled = false;
-            try { await action(); }
-            catch (HouseholdException e) { await Shell.Current.DisplayAlert("Food feed", e.Message, "OK"); }
-            catch (Exception error) { var reference=AppDiagnostics.Report(error,"ui.action");await Shell.Current.DisplayAlert("Food feed unavailable", "Check your connection and try again. Your local recipes are still available.\nReference: "+reference, "OK"); }
+            try { await ActionProgress.Run(button,action); }
+            catch (HouseholdException e) { await Shell.Current.DisplayAlert("Food feed", e.Message, AppLocalization.Text("OK")); }
+            catch (Exception error) { var reference=AppDiagnostics.Report(error,"ui.action");await Shell.Current.DisplayAlert("Food feed unavailable", "Check your connection and try again. Your local recipes are still available.\nReference: "+reference, AppLocalization.Text("OK")); }
             finally { button.IsEnabled = true; }
         };
         return button;
@@ -85,8 +88,8 @@ public class FoodFeedPage : ContentPage
         if (busy) { reloadPending |= reset; return; }
         var uid = HouseholdService.UserId;
         if (uid != account || reset) { posts.Clear(); cursor = null; count = 0; account = uid; }
-        if (uid == null) { status.Text = "Sign in on the Account tab to join the Mealsy community."; more.IsVisible = false; return; }
-        busy = true; status.Text = "Setting the table…";
+        if (uid == null) { status.Text = "Sign in on the Account tab to join the Mealsy community."; more.IsVisible = false; loading.IsBusy=false;return; }
+        busy = true; loading.Message=reset?"Refreshing the food community…":"Loading more posts…";loading.IsBusy=true;status.Text = "Setting the table…";
         try
         {
             var page = await FoodFeedService.Load(reset ? null : cursor, Mode, activeSearch);
@@ -99,13 +102,14 @@ public class FoodFeedPage : ContentPage
         }
         catch (HouseholdException e) { status.Text = e.Message; more.IsVisible = true; }
         catch (Exception error) { var reference=AppDiagnostics.Report(error,"feed.load");status.Text = "Feed unavailable. Check your connection; pull down to retry.\nReference: "+reference; more.IsVisible = true; }
-        finally { busy = false; if (reloadPending) { reloadPending = false; await Load(true); } }
+        finally { busy = false; loading.IsBusy=false;if (reloadPending) { reloadPending = false; await Load(true); } }
     }
     private View Card(FoodPost post)
     {
+        if(post.PrivacyManaged)return SocialPage.Post(post);
         var body = new VerticalStackLayout { Spacing = 10 };
         if(post.Promoted)body.Add(Text("Promoted",13,true));
-        body.Add(Text(post.AuthorName, 17, true));
+        body.Add(Button(post.AuthorName+" · View profile",()=>AppNavigation.Open(new FriendProfilePage(post.AuthorId))));
         if(!string.IsNullOrEmpty(post.BusinessId)) {
             body.Add(Text(post.BusinessVerified?"Verified business / creator":"Business / creator",13,true));
             body.Add(Button("View creator profile",()=>Navigation.PushAsync(new BusinessPublicPage(post.BusinessId))));
@@ -132,19 +136,20 @@ public class FoodFeedPage : ContentPage
         });
         body.Add(like);
         body.Add(Button($"Comments · {post.CommentCount}", async () => { EnsureAccount(); await Navigation.PushAsync(new FeedCommentsPage(post.Id, moderator)); }));
+        body.Add(Button("Share post…",()=>ContentSharing.SharePost(post)));
         body.Add(Button("Post options", async () => {
             EnsureAccount();
             var owner = post.AuthorId == account;
             var choices = new List<string> { "Report post" }; if (owner || moderator) choices.Add("Delete post"); if (moderator) choices.Add("Hide post");
             if(owner&&post.Recipe!=null)choices.Add("Promotion information");
             var choice = await DisplayActionSheet("Post options", "Cancel", null, choices.ToArray());
-            if(choice=="Promotion information"){await DisplayAlert("Promoted recipes","Promotion infrastructure is being prepared. Paid checkout is not available yet. Active promotions will always be labelled and must pass the same safety checks.","OK");return;}
+            if(choice=="Promotion information"){await DisplayAlert("Promoted recipes","Promotion infrastructure is being prepared. Paid checkout is not available yet. Active promotions will always be labelled and must pass the same safety checks.",AppLocalization.Text("OK"));return;}
             if (choice == "Report post") {
                 var reason = await DisplayPromptAsync("Report post", "Tell the moderators what is wrong with this post.", maxLength: 500);
-                if (!string.IsNullOrWhiteSpace(reason)) { EnsureAccount(); await FoodFeedService.Call<object>(new { action = "report", postId = post.Id, reason }); await DisplayAlert("Report received", "A moderator can review your report.", "OK"); }
+                if (!string.IsNullOrWhiteSpace(reason)) { EnsureAccount(); await FoodFeedService.Call<object>(new { action = "report", postId = post.Id, reason }); await DisplayAlert("Report received", "A moderator can review your report.", AppLocalization.Text("OK")); }
             }
             else if (choice is "Delete post" or "Hide post") {
-                if (!await DisplayAlert(choice + "?", choice == "Delete post" ? "This removes the shared post. Your original private recipe is kept." : "This hides the post from the community.", "Continue", "Cancel")) return;
+                if (!await DisplayAlert(choice + "?", choice == "Delete post" ? "This removes the shared post. Your original private recipe is kept." : "This hides the post from the community.", AppLocalization.Text("Continue"), AppLocalization.Text("Cancel"))) return;
                 EnsureAccount(); await FoodFeedService.Call<object>(new { action = choice == "Delete post" ? "delete" : "moderate", postId = post.Id, hidden = true }); await Load(true);
             }
         }));
@@ -183,14 +188,14 @@ public class FeedRecipePage : ContentPage
         body.Add(reader);
         var saved = false;
         body.Add(FoodFeedPage.Button("Save to my recipes", async () => {
-            if (saved) { await DisplayAlert("Already saved", "You saved a copy during this visit.", "OK"); return; }
+            if (saved) { await DisplayAlert("Already saved", "You saved a copy during this visit.", AppLocalization.Text("OK")); return; }
             var owner=HouseholdService.UserId;var copy=post.PrivateCopy(owner);
             if(!string.IsNullOrEmpty(post.BusinessId)){
                 var existing=await RecipeService.GetAllRecipes();AccountSession.Check(owner);
-                if(existing.Any(r=>r.FirebaseUID==owner&&r.CloudKey==copy.CloudKey)){saved=true;await DisplayAlert("Already saved","This business recipe is already in your recipe book. Your edited copy has been kept.","OK");return;}
+                if(existing.Any(r=>r.FirebaseUID==owner&&r.CloudKey==copy.CloudKey)){saved=true;await DisplayAlert("Already saved","This business recipe is already in your recipe book. Your edited copy has been kept.",AppLocalization.Text("OK"));return;}
             }
             AccountSession.Check(owner);await RecipeService.AddRecipe(copy); saved = true;
-            await DisplayAlert("Recipe saved", "A private copy is now in your recipe book. Editing it won't change the shared post.", "OK");
+            await DisplayAlert("Recipe saved", "A private copy is now in your recipe book. Editing it won't change the shared post.", AppLocalization.Text("OK"));
         }));
         body.Add(FoodFeedPage.Button("Add ingredients to my shopping list", async () => {
             await Navigation.PushAsync(new ShoppingListMakerPage(new[] { new RecipeShoppingChoice(post.Recipe.ToRecipe("")) { Selected=true,Servings=reader.CurrentServings.ToString() } }));

@@ -14,10 +14,10 @@ public class DiagnosticsPage : ContentPage
         body.Add(ShoppingUi.Text("Send diagnostic reports",17,true));body.Add(toggle);
         body.Add(ShoppingUi.Text("Turn this off to stop collection of new diagnostic reports and discard queued SDK reports. Reports already delivered are unaffected. Recent references remain on this device. Delivery can be delayed while offline or until the next launch.",13));
         body.Add(FoodFeedPage.Button("Send a test diagnostic",async()=>{
-            if(!AppDiagnostics.Enabled){await DisplayAlert("Reporting is off","Enable diagnostic reporting before sending a test.","OK");return;}
+            if(!AppDiagnostics.Enabled){await DisplayAlert("Reporting is off","Enable diagnostic reporting before sending a test.",AppLocalization.Text("OK"));return;}
             var reference=AppDiagnostics.Report(new InvalidOperationException("Synthetic diagnostic"),"diagnostics.test","TEST");
             var state=AppDiagnostics.History().FirstOrDefault(e=>e.Reference==reference)?.Status??"Recorded locally";
-            await DisplayAlert("Test recorded",state+". Check the diagnostics dashboard after relaunching to verify delivery.\nReference: "+reference,"OK");Render();
+            await DisplayAlert("Test recorded",state+". Check the diagnostics dashboard after relaunching to verify delivery.\nReference: "+reference,AppLocalization.Text("OK"));Render();
         }));
         body.Add(ShoppingUi.Text("Recent diagnostic references",21,true));
         var entries=AppDiagnostics.History();

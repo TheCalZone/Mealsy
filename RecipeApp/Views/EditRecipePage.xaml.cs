@@ -11,8 +11,8 @@ public partial class EditRecipePage : ContentPage
     public EditRecipePage()
     {
         InitializeComponent(); BindingContext = model; Content = new RecipeEditorView(model);
-        ToolbarItems.Add(new ToolbarItem("Preview", null, async () => await model.Preview()));
-        ToolbarItems.Add(new ToolbarItem("Save", null, async () => await model.Save()));
+        ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Preview"), null, async () => await model.Preview()));
+        ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Save"), null, async () => await model.Save()));
     }
     protected override async void OnAppearing()
     {
@@ -20,10 +20,10 @@ public partial class EditRecipePage : ContentPage
         try
         {
             var recipe = long.TryParse(RecipeId, out var id) ? await RecipeService.GetRecipe(id) : null;
-            if (recipe == null || !AccountSession.Owns(recipe.FirebaseUID)) { await DisplayAlert("Recipe unavailable", "This recipe no longer exists.", "OK"); await AppNavigation.Back(); return; }
+            if (recipe == null || !AccountSession.Owns(recipe.FirebaseUID)) { await DisplayAlert("Recipe unavailable", "This recipe no longer exists.", AppLocalization.Text("OK")); await AppNavigation.Back(); return; }
             loaded = true; await model.Initialize(recipe);
         }
-        catch (Exception) { await DisplayAlert("Recipe unavailable", "The recipe couldn't be opened. Please return to the recipe book and try again.", "OK"); }
+        catch (Exception) { await DisplayAlert("Recipe unavailable", "The recipe couldn't be opened. Please return to the recipe book and try again.", AppLocalization.Text("OK")); }
     }
     protected override async void OnDisappearing() { base.OnDisappearing(); await model.SaveDraft(); }
 }

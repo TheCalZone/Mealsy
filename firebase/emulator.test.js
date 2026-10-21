@@ -19,6 +19,22 @@ before(async () => {
 });
 after(async () => { if (rules) await rules.cleanup(); if (app) await deleteApp(app); });
 const call = (uid, data) => handle({auth: uid ? {uid, token: {email: `${uid}@example.com`}} : null, data});
+test('shared household weeks enforce real transaction conflicts, privacy and recursive deletion',async()=>{
+ const service=require('./functions/household-meals').createHouseholdMeals(db,{getUser:async()=>({disabled:false})});
+ const invoke=(uid,data)=>service({auth:{uid},data});const householdId='meal-household';
+ await db.doc(`households/${householdId}`).set({owner:'meal-owner',members:{'meal-owner':'Owner','meal-partner':'Partner'}});
+ for(const uid of ['meal-owner','meal-partner'])await db.doc(`householdAccounts/${uid}`).set({householdId});
+ await db.doc('familyGrants/meal-owner').set({active:true,expiresAt:Date.now()+86400000});
+ const weekStart='2026-10-19',meal={id:'b'.repeat(32),date:weekStart,slot:'dinner',title:'Eggs',servings:2,note:'',recipe:null};
+ const save=(uid,expectedVersion,title)=>invoke(uid,{action:'upsertMeal',householdId,weekStart,meal:{...meal,title},expectedVersion});
+ await save('meal-owner',0,'Eggs');await save('meal-owner',0,'Eggs');
+ const edits=await Promise.allSettled([save('meal-owner',1,'Pasta'),save('meal-partner',1,'Rice')]);assert.equal(edits.filter(r=>r.status==='fulfilled').length,1);assert.equal(edits.find(r=>r.status==='rejected').reason.code,'aborted');
+ const week=await invoke('meal-partner',{action:'readWeek',householdId,weekStart});assert.equal(week.revision,2);assert.equal(week.meals[0].version,2);
+ const client=rules.authenticatedContext('meal-partner').firestore();await assertFails(getDoc(doc(client,`households/${householdId}/mealWeeks/${weekStart}`)));await assertFails(setDoc(doc(client,`households/${householdId}/mealWeeks/${weekStart}`),{revision:99}));
+ await db.doc(`households/${householdId}`).update({members:{'meal-owner':'Owner'}});await assert.rejects(invoke('meal-partner',{action:'readWeek',householdId,weekStart}),{code:'permission-denied'});
+ await call('meal-owner',{action:'delete'});await assert.rejects(invoke('meal-owner',{action:'readWeek',householdId,weekStart}),{code:'permission-denied'});
+ await db.recursiveDelete(db.doc(`households/${householdId}`));assert.equal((await db.doc(`households/${householdId}/mealWeeks/${weekStart}`).get()).exists,false);
+});
 test('business collection writes and impression debits use real atomic transactions',async()=>{
  const now=Date.now();await db.doc('businesses/emulator-business').set({owner:'business-owner',name:'Test kitchen',verified:true,members:{'business-owner':'owner'},createdAt:now});
  await db.doc('feedPosts/emulator-business-recipe').set({businessId:'emulator-business',authorId:'business-owner',recipe:{title:'Soup'},createdAt:now,moderation:{status:'approved'},hidden:false});
