@@ -10,7 +10,8 @@ internal sealed class ShoppingSectionDrag
     private readonly Func<string> context;
     private readonly Action started,finished;
 #if !ANDROID
-    private string source;
+    private string source,sourceAccount,sourceContext;
+    private bool Current()=>source!=null&&allowed()&&sourceAccount==AccountSession.UserId&&sourceContext==context?.Invoke();
     private readonly List<VisualElement> highlights=new();
 
 #endif
@@ -28,7 +29,10 @@ internal sealed class ShoppingSectionDrag
 #if ANDROID
         direct?.Cancel();
 #else
-        source=null;foreach(var view in highlights)view.Opacity=1;highlights.Clear();
+        var wasDragging=source!=null;
+        source=null;sourceAccount=null;sourceContext=null;
+        foreach(var view in highlights)view.Opacity=1;highlights.Clear();
+        if(wasDragging)finished?.Invoke();
 #endif
     }
     public void Attach(View row,View handle,Func<string> section)
@@ -37,13 +41,13 @@ internal sealed class ShoppingSectionDrag
         Direct.Register(row,_=>section());Direct.Attach(handle,section);
 #else
         var drag=new DragGestureRecognizer{CanDrag=true};
-        drag.DragStarting+=(_,e)=>{Cancel();if(!allowed()){e.Cancel=true;return;}source=section();e.Data.Text=source;row.Opacity=.55;highlights.Add(row);};
+        drag.DragStarting+=(_,e)=>{Cancel();if(!allowed()||!order().Contains(section())){e.Cancel=true;return;}source=section();sourceAccount=AccountSession.UserId;sourceContext=context?.Invoke();e.Data.Text=source;row.Opacity=.55;highlights.Add(row);started?.Invoke();};
         drag.DropCompleted+=(_,_)=>Cancel();
         var drop=new DropGestureRecognizer{AllowDrop=true};
-        drop.DragOver+=(_,e)=>{if(source==null||!allowed()){e.AcceptedOperation=DataPackageOperation.None;return;}e.AcceptedOperation=DataPackageOperation.Copy;if(section()!=source){row.Opacity=.65;if(!highlights.Contains(row))highlights.Add(row);}};
+        drop.DragOver+=(_,e)=>{if(!Current()){e.AcceptedOperation=DataPackageOperation.None;return;}e.AcceptedOperation=DataPackageOperation.Copy;if(section()!=source){row.Opacity=.65;if(!highlights.Contains(row))highlights.Add(row);}};
         drop.DragLeave+=(_,_)=>{if(section()!=source)row.Opacity=1;};
         drop.Drop+=(_,e)=>{
-            try{e.Handled=true;if(source==null||!allowed())return;var target=section();var after=(e.GetPosition(row)?.Y??0)>row.Height/2;var moved=ShoppingSectionOrder.Drop(order(),source,target,after);Cancel();save(moved);}
+            try{e.Handled=true;if(!Current())return;var target=section();var after=(e.GetPosition(row)?.Y??0)>row.Height/2;var moved=ShoppingSectionOrder.Drop(order(),source,target,after);Cancel();save(moved);}
             catch(Exception error){Cancel();_=Shell.Current.DisplayAlert("Section order",error is InvalidOperationException?error.Message:"Couldn’t save the section order. Please try again.",AppLocalization.Text("OK"));}
             finally{Cancel();}
         };

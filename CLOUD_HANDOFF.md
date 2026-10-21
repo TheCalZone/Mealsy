@@ -442,3 +442,15 @@ Warmup stores per-account last-view snapshots (one household list and the curren
 Home's household card shows today's meal names, remaining shared shopping count, last-checked timestamps, direct list/plan links and explicit Refresh. The shared-week page can render a saved current week while refreshing. Shopping still checks for pending local edits every five seconds while visible, but clean network reads are reused for 60 seconds; pending patches are not delayed by read caching. Polling is disabled while App.IsForeground is false. Failed shopping sync attempts back off for one minute unless the user manually refreshes. Other household members' changes can therefore take about a minute to appear in an open list; Refresh fetches immediately.
 
 No Firebase deployment or schema change is needed. Validate on two phones: cold/warm launch and resume, cached Home view after status verification, dirty/offline list edits during preload, current-week boundary, manual refresh, sign-out/account switching, household leave/removal/expiry, failed network then retry, meal edit/delete/latest version and widget add. Unit tests cover coalescing, expiry/checked timestamps, force refresh, account/scope/week keys, mutation races, failure recovery, result cloning and JSON patch-ack reuse. Actual native/UI/Firebase billing behaviour still needs device/project verification.
+
+
+## iOS synchronisation — 21 October 2026
+
+`codex/ios-client-support` merges Android source through `38bb44c`, including
+shared shopping scroll fixes and household-first caching. See IOS_SETUP.md for
+feature parity limits and the exact Mac/TestFlight hookup checklist. The new
+`scripts/build-ios.sh` runs configuration/readiness checks before a simulator or
+signed archive build; it refuses the current legacy toolchain. No native iOS
+build, deployment, StoreKit, ads, APNs, WidgetKit or share extension is claimed.
+Native MAUI section dragging now uses the compact-preview lifecycle and checks
+the account/list context. Android custom preview/autoscroll stays Android-only.

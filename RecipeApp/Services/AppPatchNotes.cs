@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,21), "iOS client handoff refreshed", new[] {
+            "The iOS client branch now includes the latest shared shopping, recipe, meal-plan and household loading improvements.",
+            "iOS section dragging uses compact-section callbacks and checks that its account and list remain unchanged. Native device verification and release setup remain required."
+        }),
         new(new(2026,10,21), "Keep your place while planning a shop", new[] {
             "Switching between Snacks and Essentials updates the checklist in place instead of rebuilding the screen and jumping to the top.",
             "Cupboard-check and review screens remember their scroll positions when moving between steps or returning from an item editor."

@@ -1,6 +1,71 @@
 # Mealsy iOS client branch
 
-## Current assessment — 18 October 2026
+## Latest handoff — 21 October 2026
+
+Use **`codex/ios-client-support`** for the iOS handoff. It now merges the Android
+source through `38bb44c`; this is the same shared app, not a separate rewrite.
+The older preparation branch is no longer the version to build. Android's source
+branch stays separate; iOS-specific follow-up work is committed here.
+
+### Changes carried across
+
+- Shopping creator Snacks/Essentials update in place; cupboard and review steps
+  restore their positions after navigation or editing.
+- Household shopping/current-week meals preload first. Home shows today's meals
+  and remaining items, with timestamps and explicit refresh. One-minute read reuse,
+  request coalescing, failure backoff and background-poll pausing apply on iOS too.
+  Existing account sync is retained. No backend deployment is required for these.
+- Ingredient recognition, pasted-list cleanup, suggestions, local recipe finder,
+  quantity formatting, themes, languages, recipe/meal-planner improvements and
+  account loading indicators all use the current shared source.
+- iOS retains handle-only native MAUI item/section dragging. Sections now invoke
+  compact-preview/restore callbacks and reject a drag if its account/list changes.
+  Android's custom floating preview and continuous edge scrolling are Android-only;
+  equivalent iOS animation/autoscroll is not implemented or verified.
+- Browser Share to Mealsy and the home-screen quick-add widget remain Android-only.
+  iOS uses link paste in the importer; no iOS share extension or WidgetKit target
+  is supplied. Social entry points remain hidden on both platforms.
+
+### Mac hookup and deployment entry point
+
+1. Pull this branch on a Mac. Run `python3 scripts/check-ios-config.py` and
+   `python3 scripts/ios-preflight.py`. The metadata check currently passes; the
+   preflight correctly blocks the retained legacy .NET/MAUI/Firebase baseline.
+2. Complete the toolchain/Firebase migration described below on the Mac. Native
+   build/link tests must choose the compatible package/workload set; this Linux
+   handoff has not upgraded or validated those dependencies.
+3. Run `bash scripts/build-ios.sh simulator`. It selects the project's iOS target
+   and the Mac's simulator architecture, and builds without signing. It runs both
+   checks first and deliberately refuses the unsupported legacy baseline.
+4. In Apple Developer/App Store Connect register the exact bundle ID, enable the
+   chosen signing team, install its certificate/profile locally and confirm that
+   the bundled Firebase iOS app belongs to the intended project. Test native
+   Auth, permission-protected household reads/writes and account switching against
+   that backend before distribution. Never embed admin credentials in the app.
+5. After simulator and physical-device checks, export `IOS_SIGNING_IDENTITY`,
+   `IOS_PROVISIONING_PROFILE` and a new positive integer `IOS_BUILD_NUMBER` locally,
+   then run `bash scripts/build-ios.sh archive`. The script creates an archive/IPA;
+   it does not upload. Validate the archive's privacy manifests, signing, version,
+   symbols and entitlements in Xcode Organizer, then upload to TestFlight.
+6. Start with internal testers. Exercise two family accounts, offline edits,
+   expiry/revocation, day/week rollover, background/resume, scroll restoration,
+   compact section drag/drop/cancel, photos, recipe import and invitation links.
+   Confirm free access and existing Premium entitlement behaviour. Apple purchase,
+   ad, push, widget and browser-share features must remain unavailable until their
+   native/server implementations are completed.
+
+**Status:** shared source synchronised and hookup instructions prepared; **not
+App Store ready**. A signed iPhone build, native Firebase verification, supported
+release migration, StoreKit/server verification and store disclosures remain open.
+No Apple or Firebase production configuration was deployed by this change.
+
+Validation on this handoff: all 408 shared tests pass; public iOS metadata checks
+and shell syntax checks pass. The native iOS build attempt stops at NETSDK1178
+because this Linux installation has no Microsoft.ios.Sdk.net8 workload. The
+Mac build script correctly exits with a clear message on Linux. These checks do
+not establish native iOS compilation, linking, signing or runtime behaviour.
+
+## Previous assessment — 18 October 2026
 
 The preparation commit has now been integrated into the latest Android branch,
 including the newer shopping drag/autocomplete and account loading fixes. Social
@@ -9,7 +74,7 @@ new authenticated household meal-plan backend use the same accounts on Android
 and iPhone; no second subscription per family member is required.
 
 **The next milestone is a signed iPhone test build of recipes, shopping and shared
-household plans, not enabling social, ads or Apple purchases.** This Windows host
+household plans, not enabling social, ads or Apple purchases.** This Linux cloud host
 has no connected Mac, XcodeBuildMCP or iPhone simulator. No IPA/native iOS success
 is claimed. The existing preparation is a development baseline, not a current
 App Store release configuration.
@@ -109,7 +174,7 @@ requirements.
 On a compatible Mac, from the repository root:
 
 ```sh
-git switch codex/android-runtime-fixes
+git switch codex/ios-client-support
 python3 scripts/check-ios-config.py
 dotnet workload restore RecipeApp/RecipeApp.csproj -p:TargetFrameworks=net8.0-ios
 dotnet build RecipeApp/RecipeApp.csproj -f net8.0-ios -p:TargetFrameworks=net8.0-ios -c Debug -r iossimulator-arm64 -p:EnableCodeSigning=false
