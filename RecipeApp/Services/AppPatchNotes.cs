@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,21), "Keep your place while planning a shop", new[] {
+            "Switching between Snacks and Essentials updates the checklist in place instead of rebuilding the screen and jumping to the top.",
+            "Cupboard-check and review screens remember their scroll positions when moving between steps or returning from an item editor."
+        }),
         new(new(2026,10,21), "Faster household overview with fewer repeat reads", new[] {
             "Household shopping and the current shared meal week preload before the existing account sync. Home shows today's household meals, items left to buy, saved-view timestamps and direct shortcuts.",
             "Screens share recent read results and simultaneous requests. Unchanged shopping checks reuse results for a minute instead of contacting the server every five seconds; edits and manual refresh still reach the backend.",

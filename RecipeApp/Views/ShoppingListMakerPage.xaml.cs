@@ -17,6 +17,8 @@ public partial class ShoppingListMakerPage : ContentPage
     private int stage;
     private string recipeSearch="", librarySearch="", recipeTag="All";
     private bool librarySnacks;
+    private readonly Dictionary<int,double> scrollPositions=new();
+    private int renderedStage=-1;
     public ShoppingListMakerPage() : this((IEnumerable<RecipeShoppingChoice>)null) { }
     public ShoppingListMakerPage(bool snacks) : this() { stage=1; librarySnacks=snacks; }
     public ShoppingListMakerPage(IEnumerable<RecipeShoppingChoice> recipes, IEnumerable<MealPlanning.TypedShoppingMeal> meals = null)
@@ -30,7 +32,7 @@ public partial class ShoppingListMakerPage : ContentPage
         ToolbarItems.Add(new ToolbarItem("Cupboard ingredients",null,async()=>await Navigation.PushAsync(new CupboardIngredientsPage())));
         ToolbarItems.Add(new ToolbarItem("Start over",null,async () => {
             if (!await DisplayAlert("Start a fresh plan?","Your saved shopping list and reusable checklists will be kept.","Start over","Keep planning")) return;
-            model.Reset(); typedMeals.Clear(); stage=0; Render();
+            model.Reset(); typedMeals.Clear(); scrollPositions.Clear(); renderedStage=-1; stage=0; Render();
         }) { Order=ToolbarItemOrder.Secondary });
     }
     protected override async void OnAppearing()
@@ -41,7 +43,7 @@ public partial class ShoppingListMakerPage : ContentPage
             var account=model.Account;
             if (seed!=null) { await model.UseRecipes(seed); seed=null; stage=1; }
             else await model.Load();
-            if (account!=model.Account) { stage=0; typedMeals.Clear(); }
+            if (account!=model.Account) { stage=0; typedMeals.Clear(); scrollPositions.Clear(); renderedStage=-1; }
             if (stage>0) model.BuildReview(); Render();
         }
         catch (Exception e) { await DisplayAlert("Creator unavailable",e is InvalidOperationException ? e.Message : "Your recipes and checklists couldn't be loaded. Please reopen this screen.",AppLocalization.Text("OK")); }
@@ -49,6 +51,9 @@ public partial class ShoppingListMakerPage : ContentPage
     private void UpdateSummary() => summary.Text=model.Summary + (stage==2 ? $" · {model.Review.Count(r => r.Included)} items to buy" : "");
     private void Render()
     {
+        if (pane.Content is ScrollView previous && renderedStage>=0)
+            scrollPositions[renderedStage]=previous.ScrollY;
+        renderedStage=stage;
         heading.Text=stage switch {0=>AppLocalization.Text("1  Choose your meals"),1=>AppLocalization.Text("2  Check the cupboard"),_=>AppLocalization.Text("3  Ready for your shop")}; progress.Progress=(stage+1)/3d; UpdateSummary(); footer.Clear();
         if (stage==0) RenderRecipes(); else if (stage==1) RenderChecks(); else RenderReview();
         if (stage>0) footer.Add(ShoppingUi.Button("← Back",() => { stage--; Render(); return Task.CompletedTask; },true));
@@ -95,10 +100,21 @@ public partial class ShoppingListMakerPage : ContentPage
         body.Add(ShoppingUi.Text(AppLocalization.Text("Your reusable checklists"),22,true));
         body.Add(ShoppingUi.Text(AppLocalization.Text("Nothing here is added automatically. Tick what's running low for this trip."),14));
         var tabs=new Grid { ColumnDefinitions=new() {new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8 };
-        tabs.Add(ShoppingUi.Button(librarySnacks ? "Essentials" : "✓ Essentials",() => { librarySnacks=false; RenderChecks(); return Task.CompletedTask; },true),0);
-        tabs.Add(ShoppingUi.Button(librarySnacks ? "✓ Snacks" : "Snacks",() => { librarySnacks=true; RenderChecks(); return Task.CompletedTask; },true),1); body.Add(tabs);
-        var search=new SearchBar { Text=librarySearch,Placeholder="Search this checklist" };
         var entries=new VerticalStackLayout { Spacing=10 };
+        Button essentials=null, snacks=null, add=null;
+        void SelectChecklist(bool isSnack)
+        {
+            if (librarySnacks==isSnack) return;
+            librarySnacks=isSnack;
+            essentials.Text=isSnack ? "Essentials" : "✓ Essentials";
+            snacks.Text=isSnack ? "✓ Snacks" : "Snacks";
+            add.Text="+ Save a " + (isSnack ? "snack" : "cupboard essential");
+            Filter();
+        }
+        essentials=ShoppingUi.Button(librarySnacks ? "Essentials" : "✓ Essentials",() => { SelectChecklist(false); return Task.CompletedTask; },true);
+        snacks=ShoppingUi.Button(librarySnacks ? "✓ Snacks" : "Snacks",() => { SelectChecklist(true); return Task.CompletedTask; },true);
+        tabs.Add(essentials,0); tabs.Add(snacks,1); body.Add(tabs);
+        var search=new SearchBar { Text=librarySearch,Placeholder="Search this checklist" };
         void Filter()
         {
             entries.Clear(); var visible=model.Library.Where(i => i.IsSnack==librarySnacks && (i.Name ?? "").Contains(librarySearch,StringComparison.OrdinalIgnoreCase)).ToList();
@@ -114,8 +130,9 @@ public partial class ShoppingListMakerPage : ContentPage
             }
         }
         search.TextChanged += (_,e) => {librarySearch=e.NewTextValue ?? ""; Filter();}; body.Add(search);
-        body.Add(ShoppingUi.Button("+ Save a " + (librarySnacks ? "snack" : "cupboard essential"),async () => await Navigation.PushAsync(new ShoppingExtraEditorPage(model,snack:librarySnacks)),true));
-        body.Add(entries); Filter(); pane.Content=new ScrollView {Content=body};
+        add=ShoppingUi.Button("+ Save a " + (librarySnacks ? "snack" : "cupboard essential"),async () => await Navigation.PushAsync(new ShoppingExtraEditorPage(model,snack:librarySnacks)),true);
+        body.Add(add);
+        body.Add(entries); Filter(); SetScrollBody(body);
     }
     private void RenderTypedMealChecks(VerticalStackLayout body)
     {
@@ -159,7 +176,27 @@ public partial class ShoppingListMakerPage : ContentPage
         {
             body.Add(ShoppingUi.Text(group.Key,21,true)); foreach (var row in group) body.Add(ReviewCard(row,true));
         }
-        pane.Content=new ScrollView {Content=body};
+        SetScrollBody(body);
+    }
+    private void SetScrollBody(VerticalStackLayout body)
+    {
+        var scroll=new ScrollView {Content=body};
+        var target=scrollPositions.GetValueOrDefault(stage);
+        if (target>0)
+        {
+            // Restore after the new content has been measured, including when
+            // returning from an editor. A shorter list naturally clamps the offset.
+            EventHandler measured=null;
+            measured=(_,_) => {
+                if (body.Height<=0) return;
+                body.SizeChanged-=measured;
+                Dispatcher.Dispatch(async () => {
+                    if (pane.Content==scroll) await scroll.ScrollToAsync(0,target,false);
+                });
+            };
+            body.SizeChanged+=measured;
+        }
+        pane.Content=scroll;
     }
     private View ReviewCard(ShoppingReviewItem row, bool edit)
     {
