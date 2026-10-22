@@ -12,6 +12,7 @@ public static class MonetizationConfig
     // Configure your own IDs, app-ads.txt, privacy policy, and UMP messages before enabling live ads.
     public static bool LiveAdsConfigured => false;
     public static string LiveBannerId => "";
-    public static string PrivacyPolicyUrl => "";
+    public static string PrivacyPolicyUrl => "https://thecalzone.github.io/Mealsy/privacy/";
+    public const string AccountDeletionUrl = "https://thecalzone.github.io/Mealsy/delete-account/";
     public const string TermsUrl = "https://play.google.com/about/play-terms/";
 }

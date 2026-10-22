@@ -1,0 +1,36 @@
+name: Publish Mealsy privacy pages
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/android-runtime-fixes]
+    paths:
+      - firebase/desktop/privacy/**
+      - firebase/desktop/delete-account/**
+      - scripts/build-public-policies.py
+      - .github/workflows/publish-policies.yml
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: mealsy-public-policies
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/build-public-policies.py --output "$RUNNER_TEMP/policies-site"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/policies-site
+      - name: Deploy public policies
+        id: deployment
+        uses: actions/deploy-pages@v4
