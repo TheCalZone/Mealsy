@@ -83,6 +83,7 @@ public partial class Homepage : ContentPage
         },true)}}));
         var shortcuts=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},RowDefinitions=new(){new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8,RowSpacing=8};
         shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("+ New recipe"),()=>AppNavigation.Open(new AddRecipePage())),0,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Plan a shop"),()=>AppNavigation.Open(new ShoppingListMakerPage()),true),1,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Recipe book"),()=>AppNavigation.Root("RecipePage"),true),0,1);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Weekly meals"),()=>AppNavigation.Root("MealPlanOverviewPage"),true),1,1);body.Add(shortcuts);
+        body.Add(new PremiumBenefitsCard());
         var plan=await RecipeService.GetMealPlan(account);AccountSession.Check(account);var today=plan?.Days.FirstOrDefault(d=>plan.WeekStart.AddDays(d.MealDayIndex).Date==DateTime.Today);
         var meals=new VerticalStackLayout{Spacing=9};meals.Add(ShoppingUi.Text(AppLocalization.Text("On the menu today"),23,true));var planned=false;
         if(today!=null)for(var slot=0;slot<3;slot++)

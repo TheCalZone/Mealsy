@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Discover Mealsy Premium", new[] {
+            "Home and Account now show a Premium benefits card for free users, highlighting recipe-link importing, reusable weeks, saved shopping trips and household sharing.",
+            "The card opens the existing features and subscription pages without making a purchase. It hides for active Premium members, including covered family members, and Not now snoozes it for seven days. No extra cloud requests are made."
+        }),
         new(new(2026,10,21), "iPhone widget and recipe sharing", new[] {
             "Native iOS extension source now supplies a medium quick-shopping widget. Add opens Mealsy's quick-add screen; checklist and sliders open the selected list and list selection.",
             "Share to Mealsy accepts browser recipe links into a local inbox. Open Mealsy to review or discard a link before using the existing importer. Apple App Group/signing setup and native Mac verification are required."
