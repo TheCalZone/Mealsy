@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Discover Mealsy Premium", new[] {
+            "Home and Account now show a Premium benefits card for free users, highlighting recipe-link importing, reusable weeks, saved shopping trips and household sharing.",
+            "The card opens the existing features and subscription pages without making a purchase. It hides for active Premium members, including covered family members, and Not now snoozes it for seven days. No extra cloud requests are made."
+        }),
         new(new(2026,10,21), "Keep your place while planning a shop", new[] {
             "Switching between Snacks and Essentials updates the checklist in place instead of rebuilding the screen and jumping to the top.",
             "Cupboard-check and review screens remember their scroll positions when moving between steps or returning from an item editor."
