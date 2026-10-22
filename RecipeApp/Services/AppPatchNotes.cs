@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Privacy and release-readiness review", new[] {
+            "Settings and Account now offer privacy/data information, automated Firebase account-deletion requests with recent password confirmation, and an email fallback. Public privacy and deletion pages are supplied for publisher review and deployment.",
+            "Optional diagnostics default to off when no choice was saved; Android private-cache backup and advertising-ID permission are disabled in this source. Existing explicit diagnostics choices remain.",
+            "This is a test release. Automated deletion needs the new Firebase functions, rules and indexes deployed and verified. The audit also identifies target SDK/native compatibility, published policies and store setup as release blockers."
+        }),
         new(new(2026,10,22), "Eligible seven-day Premium trials", new[] {
             "Google Play subscription options can now show an eligible seven-day trial, its renewal price and cancellation terms. Users without an eligible trial see the standard subscription price.",
             "Checkout uses the selected store offer and stops if its terms change. Payment details stay with Google Play. Trial availability requires Play Console configuration and an eligible Play account.",

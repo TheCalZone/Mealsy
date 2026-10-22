@@ -57,7 +57,7 @@ public static class HouseholdService
     }
     private static async Task<T> CallEndpointUncachedAsync<T>(string endpoint, object data, bool forceRefresh = false)
     {
-        var service=endpoint==HouseholdMealsService.Endpoint?"householdMeals":endpoint==Endpoint?"household":endpoint==FoodFeedService.Endpoint?"foodFeed":endpoint==AdminService.Endpoint?"administration":endpoint==BusinessService.Endpoint?"business":endpoint==RecipeApp.Views.CampaignWalletPage.Endpoint?"promotions":endpoint.EndsWith("/notifications",StringComparison.Ordinal)?"notifications":"billing";
+        var service=endpoint.EndsWith("/accountDeletion",StringComparison.Ordinal)?"accountDeletion":endpoint==HouseholdMealsService.Endpoint?"householdMeals":endpoint==Endpoint?"household":endpoint==FoodFeedService.Endpoint?"foodFeed":endpoint==AdminService.Endpoint?"administration":endpoint==BusinessService.Endpoint?"business":endpoint==RecipeApp.Views.CampaignWalletPage.Endpoint?"promotions":endpoint.EndsWith("/notifications",StringComparison.Ordinal)?"notifications":"billing";
         var action=JsonSerializer.SerializeToElement(data).TryGetProperty("action",out var property)?property.GetString():null;
         var operation=DiagnosticPolicy.Operation(service,action);
         try {

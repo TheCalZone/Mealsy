@@ -11,7 +11,7 @@ public static class AccountSession
     public static string Email { get { try{return CrossFirebaseAuth.Current.CurrentUser?.Email;}catch(Exception){return null;} } }
     public static bool Owns(string owner)=>UserId==null ? string.IsNullOrEmpty(owner) : owner==UserId;
     public static string Status=>UserId==null?"Device mode · Your data stays on this device":Preferences.Get("Account.sync."+UserId,"Signed in · Cloud sync hasn't run yet");
-    public static void Check(string uid){if(UserId!=uid)throw new InvalidOperationException("Your account changed. Reopen this screen before continuing.");}
+    public static void Check(string uid){if(AccountDeletionService.IsPending(uid))throw new InvalidOperationException("Account deletion is pending. Editing and syncing are stopped.");if(UserId!=uid)throw new InvalidOperationException("Your account changed. Reopen this screen before continuing.");}
     public static AppUser CachedProfile
     {
         get{var uid=UserId;if(uid==null)return null;try{return JsonSerializer.Deserialize<AppUser>(Preferences.Get("Account.profile."+uid,"null"))??new AppUser {FirebaseUID=uid,Email=Email};}catch(JsonException){return new AppUser {FirebaseUID=uid,Email=Email};}}
@@ -55,6 +55,7 @@ public static class AccountSession
         catch(FirebaseAuthException e){if(e.Reason.ToString()!="UserNotFound")throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.reset",e.Reason.ToString()));}
         catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.reset"));}
     }
+    internal static async Task WaitForSyncBeforeDeletion(){await sync.WaitAsync();sync.Release();}
     public static async Task SignOut(){
 #if ANDROID
         await RecipeApp.Platforms.Android.ActivityNotifications.Disable();

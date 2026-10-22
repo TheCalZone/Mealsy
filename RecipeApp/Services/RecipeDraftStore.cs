@@ -10,6 +10,7 @@ public static class RecipeDraftStore
     public static string PathFor(string account, long recipeId) => Path.Combine(FileSystem.AppDataDirectory, "recipe-drafts", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes((account == null ? "guest" : "user:" + account) + ":" + recipeId))) + ".json");
     public static async Task Save(string account, RecipeDraft draft)
     {
+        if(account!=null&&Preferences.Get("Mealsy.deletion.pending","")==account)throw new InvalidOperationException("Account deletion is pending. Draft saving is stopped.");
         draft.SavedAt = DateTimeOffset.UtcNow;
         var text = JsonSerializer.Serialize(draft); var path = PathFor(account, draft.Recipe.Id);
         await gate.WaitAsync();

@@ -42,7 +42,7 @@ public class PlanPage : ContentPage
 #endif
             },true),
             ShoppingUi.Button("Privacy policy",async()=>{
-                if(string.IsNullOrWhiteSpace(MonetizationConfig.PrivacyPolicyUrl)){await DisplayAlert("Privacy policy","The publisher hasn't supplied a privacy policy link yet. Live advertising remains disabled.","OK");return;}
+                if(string.IsNullOrWhiteSpace(MonetizationConfig.PrivacyPolicyUrl)){await AppNavigation.Open(new PrivacyAndDataPage());return;}
                 await Launcher.Default.OpenAsync(MonetizationConfig.PrivacyPolicyUrl);
             },true),
             ShoppingUi.Button("Store terms",async()=>await Launcher.Default.OpenAsync(MonetizationConfig.TermsUrl),true)

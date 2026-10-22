@@ -105,3 +105,6 @@ test('monthly cancellation retains paid access and expiry removes it', () => {
   assert(entitlementFromPurchase(value,'owner',now).active);
   value.lineItems[0].expiryTime=new Date(now-1).toISOString(); assert(!entitlementFromPurchase(value,'owner',now).active);
 });
+test('subscription updates cannot recreate a deleting account entitlement',async()=>{
+ const f=fixture();await f.call('owner',{action:'verify',token:'purchase-token-owner'});f.db.docs.set('accountDeletions/owner',{status:'queued'});f.db.docs.delete('billingEntitlements/owner');await f.billing.notification('purchase-token-owner');assert(!f.db.docs.has('billingEntitlements/owner'));await assert.rejects(f.billing.verify('owner','purchase-token-owner'),{code:'permission-denied'});assert(!f.db.docs.has('billingEntitlements/owner'));
+});

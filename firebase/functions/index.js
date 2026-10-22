@@ -5,7 +5,17 @@ const {DomainError} = require('./domain');
 const {createHandler} = require('./application');
 initializeApp();
 const handle = createHandler(getFirestore());
-const {protect}=require('./callable-errors');
+const {protect:protectCall}=require('./callable-errors');
+// Disabled/deleting users can still hold an unexpired ID token. Block all
+// callables using the durable deletion marker, including old app versions.
+function protect(handler,service){return protectCall(async request=>{
+ if(service!=='accountDeletion'&&request.auth&&(await getFirestore().doc(`accountDeletions/${request.auth.uid}`).get()).exists)
+   require('./domain').fail('permission-denied','This account is being deleted.');
+ return handler(request);
+},service);}
+const accountDeletion=require('./account-deletion').createAccountDeletion(getFirestore(),require('firebase-admin/auth').getAuth());
+exports.accountDeletion=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},protect(accountDeletion.handle,'accountDeletion'));
+exports.processAccountDeletion=require('firebase-functions/v2/firestore').onDocumentCreated({document:'accountDeletions/{uid}',region:'europe-west1',retry:true,maxInstances:2,timeoutSeconds:540},event=>accountDeletion.process(event.params.uid));
 const {socialHandler,socialEnabled}=require('./product-features');
 exports.householdMeals=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./household-meals').createHouseholdMeals(getFirestore(),require('firebase-admin/auth').getAuth()),'householdMeals'));
 const business=require('./business').createBusiness(getFirestore(),require('firebase-admin/auth').getAuth());
@@ -58,4 +68,10 @@ exports.reconcileSubscriptions = onSchedule({schedule: 'every 60 minutes', regio
       await Promise.all(page.docs.slice(i, i + 5).map(doc => billing.notification(doc.data().token)));
     cursor = page.size === 100 ? page.docs.at(-1) : null;
   } while (cursor);
+});
+
+// Recovery also covers process termination and the second, post-request sweep.
+exports.resumeAccountDeletions=onSchedule({schedule:'every 5 minutes',region:'us-central1',maxInstances:1,timeoutSeconds:540},async()=>{
+ const jobs=await getFirestore().collection('accountDeletions').where('status','in',['queued','retry','cleaning','settling']).where('retryAfter','<=',Date.now()).orderBy('retryAfter').limit(5).get();
+ for(const job of jobs.docs){try{await accountDeletion.process(job.id);}catch{console.error('Account deletion will retry',{reference:job.data().reference});}}
 });

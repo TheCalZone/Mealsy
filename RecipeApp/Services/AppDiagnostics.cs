@@ -23,7 +23,7 @@ public static class AppDiagnostics
         AppDomain.CurrentDomain.UnhandledException+=(_,e)=> { if(e.ExceptionObject is Exception error)Report(error,"ui.action"); };
         TaskScheduler.UnobservedTaskException+=(_,e)=>Report(e.Exception,"ui.action");
     }
-    public static bool Enabled => Preferences.Get(EnabledKey,"true")=="true";
+    public static bool Enabled => Preferences.Get(EnabledKey,"false")=="true";
     public static void SetEnabled(bool value) { Preferences.Set(EnabledKey,value?"true":"false"); ApplyCollection(); }
     public static void ApplyCollection() { try { CrossFirebaseCrashlytics.Current.SetCrashlyticsCollectionEnabled(Enabled); if(!Enabled)CrossFirebaseCrashlytics.Current.DeleteUnsentReports(); } catch { } }
     public static List<DiagnosticEntry> History() { try{return JsonSerializer.Deserialize<List<DiagnosticEntry>>(Preferences.Get(HistoryKey,"[]"))??new();}catch{return new();} }
@@ -39,7 +39,7 @@ public static class AppDiagnostics
                 if(error.Data["Mealsy.DiagnosticReference"] is string known)return known;
                 reference=DiagnosticPolicy.Reference(reference);error.Data["Mealsy.DiagnosticReference"]=reference;
                 // Only fixed operation names, codes and reason categories leave the device.
-                var parts=operation.Split('.',2);operation=parts.Length==2 && new[]{"householdMeals","household","foodFeed","billing","administration","business","notifications","promotions"}.Contains(parts[0])?DiagnosticPolicy.Operation(parts[0],parts[1]):DiagnosticPolicy.LocalOperation(operation);
+                var parts=operation.Split('.',2);operation=parts.Length==2 && new[]{"accountDeletion","householdMeals","household","foodFeed","billing","administration","business","notifications","promotions"}.Contains(parts[0])?DiagnosticPolicy.Operation(parts[0],parts[1]):DiagnosticPolicy.LocalOperation(operation);
                 code=DiagnosticPolicy.Code(code);reason=DiagnosticPolicy.Reason(reason);
                 var entry=new DiagnosticEntry(reference,operation,code,reason,DateTimeOffset.UtcNow);
                 var history=History();history.Insert(0,entry);Preferences.Set(HistoryKey,JsonSerializer.Serialize(history.Take(20)));

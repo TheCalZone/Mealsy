@@ -1,10 +1,84 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "accountDeletions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "retryAfter",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": [
-    {"collectionGroup":"businessEvents","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
-    {"collectionGroup":"businessInvites","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
-    {"collectionGroup":"impressionTickets","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
-    {"collectionGroup":"billableImpressions","fieldPath":"deleteAfter","ttl":true,"indexes":[]},
-    {"collectionGroup":"items","fieldPath":"deleteAfter","ttl":true,"indexes":[]}
+    {
+      "collectionGroup": "businessEvents",
+      "fieldPath": "deleteAfter",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "businessInvites",
+      "fieldPath": "deleteAfter",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "impressionTickets",
+      "fieldPath": "deleteAfter",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "billableImpressions",
+      "fieldPath": "deleteAfter",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "items",
+      "fieldPath": "deleteAfter",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comments",
+      "fieldPath": "authorId",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "reporterId",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "accountDeletions",
+      "fieldPath": "deleteAfter",
+      "ttl": true,
+      "indexes": []
+    }
   ]
 }

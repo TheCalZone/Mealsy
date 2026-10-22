@@ -80,6 +80,7 @@ public partial class AccountPage : ContentPage
         body.Add(ShoppingUi.Button("Weekly templates · Premium",PremiumAccess.OpenWeeks,true));
         body.Add(ShoppingUi.Button("Saved shopping trips · Premium",PremiumAccess.OpenShopping,true));
         body.Add(new PremiumBenefitsCard());
+        body.Add(ShoppingUi.Button("Privacy, data & account deletion",()=>AppNavigation.Open(new PrivacyAndDataPage()),true));
         body.Add(ShoppingUi.Button("Mealsy Premium · Plans & benefits",()=>AppNavigation.Open(new PlanPage())));
         body.Add(ShoppingUi.Button(AppLocalization.Text("Premium features"),()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
         body.Add(ShoppingUi.Text("Your recipes and shopping lists sync when connected. Your personal meal plan, saved weeks, saved shopping trips and editor drafts stay on this device. Household shopping and household meal plans are shared online. Signing in does not automatically copy recipes created in device mode.",13));

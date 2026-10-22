@@ -367,3 +367,16 @@ Test a new eligible Play account, previously used trial, existing subscriber,
 cancelled trial, offline query, changed/withdrawn offer and renewal/cancellation
 notifications. Confirm the paid price/period after the trial and final first-charge
 date in the Play purchase sheet. Never use real charges merely to exercise UI.
+
+
+## Automated account deletion and policy audit — 22 October 2026
+
+See ACCOUNT_DELETION.md for the three new Firebase functions, required indexes,
+rules/callable guards, TTL and staged validation. Deploy the entire functions
+codebase plus rules/indexes together; the test APK does not deploy them. Public
+privacy and external account-deletion pages live in firebase/desktop/privacy and
+firebase/desktop/delete-account, with Callum@brightbark.co.uk as the confirmed
+support contact. Publish/review them and then configure the app/Console policy
+URL. PLAY_POLICY_AUDIT.md records remaining target-SDK/native-page-size and store
+configuration blockers; PLAY_DATA_SAFETY.md is a draft inventory, not a submitted
+declaration. No production account was deleted or backend deployed here.

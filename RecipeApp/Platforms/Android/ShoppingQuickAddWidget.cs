@@ -22,6 +22,11 @@ public class ShoppingQuickAddWidget : AppWidgetProvider
         var context=global::Android.App.Application.Context;var info=AppWidgetManager.GetInstance(context).GetAppWidgetInfo(id);
         return info?.Provider?.PackageName==context.PackageName&&info.Provider.ClassName=="com.companyname.recipeapp.ShoppingQuickAddWidget";
     }
+    public static void UpdateAll(Context context)
+    {
+        var manager=AppWidgetManager.GetInstance(context);
+        foreach(var id in manager.GetAppWidgetIds(new ComponentName(context.PackageName,"com.companyname.recipeapp.ShoppingQuickAddWidget")))Update(context,id);
+    }
     public static void Update(Context context,int id)
     {
         var views=new RemoteViews(context.PackageName,Resource.Layout.shopping_quick_add_widget);
