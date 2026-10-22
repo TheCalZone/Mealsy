@@ -57,6 +57,7 @@
                     </Border>
                 </Grid>
                 <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
+                <views:MembershipPrompt x:Name="ShoppingMembership" />
                 <Button Text="{loc:Translate 'Go shopping'}" Clicked="GoShopping_Clicked" BackgroundColor="White" TextColor="{DynamicResource ThemePrimary}" HeightRequest="48" />
             </VerticalStackLayout>
         </Border>

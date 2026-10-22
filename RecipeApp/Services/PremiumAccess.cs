@@ -16,6 +16,11 @@ public static class PremiumAccess
     public static async Task<bool> Require(string feature)
     {
         var account=AccountSession.UserId;
+        if(account==null)
+        {
+            if(await Shell.Current.DisplayAlert("Start with a free Mealsy account",feature+" needs an account and Premium access. Creating an account is free and does not start a subscription. Basic personal recipes, shopping and meal planning stay free.","Create free account","Not now"))await AppNavigation.Open(new RecipeApp.Views.SignupPage());
+            return false;
+        }
         if(account!=null)
         {
             try{var plan=await PlanService.RefreshAsync();AccountSession.Check(account);if(PremiumEntitlement.IsActive(plan,DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()))return true;}

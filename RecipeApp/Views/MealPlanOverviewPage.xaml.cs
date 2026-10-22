@@ -40,7 +40,7 @@ public partial class MealPlanOverviewPage : ContentPage
     }).Concat(new[]{MealPlanning.SimpleMeal(day,slot)}).Where(text=>!string.IsNullOrWhiteSpace(text)));
     private void Render()
     {
-        var body=new VerticalStackLayout {Padding=16,Spacing=16};body.Add(ShoppingUi.Text(AppLocalization.Text("A week worth looking forward to"),28,true));
+        var body=new VerticalStackLayout {Padding=16,Spacing=16};body.Add(new MembershipPrompt(true));body.Add(ShoppingUi.Text(AppLocalization.Text("A week worth looking forward to"),28,true));
         var filled=plan.Days.Sum(d=>Enumerable.Range(0,3).Count(s=>MealPlanning.Ids(d,s).Count>0||MealPlanning.Notes(d,s).Count>0||MealPlanning.SimpleMeal(d,s).Length>0));
         body.Add(ShoppingUi.Text($"{filled} of 21 meals planned · Personal plan",14));body.Add(new ProgressBar {Progress=filled/21d,ProgressColor=Color.FromArgb("#D0A34F")});
         body.Add(ShoppingUi.Text(AppLocalization.Text("Week starts"),12,true));var start=new DatePicker {Date=plan.WeekStart.Date,Format="ddd d MMM yyyy"};start.SetDynamicResource(DatePicker.TextColorProperty, "ThemeText");

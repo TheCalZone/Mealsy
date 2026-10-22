@@ -67,7 +67,7 @@ public partial class ShoppingListPage : ContentPage
 
     protected override async void OnAppearing()
     {
-        base.OnAppearing(); visible = true;
+        base.OnAppearing(); visible = true; ShoppingMembership.Refresh();
         WidgetShoppingStore.Changed -= WidgetChanged;
         WidgetShoppingStore.Changed += WidgetChanged;
         try
@@ -181,6 +181,11 @@ public partial class ShoppingListPage : ContentPage
         {
             try
             {
+                if(AccountSession.UserId==null)
+                {
+                    if(await DisplayAlert("Share your household shopping","Create a free account first. Sharing a household list requires an active Premium household plan; your personal list stays free.","Create free account","Not now"))await AppNavigation.Open(new SignupPage());
+                    return;
+                }
                 var info = await HouseholdService.StatusAsync();
                 if (info.HouseholdId == null) { await Navigation.PushAsync(new HouseholdPage()); return; }
                 if (!info.FamilyEnabled) { await Navigation.PushAsync(new PlanPage()); return; }
