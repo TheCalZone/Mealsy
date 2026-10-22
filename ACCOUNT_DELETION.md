@@ -74,9 +74,10 @@ already-delivered diagnostics follow provider retention; confirm/disclose those.
 5. Verify jobs actually reach completed after the second sweep; alert on retry or
    age/backlog. Confirm completed-marker TTL. Do not delete the Auth login alone:
    that does not recursively delete associated Firestore content.
-6. Review/deploy public privacy and /delete-account pages with Hosting, verify
-   anonymously in a browser, then set MonetizationConfig.PrivacyPolicyUrl and
-   Play Console URLs. The web page offers an external email request without
+6. Activate the prepared GitHub Pages policy site as described in
+   PUBLIC_POLICY_HOSTING.md and verify both URLs anonymously in a browser. App
+   URLs already use those planned Pages addresses; set the Play Console URLs
+   only after verification. The web page offers an external email request without
    requiring app installation; Callum@brightbark.co.uk must be monitored and
    identity verification exercised. Do not accept a uid emailed by a stranger as
    proof of ownership. Never request passwords/card details by email.

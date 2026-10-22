@@ -1,5 +1,10 @@
 # Mealsy cloud handoff — 17 October 2026
 
+For the remaining production-release work, start with
+[PRODUCTION_DESKTOP_HANDOFF.md](PRODUCTION_DESKTOP_HANDOFF.md) (22 October 2026).
+It records the latest hosting, Android compatibility, Firebase deletion and Play
+Console blockers; the historical notes below do not establish production readiness.
+
 ## Localization: initial five-language rollout
 
 Resources/Localization/Strings*.resx contains 262 matching messages in English,

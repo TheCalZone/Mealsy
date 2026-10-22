@@ -1,5 +1,9 @@
 # Firebase handoff: friends, privacy, household meals and content sharing
 
+For current release blockers and the staged account-deletion deployment sequence,
+start with [PRODUCTION_DESKTOP_HANDOFF.md](PRODUCTION_DESKTOP_HANDOFF.md) and
+[ACCOUNT_DELETION.md](ACCOUNT_DELETION.md). Social features remain paused.
+
 ## Applied scope — 18 October 2026
 
 The user reconfirmed that social/creator work stays paused for cost and scope control.
