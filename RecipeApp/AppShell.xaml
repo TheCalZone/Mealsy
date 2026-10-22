@@ -105,6 +105,7 @@
         <ShellContent
             Title="{loc:Translate 'Account'}"
             ContentTemplate="{DataTemplate local:AccountPage}"
+            Icon="account_person.png"
             Route="AccountPage" />
     </TabBar>
 

@@ -7,6 +7,9 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Account navigation icon", new[] {
+            "The Account tab now has a clear person icon alongside its label, matching the other navigation tabs."
+        }),
         new(new(2026,10,22), "Discover household sharing", new[] {
             "Home shopping and meal sections now offer household shortcuts with relevant Premium benefits. Covered members go straight to their shared list or plan without needing a separate subscription.",
             "Inactive household members are directed to their owner's plan, while Premium users without a household can set one up."
