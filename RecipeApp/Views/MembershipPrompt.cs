@@ -32,6 +32,7 @@ public sealed class MembershipPrompt : ContentView
         body.Add(ShoppingUi.Text(account==null
             ?meals?"Keep your personal planner free. Sign up to get started; shared household plans are available with Premium.":"Create a free account to sync your personal shopping list. Household cloud sharing and saved shopping trips are Premium extras."
             :meals?"Premium adds reusable weekly templates and a shared household meal plan. Your personal planner stays free.":"Upgrade for reusable saved shopping trips and a shared household list. Your personal list stays separate.",13));
+        if(account!=null&&ClientPlatform.StorePurchasesAvailable)body.Add(ShoppingUi.Text("Check plans for an eligible 7-day free trial. Renewal price and terms are shown before checkout.",12));
         var actions=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Auto)},ColumnSpacing=8};
         actions.Add(ShoppingUi.Button(account==null?"Create free account":ClientPlatform.StorePurchasesAvailable?"Explore Premium":"See Premium benefits",()=>{
             AccountSession.Check(account);

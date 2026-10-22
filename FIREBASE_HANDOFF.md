@@ -339,3 +339,31 @@ button on the landing page. Update store links if the package/listing changes.
 There is no Firebase Dynamic Links dependency or automatic deferred install
 attribution. After first installation users return to the share page or reopen
 its link. Friend/private shares require the new social service before release.
+
+## Google Play seven-day trial hookup — 22 October 2026
+
+Client source supports `mealsy_family`, base plans `monthly` and `annual`, offer
+ID `seven-day-trial` under each plan. Configure/activate each desired offer in
+Play Console: new-customer acquisition eligibility controlled by Google Play
+(not developer-determined), one free seven-day phase (P7D or P1W), then the base plan's normal
+recurring P1M/P1Y phase. No intermediate introductory discount phases are supported
+by this first client selector. The offer ID is unique within each base plan.
+
+The client only selects this configured offer when returned by Google Play with
+that exact phase structure, positive recurring price and matching currency. It
+falls back to the base offer if no eligible trial is returned. It does not infer
+trial eligibility from Mealsy sign-in or subscription status, persist a local
+trial entitlement, or grant access on the basis of marketing UI. Checkout reloads
+the offer and requires the displayed quote to match before launching Play.
+Extra-place subscriptions are unaffected. Existing backend receipt verification,
+acknowledgement and subscription notifications remain authoritative; a verified
+active trial uses the subscription's actual Play expiry, not a guessed local date.
+
+No Play Console configuration or Firebase deployment was performed here. Test
+using a Play internal-testing release installed through Play and licence-test
+accounts. A sideloaded test-signed APK can show the updated promotions and normal
+unavailable-store handling but cannot establish real trial eligibility or checkout.
+Test a new eligible Play account, previously used trial, existing subscriber,
+cancelled trial, offline query, changed/withdrawn offer and renewal/cancellation
+notifications. Confirm the paid price/period after the trial and final first-charge
+date in the Play purchase sheet. Never use real charges merely to exercise UI.

@@ -35,18 +35,30 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
             QueryProductDetailsParams.Product.NewBuilder().SetProductId(productId).SetProductType("subs").Build() }).Build();
         var response = await client.QueryProductDetailsAsync(query).WaitAsync(TimeSpan.FromSeconds(30));
         var product = response.ProductDetailsList.FirstOrDefault(p => p.ProductId == productId);
-        var offer = product?.GetSubscriptionOfferDetails()?.FirstOrDefault(o => o.BasePlanId == basePlanId && o.OfferId == null);
-        var phase = offer?.PricingPhases.PricingPhaseList.LastOrDefault();
         var seats=productId=="mealsy_extra_places"&&System.Text.RegularExpressions.Regex.IsMatch(basePlanId,@"^places-([1-9]|1[0-6])$");
-        if ((!seats&&basePlanId is not (MonetizationConfig.BasePlanId or MonetizationConfig.MonthlyBasePlanId)) || phase == null || phase.BillingPeriod != (seats||basePlanId == MonetizationConfig.MonthlyBasePlanId ? "P1M" : "P1Y")) throw new InvalidOperationException("That plan is not available from the app store yet.");
-        return (product,offer);
+        if ((!seats&&basePlanId is not (MonetizationConfig.BasePlanId or MonetizationConfig.MonthlyBasePlanId)) || product==null) throw new InvalidOperationException("That plan is not available from the app store yet.");
+        var offers=product.GetSubscriptionOfferDetails()?.Where(o=>o.BasePlanId==basePlanId).ToList()??new();
+        var quote=StoreSubscriptionOffer.Select(offers.Select(o=>new StoreOffer(o.OfferId,o.OfferToken,
+            o.PricingPhases.PricingPhaseList.Select(p=>new StorePricePhase(p.PriceAmountMicros,p.FormattedPrice,p.PriceCurrencyCode,p.BillingPeriod,(int)p.RecurrenceMode,p.BillingCycleCount)).ToList())),
+            seats||basePlanId==MonetizationConfig.MonthlyBasePlanId?"P1M":"P1Y",productId==MonetizationConfig.ProductId?MonetizationConfig.TrialOfferId:null);
+        return (product,offers.Single(o=>o.OfferToken==quote.Token));
+    }
+    private static SubscriptionQuote Quote(ProductDetails.SubscriptionOfferDetails offer)
+    {
+        var phases=offer.PricingPhases.PricingPhaseList;var last=phases.Last();
+        return new(offer.OfferToken,last.FormattedPrice,last.BillingPeriod,phases.Count==2&&phases[0].PriceAmountMicros==0&&(phases[0].BillingPeriod is "P7D" or "P1W"),last.PriceAmountMicros,last.PriceCurrencyCode);
+    }
+    public async Task<SubscriptionQuote> LoadQuote(string basePlanId)
+    {
+        var offer=await LoadOffer(basePlanId,MonetizationConfig.ProductId);
+        return Quote(offer.Offer);
     }
     public async Task<string> LoadPrice(string basePlanId = MonetizationConfig.BasePlanId,string productId=MonetizationConfig.ProductId)
     {
         var details=await LoadOffer(basePlanId,productId);
         return Price=details.Offer.PricingPhases.PricingPhaseList.Last().FormattedPrice;
     }
-    public async Task Buy(string basePlanId = MonetizationConfig.BasePlanId,string productId=MonetizationConfig.ProductId)
+    public async Task Buy(string basePlanId = MonetizationConfig.BasePlanId,string productId=MonetizationConfig.ProductId,SubscriptionQuote expected=null)
     {
         var uid = HouseholdService.UserId ?? throw new InvalidOperationException("Sign in before subscribing.");
         if (pending != null) throw new InvalidOperationException("A purchase is already in progress.");
@@ -56,6 +68,7 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
         {
             var selected=await LoadOffer(basePlanId,productId);
             if (uid != HouseholdService.UserId) throw new InvalidOperationException("Your account changed. Please try again.");
+            if(expected!=null&&expected!=Quote(selected.Offer))throw new InvalidOperationException("Your store offer or price changed. Refresh plans and review the updated terms before subscribing.");
             var parameters = BillingFlowParams.NewBuilder().SetObfuscatedAccountId(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(uid))).ToLowerInvariant())
                 .SetProductDetailsParamsList(new[] { BillingFlowParams.ProductDetailsParams.NewBuilder().SetProductDetails(selected.Product).SetOfferToken(selected.Offer.OfferToken).Build() }).Build();
             var result = client.LaunchBillingFlow(Platform.CurrentActivity, parameters); Check(result);

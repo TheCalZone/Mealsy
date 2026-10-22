@@ -22,7 +22,7 @@ internal sealed class PremiumBenefitsCard : ContentView
             AccountSession.Check(account);
             return AppNavigation.Open(new UpgradeFeaturesPage());
         }));
-        body.Add(ShoppingUi.Text(ClientPlatform.StorePurchasesAvailable?"Monthly or annual options · See the current local price before subscribing.":ClientPlatform.IosPurchaseNotice,12));
+        body.Add(ShoppingUi.Text(ClientPlatform.StorePurchasesAvailable?"Monthly or annual options · Check for an eligible 7-day free trial in subscription options. Renewal price and cancellation terms are shown before checkout.":ClientPlatform.IosPurchaseNotice,12));
         body.Add(ShoppingUi.Button("Not now",()=>{
             AccountSession.Check(account);
             Preferences.Set(DismissKey,DateTimeOffset.UtcNow.AddDays(7).ToUnixTimeMilliseconds().ToString());

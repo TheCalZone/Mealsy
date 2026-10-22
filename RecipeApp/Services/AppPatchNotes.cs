@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Eligible seven-day Premium trials", new[] {
+            "Google Play subscription options can now show an eligible seven-day trial, its renewal price and cancellation terms. Users without an eligible trial see the standard subscription price.",
+            "Checkout uses the selected store offer and stops if its terms change. Payment details stay with Google Play. Trial availability requires Play Console configuration and an eligible Play account.",
+            "Premium promotions now invite you to check trial eligibility. iOS purchases and trials remain unavailable in this build."
+        }),
         new(new(2026,10,22), "Helpful account and Premium invitations", new[] {
             "Shopping and meal-plan screens now offer contextual sign-up or Premium benefits prompts. Creating an account is free; household sharing needs Premium.",
             "Prompts explain saved shopping trips, reusable meal weeks and shared household plans without claiming unlimited cloud lists. Active Premium users do not see them, and Not now hides contextual prompts for seven days.",

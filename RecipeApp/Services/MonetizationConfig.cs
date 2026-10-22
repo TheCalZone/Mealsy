@@ -2,6 +2,7 @@ namespace RecipeApp.Services;
 
 public static class MonetizationConfig
 {
+    public const string TrialOfferId = "seven-day-trial";
     public const string ProductId = "mealsy_family";
     public const string BasePlanId = "annual";
     public const string MonthlyBasePlanId = "monthly";

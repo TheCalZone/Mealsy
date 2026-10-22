@@ -9,6 +9,9 @@ public class PlanPage : ContentPage
     private readonly Label annualPrice=ShoppingUi.Text(AppLocalization.Text("Checking store price…"),25,true);
     private readonly LoadingIndicator loading=new("Checking plans & prices…",false);
     private bool busy;
+    private readonly Dictionary<string,SubscriptionQuote> quotes=new();
+    private readonly Label monthlyTerms=ShoppingUi.Text("Google Play confirms the price and any eligible trial before payment.",13);
+    private readonly Label annualTerms=ShoppingUi.Text("Google Play confirms the price and any eligible trial before payment.",13);
     public PlanPage()
     {
         Title="Mealsy Premium"; ShoppingUi.Theme(this);
@@ -19,8 +22,8 @@ public class PlanPage : ContentPage
         var body=new VerticalStackLayout {Padding=20,Spacing=16,Children={
             ShoppingUi.Text("Your kitchen, on repeat",29,true),
             ShoppingUi.Text("Save time cooking for one or sharing with others. One subscription includes Premium tools and Family sharing.",17),
-            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("MONTHLY"),12,true),monthlyPrice,ShoppingUi.Text("Billed monthly · Google Play confirms the price before payment",13),monthly}}),
-            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("ANNUAL"),12,true),annualPrice,ShoppingUi.Text("One payment each year · Google Play confirms the price before payment",13),annual}}),
+            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("MONTHLY"),12,true),monthlyPrice,monthlyTerms,monthly}}),
+            ShoppingUi.Card(new VerticalStackLayout {Spacing=8,Children={ShoppingUi.Text(AppLocalization.Text("ANNUAL"),12,true),annualPrice,annualTerms,annual}}),
             ShoppingUi.Text("Both options include exactly the same Premium features. The app store confirms your actual local price and billing period before payment.",13),
             ShoppingUi.Button("See everything included",async()=>await Navigation.PushAsync(new UpgradeFeaturesPage(true))),loading,status,signIn,
             ShoppingUi.Button("Refresh plans & prices",()=>Run(Refresh),true),
@@ -32,7 +35,7 @@ public class PlanPage : ContentPage
                 await Refresh();
             }),true),
             ShoppingUi.Button("Manage or cancel in the app store",async()=>await Launcher.Default.OpenAsync($"https://play.google.com/store/account/subscriptions?sku={MonetizationConfig.ProductId}&package=com.companyname.recipeapp"),true),
-            ShoppingUi.Text("Subscriptions renew automatically each month or year, according to the option you choose. Cancel in the app store before renewal to avoid the next charge. Cancellation keeps access until the paid period ends. No free trial is included. Existing subscribers can manage their subscription in the app store; this page does not sell a second subscription.",13),
+            ShoppingUi.Text("Subscriptions renew automatically each month or year, according to the option you choose. Cancel in the app store before renewal to avoid the next charge. Cancellation keeps access until the paid period ends. A 7-day free trial is shown only when Google Play returns an eligible offer. Payment details are handled by Google Play; Mealsy does not collect card details. Cancel before the trial ends to avoid the first charge. Existing subscribers can manage their subscription in the app store; this page does not sell a second subscription.",13),
             ShoppingUi.Button("Ad privacy choices",async()=>{
 #if ANDROID
                 await RecipeApp.Platforms.Android.AdConsent.PrivacyChoices();
@@ -48,7 +51,7 @@ public class PlanPage : ContentPage
             foreach(var child in body.Children.OfType<Button>().Where(button=>button.Text=="Ad privacy choices").ToList())body.Remove(child);
         if(!ClientPlatform.StorePurchasesAvailable)
         {
-            monthlyPrice.Text=AppLocalization.Text("Monthly membership");annualPrice.Text=AppLocalization.Text("Annual membership");
+            monthlyPrice.Text=AppLocalization.Text("Monthly membership");annualPrice.Text=AppLocalization.Text("Annual membership");monthlyTerms.Text=annualTerms.Text="App Store subscriptions and trials are not available in this build.";
             // Keep price/feature information and verified status, but no inert purchase actions.
             foreach(var child in body.Children.ToList())if(child is Button button &&
                 (button.Text.StartsWith("Extra household")||button.Text==AppLocalization.Text("Restore purchases")||button.Text.StartsWith("Manage or cancel")||button.Text=="Ad privacy choices"||button.Text=="Store terms"))body.Remove(child);
@@ -66,7 +69,7 @@ public class PlanPage : ContentPage
     }
     private async Task Refresh()
     {
-        monthly.IsEnabled=annual.IsEnabled=false;
+        monthly.IsEnabled=annual.IsEnabled=false;quotes.Clear();
         var account=HouseholdService.UserId;signIn.IsVisible=account==null;
         monthly.IsVisible=annual.IsVisible=ClientPlatform.StorePurchasesAvailable;
         PlanStatus plan=null;
@@ -86,7 +89,7 @@ public class PlanPage : ContentPage
         foreach(var option in new[]{(monthly,monthlyPrice,"Monthly"),(annual,annualPrice,"Annual")})
         {
             option.Item1.IsEnabled=option.Item2.Text!=AppLocalization.Text("Price unavailable");
-            option.Item1.Text=option.Item1.IsEnabled?$"Subscribe · {option.Item2.Text}":$"{option.Item3} plan unavailable in Google Play";
+            option.Item1.Text=option.Item1.IsEnabled?(quotes[option.Item3=="Monthly"?MonetizationConfig.MonthlyBasePlanId:MonetizationConfig.BasePlanId].SevenDayTrial?"Start 7-day free trial":$"Subscribe · {option.Item2.Text}"):$"{option.Item3} plan unavailable in Google Play";
         }
     }
     private async Task LoadPrices(string account)
@@ -95,8 +98,8 @@ public class PlanPage : ContentPage
         foreach(var option in new[]{(monthlyPrice,MonetizationConfig.MonthlyBasePlanId,"month"),(annualPrice,MonetizationConfig.BasePlanId,"year")})
         {
             option.Item1.Text=AppLocalization.Text("Checking store price…");
-            try{var price=await RecipeApp.Platforms.Android.PlayBillingService.Instance.LoadPrice(option.Item2).WaitAsync(TimeSpan.FromSeconds(15));AccountSession.Check(account);option.Item1.Text=$"{price} per {option.Item3}";}
-            catch(Exception){AccountSession.Check(account);option.Item1.Text=AppLocalization.Text("Price unavailable");}
+            try{var quote=await RecipeApp.Platforms.Android.PlayBillingService.Instance.LoadQuote(option.Item2).WaitAsync(TimeSpan.FromSeconds(15));AccountSession.Check(account);quotes[option.Item2]=quote;option.Item1.Text=quote.DisplayPrice;(option.Item2==MonetizationConfig.MonthlyBasePlanId?monthlyTerms:annualTerms).Text=quote.Disclosure;}
+            catch(Exception){AccountSession.Check(account);option.Item1.Text=AppLocalization.Text("Price unavailable");(option.Item2==MonetizationConfig.MonthlyBasePlanId?monthlyTerms:annualTerms).Text="Connect to Google Play and refresh to check prices and trial eligibility.";}
         }
 #else
         await Task.CompletedTask;
@@ -104,7 +107,8 @@ public class PlanPage : ContentPage
     }
     private Task Subscribe(string basePlan)=>Run(async()=>{
 #if ANDROID
-        await RecipeApp.Platforms.Android.PlayBillingService.Instance.Buy(basePlan);
+        if(!quotes.TryGetValue(basePlan,out var quote))throw new InvalidOperationException("Refresh plans before subscribing.");
+        await RecipeApp.Platforms.Android.PlayBillingService.Instance.Buy(basePlan,expected:quote);
 #endif
         await Refresh();
     });
@@ -118,6 +122,7 @@ public class UpgradeFeaturesPage : ContentPage
         var body=new VerticalStackLayout {Padding=20,Spacing=16};
         body.Add(ShoppingUi.Text("More useful every week",29,true));
         if(!ClientPlatform.StorePurchasesAvailable)body.Add(ShoppingUi.Text(ClientPlatform.IosPurchaseNotice,14));
+        if(ClientPlatform.StorePurchasesAvailable)body.Add(ShoppingUi.Text("Check subscription options for a 7-day free trial. Trials are available only when Google Play confirms eligibility; renewal pricing and cancellation terms are shown before checkout.",14));
         body.Add(ShoppingUi.Text("Monthly or annual Premium membership. Both include the same benefits for a solo cook or a household owner. View subscription options for the current app-store price.",16));
         void Card(string title,string detail)=>body.Add(ShoppingUi.Card(new VerticalStackLayout {Spacing=7,Children={ShoppingUi.Text(title,20,true),ShoppingUi.Text(detail)}}));
         Card("Import recipes from supported websites","Bring a recipe link straight into the editor for review. Keep ingredients, portions and method in your private recipe book. Some sources block imports; manual entry and ingredient paste remain free.");
