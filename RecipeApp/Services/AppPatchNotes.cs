@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Public privacy and deletion instructions", new[] {
+            "Public policy pages are prepared for GitHub Pages, and the app uses the corresponding privacy and deletion-instructions URLs. Hosting needs the repository Pages setting enabled.",
+            "The public deletion page supports email requests without app installation and explains when the automated in-app service is available."
+        }),
         new(new(2026,10,22), "Privacy and release-readiness review", new[] {
             "Settings and Account now offer privacy/data information, automated Firebase account-deletion requests with recent password confirmation, and an email fallback. Public privacy and deletion pages are supplied for publisher review and deployment.",
             "Optional diagnostics default to off when no choice was saved; Android private-cache backup and advertising-ID permission are disabled in this source. Existing explicit diagnostics choices remain.",

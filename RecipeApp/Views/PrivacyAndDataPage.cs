@@ -15,6 +15,7 @@ public class PrivacyAndDataPage:ContentPage
         body.Add(ShoppingUi.Text("Optional crash reporting is off by default for users without a saved choice. You can change it in Settings → Diagnostics & error reports. Reports may include app/device details; Mealsy's custom error reports remove submitted text and account identifiers. Live advertising and public community features are disabled in this test build."));
         if(!string.IsNullOrWhiteSpace(MonetizationConfig.PrivacyPolicyUrl))body.Add(ShoppingUi.Button("Read public privacy policy",()=>Launcher.Default.OpenAsync(MonetizationConfig.PrivacyPolicyUrl),true));
         body.Add(ShoppingUi.Text("Contact and account deletion",18,true));
+        body.Add(ShoppingUi.Button("Account deletion instructions online",()=>Launcher.Default.OpenAsync(MonetizationConfig.AccountDeletionUrl),true));
         body.Add(ShoppingUi.Button("Delete my account automatically",()=>AppNavigation.Open(new DeleteAccountPage())));
         body.Add(ShoppingUi.Text("Use automated deletion below, or contact "+MonetizationConfig.SupportEmail+" for privacy questions and deletion requests. Account ownership must be verified before deletion. Signing out or uninstalling does not delete cloud data. A deletion request does not cancel a Google Play subscription; manage or cancel it separately in Google Play."));
         body.Add(ShoppingUi.Button("Request account and data deletion",async()=>{
@@ -27,7 +28,7 @@ public class PrivacyAndDataPage:ContentPage
             if(!await Launcher.Default.TryOpenAsync(uri))await DisplayAlert("Email support","Email "+MonetizationConfig.SupportEmail+" from your registered email address with the subject 'Mealsy account and data deletion request'. Never send your password or payment-card details.","OK");
         }));
         if(ClientPlatform.StorePurchasesAvailable)body.Add(ShoppingUi.Button("Manage Google Play subscriptions",()=>Launcher.Default.OpenAsync("https://play.google.com/store/account/subscriptions"),true));
-        body.Add(ShoppingUi.Text("Test-build notice: the public privacy and deletion pages must be published and verified before store distribution. The full release-readiness audit is included with the source handoff.",12));
+        body.Add(ShoppingUi.Text("Account-deletion requests are also available by email without installing the app. Automated deletion requires the account service to be available; support can help if it is not.",12));
         Content=new ScrollView{Content=body};
     }
 }
