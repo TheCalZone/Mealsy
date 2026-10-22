@@ -17,6 +17,7 @@ internal sealed class PremiumBenefitsCard : ContentView
         body.Add(ShoppingUi.Text("Premium saves time whether you're cooking for yourself or feeding the family.",15));
         body.Add(ShoppingUi.Text("↗  Import recipes from supported websites\n↻  Reuse favourite weekly meal plans\n✓  Bring back saved shopping trips\n⌂  Share shopping lists and meal plans with your household\n♡  Enjoy an ad-free household",15));
         body.Add(ShoppingUi.Text("One membership covers up to four people, including you. Your personal recipes and lists stay private. Basic personal recipes, shopping and meal planning stay free.",13));
+        if(account==null)body.Add(ShoppingUi.Button("Start with a free account",()=>{AccountSession.Check(account);return AppNavigation.Open(new SignupPage());}));
         body.Add(ShoppingUi.Button(ClientPlatform.StorePurchasesAvailable?"Explore Premium · Plans & benefits":"Explore Premium benefits",()=>{
             AccountSession.Check(account);
             return AppNavigation.Open(new UpgradeFeaturesPage());

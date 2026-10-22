@@ -36,7 +36,7 @@ public class HouseholdPage : ContentPage
         content.Clear();
         content.Add(ShoppingUi.Text("Shop together", 30, true));
         content.Add(ShoppingUi.Text("Each person keeps a private list and their own login. Everyone in your household can add, edit, remove and collect items on the household list."));
-        if (account == null) { content.Add(ShoppingUi.Text("Sign in or create an account on the Account tab to get started."));content.Add(Action("Go to Account",()=>AppNavigation.Root("AccountPage"))); return; }
+        if (account == null) { content.Add(ShoppingUi.Text("Sign in or create an account on the Account tab to get started."));content.Add(Action("Create free account",()=>AppNavigation.Open(new SignupPage())));content.Add(Action("Already have an account? Sign in",()=>AppNavigation.Root("AccountPage"))); return; }
         PlanStatus plan;
         try { plan = await PlanService.RefreshAsync(); }
         catch (Exception) { plan = PlanService.Cached ?? new PlanStatus(false, false, false, 0, true, "", ""); }

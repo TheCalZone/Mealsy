@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Helpful account and Premium invitations", new[] {
+            "Shopping and meal-plan screens now offer contextual sign-up or Premium benefits prompts. Creating an account is free; household sharing needs Premium.",
+            "Prompts explain saved shopping trips, reusable meal weeks and shared household plans without claiming unlimited cloud lists. Active Premium users do not see them, and Not now hides contextual prompts for seven days.",
+            "Signed-out users trying Premium tools or shared shopping get a direct Create free account action. Existing sign-in options remain available. Prompts make no extra cloud requests."
+        }),
         new(new(2026,10,22), "Discover Mealsy Premium", new[] {
             "Home and Account now show a Premium benefits card for free users, highlighting recipe-link importing, reusable weeks, saved shopping trips and household sharing.",
             "The card opens the existing features and subscription pages without making a purchase. It hides for active Premium members, including covered family members, and Not now snoozes it for seven days. No extra cloud requests are made."
