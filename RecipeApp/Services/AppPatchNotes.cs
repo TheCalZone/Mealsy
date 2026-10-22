@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "A calmer home page", new[] {
+            "Home sections now expand with a tap, keeping shopping, today's meals, favourites and kitchen tools easy to scan. Main shortcuts stay visible.",
+            "Removed household check timestamps and routine account-status text. Sections keep their open state while you use the page, and reset when accounts change."
+        }),
         new(new(2026,10,22), "Public privacy and deletion instructions", new[] {
             "Public policy pages are prepared for GitHub Pages, and the app uses the corresponding privacy and deletion-instructions URLs. Hosting needs the repository Pages setting enabled.",
             "The public deletion page supports email requests without app installation and explains when the automated in-app service is available."
