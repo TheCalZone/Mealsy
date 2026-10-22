@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Choose what happens to checked shopping items", new[] {
+            "Shopping's Checked item settings can keep checks visible, hide them, or delete items as you check them. Automatic removal supports Undo while the list stays open.",
+            "The setting stays on this device. Deleting from a household list affects everyone; existing checked items and remotely checked items are not automatically removed."
+        }),
         new(new(2026,10,22), "Account navigation icon", new[] {
             "The Account tab now has a clear person icon alongside its label, matching the other navigation tabs."
         }),

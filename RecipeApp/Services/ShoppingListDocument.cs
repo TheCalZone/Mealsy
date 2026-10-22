@@ -89,6 +89,16 @@ public class ShoppingListDocument
     }
 
     public void Remove(Guid id) { items.RemoveAll(i => i.Id == id); Commit(); }
+    // Called only for a local checkbox edit, never for imported/synced checks.
+    // Commit removal directly so one Undo restores the unchecked item.
+    public bool CommitCheckedItem(Guid id, bool deleteOnCheck)
+    {
+        var item = items.FirstOrDefault(i => i.Id == id);
+        var removed = item != null && item.InBasket && deleteOnCheck;
+        if (removed) items.Remove(item);
+        Commit();
+        return removed;
+    }
     public void ClearCollected() { items.RemoveAll(i => i.InBasket); Commit(); }
     public void Clear() { items.Clear(); Commit(); }
     public void Undo()

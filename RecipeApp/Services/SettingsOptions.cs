@@ -10,6 +10,7 @@ public sealed record SettingsOptions
     public string Language { get; init; } = "system";
     public bool ShowPhotos { get; init; } = true;
     public bool HideCollected { get; init; }
+    public bool DeleteCollectedOnCheck { get; init; }
     public bool ShoppingDetails { get; init; }
     public string RecipeSort { get; init; } = "Recent";
     public bool KeepAwake { get; init; }

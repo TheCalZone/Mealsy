@@ -38,7 +38,7 @@ public partial class ShoppingListPage : ContentPage
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
     private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
     private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Checked item settings",null,async()=>await CheckedItemSettings()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
     {
@@ -57,6 +57,29 @@ public partial class ShoppingListPage : ContentPage
     {
         if(sender is not View row||itemDragViews.TryGetValue(row,out _))return;
         itemDragViews.Add(row,new object());ItemDrag.AttachRow(row);
+    }
+    private async void CheckedItemSettings_Clicked(object sender,EventArgs e)
+    {
+        try{await CheckedItemSettings();}
+        catch(Exception){await DisplayAlert("Settings not changed","Couldn't save this preference. Please try again.",AppLocalization.Text("OK"));}
+    }
+    private async Task CheckedItemSettings()
+    {
+        var account=AccountSession.UserId;
+        var current=Model.DeleteCollectedOnCheck?"Delete as I check":Model.HideCollected?"Hidden":"Visible";
+        var choice=await DisplayActionSheet("Checked items · "+current,AppLocalization.Text("Cancel"),null,
+            "Keep checked items visible","Hide checked items","Delete as I check");
+        if(choice==null || choice==AppLocalization.Text("Cancel"))return;
+        AccountSession.Check(account);
+        var remove=choice=="Delete as I check";
+        if(remove && !await DisplayAlert("Delete items as you check them?",
+            "Items you check on this device will be removed from the list. On a household list, this removes them for everyone when synced. Existing checked items stay. You can Undo while the list stays open.","Enable auto-delete",AppLocalization.Text("Cancel")))return;
+        AccountSession.Check(account);
+        var hide=choice=="Hide checked items";
+        AppSettings.Save(AppSettings.Current with {HideCollected=hide,DeleteCollectedOnCheck=remove});
+        Model.DeleteCollectedOnCheck=remove;
+        Model.HideCollected=hide;
+        Model.StatusText=remove?"Checked items will be deleted · Undo available":hide?"Checked items hidden, not deleted":"Checked items stay visible";
     }
     private async Task OpenSectionOrder()
     {

@@ -6,6 +6,34 @@ using Xunit;
 public class ShoppingListTests
 {
     [Fact]
+    public void DeleteOnCheckIsOneUndoableChangeAndPreservesOtherCheckedItems()
+    {
+        var list=new ShoppingListDocument();
+        var existing=new ShoppingListItem {Name="Bread",InBasket=true};
+        var milk=new ShoppingListItem {Name="Milk",Quantity="2 L"};
+        list.Add(existing);list.Add(milk);
+        var baseline=list.Serialize();
+        milk.InBasket=true;
+        Assert.True(list.CommitCheckedItem(milk.Id,true));
+        Assert.Equal(existing.Id,Assert.Single(list.Items).Id);
+        var change=Assert.Single(ShoppingListSync.Changes(baseline,list.Serialize()));
+        Assert.Equal(milk.Id,change.before.Id);Assert.Null(change.after);
+        list.Undo();
+        Assert.False(list.Items.Single(i=>i.Id==milk.Id).InBasket);
+        Assert.Equal("2 L",list.Items.Single(i=>i.Id==milk.Id).Quantity);
+        list.Redo();Assert.DoesNotContain(list.Items,i=>i.Id==milk.Id);
+    }
+    [Fact]
+    public void KeepOnCheckRetainsItemAndHidingDoesNotDeleteIt()
+    {
+        var list=new ShoppingListDocument();var item=new ShoppingListItem {Name="Eggs"};list.Add(item);
+        item.InBasket=true;
+        Assert.False(list.CommitCheckedItem(item.Id,false));
+        Assert.Empty(list.Visible("",true));Assert.Single(list.Items);
+        list.Undo();Assert.False(Assert.Single(list.Items).InBasket);
+    }
+
+    [Fact]
     public void CollectedStateAndEditsSurviveSerialization()
     {
         var list = new ShoppingListDocument();
