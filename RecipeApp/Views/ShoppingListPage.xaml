@@ -73,6 +73,7 @@
                             HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" FontAttributes="Bold" />
                 </Grid>
                 <views:IngredientSuggestionsView x:Name="QuickSuggestions" />
+                <Button Text="Checked item settings" Clicked="CheckedItemSettings_Clicked" Style="{StaticResource QuietButton}" />
                 <Button Text="{loc:Translate 'Reorder sections'}" Clicked="ReorderSections_Clicked" Style="{StaticResource QuietButton}" />
                 <Button Text="{loc:Translate 'Category &amp; note'}" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" HorizontalOptions="Start" />
                 <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">

@@ -79,6 +79,7 @@ public class ShoppingListViewModel : CustomViewModelBase
     public ObservableRangeCollection<string> Categories { get; } = new();
     public string SearchText { get => searchText; set { if (SetProperty(ref searchText, value)) RefreshGroups(); } }
     public bool HideCollected { get => hideCollected; set { if (SetProperty(ref hideCollected, value)) RefreshGroups(); } }
+    public bool DeleteCollectedOnCheck { get; set; }
     public bool ShowDetails { get => showDetails; set => SetProperty(ref showDetails, value); }
     public string QuickName { get => quickName; set { SetProperty(ref quickName, value); AddItemCommand?.ChangeCanExecute(); } }
     public string QuickQuantity { get => quickQuantity; set => SetProperty(ref quickQuantity, value); }
@@ -136,6 +137,7 @@ public class ShoppingListViewModel : CustomViewModelBase
     public void Load(bool manual, string incomingJson)
     {
         HideCollected = AppSettings.Current.HideCollected;
+        DeleteCollectedOnCheck = AppSettings.Current.DeleteCollectedOnCheck;
         ShowDetails = AppSettings.Current.ShoppingDetails;
         if (loadedKey != StorageKey) { loaded = false; document = new(); IsEditing = false; loadedKey = StorageKey; }
         var legacy = IsShared ? "" : Preferences.Get(ShoppingListStore.LegacyKey, "");
@@ -242,6 +244,13 @@ public class ShoppingListViewModel : CustomViewModelBase
     {
         if (batching || args.PropertyName is not (nameof(ShoppingListItem.InBasket) or nameof(ShoppingListItem.Name)
             or nameof(ShoppingListItem.Quantity) or nameof(ShoppingListItem.Note) or nameof(ShoppingListItem.Category))) return;
+        if(args.PropertyName == nameof(ShoppingListItem.InBasket) && sender is ShoppingListItem checkedItem
+            && document.CommitCheckedItem(checkedItem.Id,DeleteCollectedOnCheck))
+        {
+            if(editingItem?.Id == checkedItem.Id) IsEditing = false;
+            Changed("Checked item removed · Undo available");
+            return;
+        }
         document.Commit();
         Persist();
         NotifySummary();
