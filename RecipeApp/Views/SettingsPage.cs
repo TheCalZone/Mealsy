@@ -8,6 +8,7 @@ public class SettingsPage : ContentPage
     {
         var body = new VerticalStackLayout { Padding = 16, Spacing = 18 };
         body.Add(ShoppingUi.Text("Make Mealsy yours", 28, true));
+        body.Add(ShoppingUi.Button("Privacy, data & account deletion",()=>AppNavigation.Open(new PrivacyAndDataPage()),true));
         body.Add(ShoppingUi.Button("Get started guide",()=>AppNavigation.Open(new OnboardingPage()),true));
         body.Add(ShoppingUi.Button(AppLocalization.Text("Share Mealsy"),OnboardingState.ShareApp,true));
         body.Add(ShoppingUi.Text("Saved automatically on this device, for signed-in and device mode alike.", 14));

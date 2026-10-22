@@ -1,6 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.recipeapp" android:versionCode="1" android:versionName="0.1.0.1">
-	<application android:allowBackup="true" android:icon="@mipmap/saladiconandroid" android:supportsRtl="true" android:label="Mealsy">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="com.companyname.recipeapp" android:versionCode="1" android:versionName="0.1.0.1">
+	<application android:allowBackup="false" android:fullBackupContent="false" android:icon="@mipmap/saladiconandroid" android:supportsRtl="true" android:label="Mealsy">
+        <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
         <!-- Google sample app ID. Replace only when configuring your live AdMob app. -->
         <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />
@@ -8,6 +9,8 @@
     </application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+    <!-- Live ads are disabled. Review this exclusion and Data safety before enabling them. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 	<uses-sdk android:minSdkVersion="23" android:targetSdkVersion="34" />

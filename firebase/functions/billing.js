@@ -40,6 +40,7 @@ function createBilling(db, readPurchase = googlePurchase, ack = acknowledge, clo
     if (value.active && purchase.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING') await ack(token,value.productId);
     const entitlementRef=db.doc(`${value.productId===SEAT_PRODUCT?'seatEntitlements':'billingEntitlements'}/${uid}`);
     await db.runTransaction(async tx => {
+      if((await tx.get(db.doc(`accountDeletions/${uid}`))).exists)fail('permission-denied','This account is being deleted.');
       const [binding, current] = await Promise.all([tx.get(ref), tx.get(entitlementRef)]);
       if (binding.exists && binding.data().uid !== uid) fail('permission-denied', 'This purchase is already connected to another account.');
       // Reject an out-of-order verification so an old response cannot undo a refund update.
@@ -80,7 +81,7 @@ function createBilling(db, readPurchase = googlePurchase, ack = acknowledge, clo
   async function notification(token) {
     if (typeof token !== 'string' || token.length > 4096) return;
     const binding = (await db.doc(`billingPurchases/${sha(token)}`).get()).data();
-    if (binding) await verify(binding.uid, token);
+    if (binding && !(await db.doc(`accountDeletions/${binding.uid}`).get()).exists) await verify(binding.uid, token);
   }
   return {handle, verify, notification};
 }

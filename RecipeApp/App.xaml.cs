@@ -17,7 +17,7 @@ public partial class App : Application
     protected override async void OnStart()
     {
         base.OnStart();
-        try{await RecipeService.GetRecipesForLocal();await RecipeService.GetSnacksForLocal();await RecipeService.GetStaplesForLocal();}
+        try{await AccountDeletionService.FinishLocal();await RecipeService.GetRecipesForLocal();await RecipeService.GetSnacksForLocal();await RecipeService.GetStaplesForLocal();}
         catch(Exception){await MainPage.DisplayAlert("Local data unavailable","Your local data couldn't be loaded. Restart the app before editing it.","OK");}
         finally{AccountSession.ClearOldPassword();InitialAccountReady=true;}
         // Firebase's native SDK restores its own session; passwords are never stored/replayed by Mealsy.

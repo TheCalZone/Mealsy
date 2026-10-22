@@ -9,6 +9,7 @@ function createPromotionPurchases(db,read=token=>store(token),consume=token=>sto
   const purchase=await read(token);if(purchase.obfuscatedExternalAccountId!==accountId(uid)||purchase.obfuscatedExternalProfileId!==sha(businessId))fail('permission-denied','This credit purchase belongs to another account or business.');
   const receiptRef=db.doc(`promotionPurchases/${sha(token)}`),walletRef=db.doc(`businessWallets/${businessId}`);
   await db.runTransaction(async tx=>{
+   if((await tx.get(db.doc(`accountDeletions/${uid}`))).exists)return;
    const receipt=(await tx.get(receiptRef)).data(),wallet=(await tx.get(walletRef)).data()||{balanceMicro:0},b=(await tx.get(db.doc(`businesses/${businessId}`))).data();if(!system)requireRole(b,uid,'campaign',true);else if(!receipt)return;
    if(receipt&&(receipt.uid!==uid||receipt.businessId!==businessId))fail('permission-denied','This purchase is already assigned.');
    if(purchase.purchaseState!==0){if(receipt?.credited&&!receipt.revoked){tx.update(walletRef,{balanceMicro:wallet.balanceMicro-CREDIT_MICRO});tx.update(receiptRef,{revoked:true,verifiedAt:clock()});}return;}

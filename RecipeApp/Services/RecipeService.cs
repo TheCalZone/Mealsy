@@ -588,6 +588,27 @@ namespace RecipeApp.Services
                 recipe.FirebaseUID = uid;
         }
 
+        public static async Task DeleteAccountLocal(string uid)
+        {
+            if(string.IsNullOrWhiteSpace(uid))throw new InvalidOperationException("Choose an account to clear.");
+            await Init();
+            var ids=(await db.Table<Recipe>().Where(r=>r.FirebaseUID==uid).ToListAsync()).Select(r=>r.Id).Append(0).ToList();
+            foreach(var id in ids)
+            {
+                var path=RecipeDraftStore.PathFor(uid,id);var directory=Path.GetDirectoryName(path);
+                if(Directory.Exists(directory))foreach(var file in Directory.EnumerateFiles(directory,Path.GetFileName(path)+"*"))File.Delete(file);
+            }
+            await db.RunInTransactionAsync(connection=>{
+                connection.Execute("DELETE FROM Ingredient WHERE RecipeId IN (SELECT Id FROM Recipe WHERE FirebaseUID = ?)",uid);
+                connection.Execute("DELETE FROM Recipe WHERE FirebaseUID = ?",uid);
+                connection.Execute("DELETE FROM Snack WHERE FirebaseUID = ?",uid);
+                connection.Execute("DELETE FROM Staple WHERE FirebaseUID = ?",uid);
+                connection.Execute("DELETE FROM MealPlanDay WHERE MealPlanID IN (SELECT Id FROM MealPlan WHERE AccountKey = ?)","user:"+uid);
+                connection.Execute("DELETE FROM MealPlan WHERE AccountKey = ?","user:"+uid);
+            });
+            Recipes.RemoveAll(r=>r.FirebaseUID==uid);Snacks.RemoveAll(r=>r.FirebaseUID==uid);Staples.RemoveAll(r=>r.FirebaseUID==uid);
+        }
+
         public static async Task DeleteAllRecipes()
         {
             await Init();

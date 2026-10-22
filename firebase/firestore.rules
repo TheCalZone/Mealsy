@@ -3,9 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Existing recipe/profile data remains private to the signed-in owner.
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if request.auth != null && request.auth.uid == uid && !exists(/databases/$(database)/documents/accountDeletions/$(uid));
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if request.auth != null && request.auth.uid == uid && !exists(/databases/$(database)/documents/accountDeletions/$(uid));
       }
     }
     // Household, invitation, and shopping data can only be accessed through the

@@ -137,3 +137,18 @@ test('feed Firestore transactions count likes once and enforce hidden-post acces
     await assertFails(getDoc(doc(signedIn, path))); await assertFails(setDoc(doc(signedIn, path), {authorId: 'feed-owner'}));
   }
 });
+test('account deletion blocks personal writes and recursively cleans only the requesting account on real Firestore',async()=>{
+ let now=Date.now();const uid='delete-emulator',other='keep-emulator';let disabled=false,deleted=false;
+ const auth={getUser:async()=>({disabled:false}),updateUser:async()=>{disabled=true;},revokeRefreshTokens:async()=>{},deleteUser:async()=>{deleted=true;}};
+ const service=require('./functions/account-deletion').createAccountDeletion(db,auth,()=>now);
+ await db.doc(`users/${uid}`).set({email:'delete@example.test'});await db.doc(`users/${uid}/recipes/r`).set({photo:'inline'});await db.doc(`users/${other}`).set({keep:true});
+ await db.doc('households/delete-house').set({owner:uid,members:{[uid]:'Owner',[other]:'Member'}});
+ for(const member of [uid,other])await db.doc(`householdAccounts/${member}`).set({householdId:'delete-house'});
+ await db.doc('households/delete-house/mealWeeks/week').set({meals:{}});
+ const request={auth:{uid,token:{auth_time:Math.floor(now/1000)}},data:{action:'request',confirmation:'DELETE',deleteOwnedSpaces:true}};
+ const result=await service.handle(request);assert(result.accepted);
+ await assertFails(setDoc(doc(rules.authenticatedContext(uid).firestore(),`users/${uid}/recipes/late`),{name:'blocked'}));
+ await assertSucceeds(setDoc(doc(rules.authenticatedContext(other).firestore(),`users/${other}/recipes/new`),{name:'allowed'}));
+ await service.process(uid);assert(disabled);assert(!deleted);assert(!(await db.doc('households/delete-house/mealWeeks/week').get()).exists);assert((await db.doc(`users/${other}`).get()).exists);
+ now+=120001;await service.process(uid);assert(deleted);assert.equal((await db.doc(`accountDeletions/${uid}`).get()).data().status,'completed');
+});

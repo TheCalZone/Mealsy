@@ -4,7 +4,7 @@ Handled operational failures now generate bounded, sanitized non-fatal Crashlyti
 events through the existing platform SDK. Covered paths include callable requests
 (feed, shopping/household, billing, administration), account sign-in/registration,
 profile loading and sync, common action handlers, and uncaught managed exceptions.
-Existing native fatal collection remains enabled by default. Managed exception
+Optional managed/native collection now defaults to off when no saved choice exists; previously saved choices remain respected. Platform startup metadata disables automatic Crashlytics collection until the app applies that choice. Managed exception
 hooks do not mark exceptions handled or prevent termination.
 
 Report fields are fixed operation names, error categories, failure reasons and a
