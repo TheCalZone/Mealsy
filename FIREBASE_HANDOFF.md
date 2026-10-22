@@ -345,7 +345,7 @@ its link. Friend/private shares require the new social service before release.
 Client source supports `mealsy_family`, base plans `monthly` and `annual`, offer
 ID `seven-day-trial` under each plan. Configure/activate each desired offer in
 Play Console: new-customer acquisition eligibility controlled by Google Play
-(not developer-determined), one free P7D phase, then the base plan's normal
+(not developer-determined), one free seven-day phase (P7D or P1W), then the base plan's normal
 recurring P1M/P1Y phase. No intermediate introductory discount phases are supported
 by this first client selector. The offer ID is unique within each base plan.
 

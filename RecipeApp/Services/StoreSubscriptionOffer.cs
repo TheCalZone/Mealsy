@@ -19,7 +19,7 @@ public static class StoreSubscriptionOffer
         var candidates=offers.Where(o=>!string.IsNullOrWhiteSpace(o.Token)&&o.Phases!=null).ToList();
         bool Renewal(StorePricePhase p)=>p.Micros>0&&!string.IsNullOrWhiteSpace(p.Price)&&!string.IsNullOrWhiteSpace(p.Currency)&&p.Period==period&&p.Recurrence==1;
         var trial=trialOfferId==null?null:candidates.FirstOrDefault(o=>o.Id==trialOfferId&&o.Phases.Count==2
-            &&o.Phases[0] is {Micros:0,Period:"P7D",Recurrence:2,Cycles:1}
+            &&o.Phases[0] is {Micros:0,Recurrence:2,Cycles:1} && (o.Phases[0].Period is "P7D" or "P1W")
             &&Renewal(o.Phases[1])&&o.Phases[0].Currency==o.Phases[1].Currency);
         var selected=trial??candidates.FirstOrDefault(o=>string.IsNullOrEmpty(o.Id)&&o.Phases.Count==1&&Renewal(o.Phases[0]));
         if(selected==null)throw new InvalidOperationException("That plan is not available from Google Play yet. Refresh plans and try again.");

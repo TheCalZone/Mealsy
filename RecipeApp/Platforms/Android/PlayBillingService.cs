@@ -46,7 +46,7 @@ public sealed class PlayBillingService : Java.Lang.Object, IPurchasesUpdatedList
     private static SubscriptionQuote Quote(ProductDetails.SubscriptionOfferDetails offer)
     {
         var phases=offer.PricingPhases.PricingPhaseList;var last=phases.Last();
-        return new(offer.OfferToken,last.FormattedPrice,last.BillingPeriod,phases.Count==2&&phases[0].PriceAmountMicros==0&&phases[0].BillingPeriod=="P7D",last.PriceAmountMicros,last.PriceCurrencyCode);
+        return new(offer.OfferToken,last.FormattedPrice,last.BillingPeriod,phases.Count==2&&phases[0].PriceAmountMicros==0&&(phases[0].BillingPeriod is "P7D" or "P1W"),last.PriceAmountMicros,last.PriceCurrencyCode);
     }
     public async Task<SubscriptionQuote> LoadQuote(string basePlanId)
     {

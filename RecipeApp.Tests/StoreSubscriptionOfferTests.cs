@@ -12,6 +12,8 @@ public class StoreSubscriptionOfferTests
         Assert.True(quote.SevenDayTrial);Assert.Equal("trial",quote.Token);
         Assert.Contains("£4.99 per month",quote.Disclosure);Assert.Contains("Cancel",quote.Disclosure);
     }
+    [Fact] public void OneWeekIsAlsoSevenDays()
+        =>Assert.True(StoreSubscriptionOffer.Select(new[]{Standard(),Trial("P1W")},"P1M","seven-day-trial").SevenDayTrial);
     [Fact] public void MissingTrialFallsBackToNormalPrice()
     {
         var quote=StoreSubscriptionOffer.Select(new[]{Standard()},"P1M","seven-day-trial");
