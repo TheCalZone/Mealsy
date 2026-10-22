@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,22), "Discover household sharing", new[] {
+            "Home shopping and meal sections now offer household shortcuts with relevant Premium benefits. Covered members go straight to their shared list or plan without needing a separate subscription.",
+            "Inactive household members are directed to their owner's plan, while Premium users without a household can set one up."
+        }),
         new(new(2026,10,22), "A calmer home page", new[] {
             "Home sections now expand with a tap, keeping shopping, today's meals, favourites and kitchen tools easy to scan. Main shortcuts stay visible.",
             "Removed household check timestamps and routine account-status text. Sections keep their open state while you use the page, and reset when accounts change."

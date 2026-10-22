@@ -47,7 +47,7 @@ public partial class Homepage : ContentPage
         if(householdQuick==null)return;
         if(quickAccount==null||quickAccount!=AccountSession.UserId){householdQuick.Content=null;return;}
         var view=HouseholdWarmup.Cached;
-        if(view==null){householdQuick.Content=ShoppingUi.Button("What’s for dinner? · Household plan",()=>AppNavigation.Open(new HouseholdMealsPage()),true);return;}
+        if(view==null){householdQuick.Content=ShoppingUi.Button("What’s for dinner? · Household plan",()=>OpenHouseholdFeature(true,quickAccount),true);return;}
         var body=new VerticalStackLayout{Spacing=9};
 
         var today=SocialPolicy.DateKey(DateTime.Today);
@@ -62,12 +62,57 @@ public partial class Homepage : ContentPage
             catch(Exception){body.Add(ShoppingUi.Text("Open your household list to check its saved items.",14));}
         }
         else body.Add(ShoppingUi.Text("Checking your household shopping list…",14));
-        body.Add(ShoppingUi.Button("Open household shopping list",()=>{AccountSession.Check(quickAccount);return AppNavigation.ShoppingList("//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(view.Household.HouseholdId));}));
-        body.Add(ShoppingUi.Button("Open household meal plan",()=>{AccountSession.Check(quickAccount);return AppNavigation.Open(new HouseholdMealsPage());},true));
+        body.Add(ShoppingUi.Button("Open household shopping list",()=>OpenHouseholdFeature(false,quickAccount)));
+        body.Add(ShoppingUi.Button("Open household meal plan",()=>OpenHouseholdFeature(true,quickAccount),true));
         body.Add(ShoppingUi.Button("Refresh household",async()=>await HouseholdWarmup.Start(true),true));
         var dinner=meals?.FirstOrDefault(meal=>meal.Slot=="dinner");
         householdQuick.Content=Foldout("household",view.Household.Name+" · Household",body,
             dinner==null?"Shared shopping & meals":"Tonight: "+dinner.Title);
+    }
+    private async Task OpenHouseholdFeature(bool meals, string account)
+    {
+        AccountSession.Check(account);
+        HouseholdInfo household = null;
+        if(account != null)
+        {
+            // Check household coverage, including members who do not pay themselves.
+            // Connection errors must not be presented as an expired subscription.
+            household = await HouseholdService.StatusAsync();
+            AccountSession.Check(account);
+            if(household.FamilyEnabled && household.HouseholdId != null)
+            {
+                if(meals) await AppNavigation.Open(new HouseholdMealsPage());
+                else await AppNavigation.ShoppingList("//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(household.HouseholdId));
+                return;
+            }
+            if(household.HouseholdId != null && household.Owner != account)
+            {
+                await DisplayAlert("Household sharing is paused",
+                    "Your household owner's Premium plan covers everyone. Ask them to renew or restore it to use the shared shopping list and meal plan. You don't need a separate subscription.",AppLocalization.Text("OK"));
+                return;
+            }
+            if(household.HouseholdId == null)
+            {
+                var plan = await PlanService.RefreshAsync();
+                AccountSession.Check(account);
+                if(PremiumEntitlement.IsActive(plan,DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()))
+                {
+                    await AppNavigation.Open(new HouseholdPage());
+                    return;
+                }
+            }
+        }
+        var benefit = meals
+            ? "Plan dinner together, add portions and notes, and let everyone check what's cooking. Your personal planner stays separate."
+            : "One list for your household: everyone can add what they need and tick things off at the shops. Keep your personal list separate.";
+        var message = benefit + "\n\nThe household owner's Premium membership covers up to four people, including the owner. Each person uses their own account. Your personal shopping and meal planning stay free.";
+        if(account == null) message += " Creating an account is free and does not start a subscription.";
+        if(ClientPlatform.StorePurchasesAvailable) message += " Check subscription options for an eligible 7-day trial; renewal price and cancellation terms are shown before checkout.";
+        if(await DisplayAlert(meals ? "Plan meals together with Premium" : "Share your shopping with Premium",message,"Explore Premium","Not now"))
+        {
+            AccountSession.Check(account);
+            await AppNavigation.Open(new UpgradeFeaturesPage());
+        }
     }
     private bool recipeBusy;
     private async Task RecipeAction(long id,string account,bool options)
@@ -108,7 +153,7 @@ public partial class Homepage : ContentPage
         try{var json=Preferences.Get(ShoppingListStore.StateKey,"");if(json.Length>0){var items=ShoppingListDocument.Deserialize(json).Items;summary=$"{items.Count(i=>!i.InBasket)} items left to buy";}}catch(Exception){summary="Your saved list needs checking. Open Shopping for recovery options.";}
         body.Add(Foldout("shopping",AppLocalization.Text("Your next shopping trip"),new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Button(AppLocalization.Text("Open personal shopping list"),()=>AppNavigation.ShoppingList("//ShoppingListPage?OpenPersonal=True")),ShoppingUi.Button(AppLocalization.Text("Quick add an item"),async()=>{
             var name=await DisplayPromptAsync("Quick add to personal list","What do you need?",maxLength:200);if(string.IsNullOrWhiteSpace(name))return;AccountSession.Check(account);ShoppingListStore.AppendIngredients(new[]{new Ingredient{Name=name.Trim()}});await DisplayAlert("Added","Added to your personal shopping list.",AppLocalization.Text("OK"));await Render(account);
-        },true)}},summary));
+        },true),ShoppingUi.Button("Show household shopping list",()=>OpenHouseholdFeature(false,account),true)}},summary));
         var shortcuts=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},RowDefinitions=new(){new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8,RowSpacing=8};
         shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("+ New recipe"),()=>AppNavigation.Open(new AddRecipePage())),0,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Plan a shop"),()=>AppNavigation.Open(new ShoppingListMakerPage()),true),1,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Recipe book"),()=>AppNavigation.Root("RecipePage"),true),0,1);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Weekly meals"),()=>AppNavigation.Root("MealPlanOverviewPage"),true),1,1);body.Insert(1,shortcuts);
 
@@ -118,7 +163,7 @@ public partial class Homepage : ContentPage
         {
             var names=MealPlanning.MealNames(today,slot,recipes).Concat(MealPlanning.Notes(today,slot)).ToList();if(names.Count==0)continue;planned=true;meals.Add(ShoppingUi.Text(MealPlanning.Slots[slot],12,true));meals.Add(ShoppingUi.Text(string.Join(" · ",names),15));
         }
-        if(!planned)meals.Add(ShoppingUi.Text("Leave room for inspiration, leftovers, or something you've been meaning to cook.",14));meals.Add(ShoppingUi.Button(AppLocalization.Text("Plan your week"),()=>AppNavigation.Root("MealPlanOverviewPage"),true));body.Add(Foldout("meals",AppLocalization.Text("On the menu today"),meals,planned?"Your meals are planned for today":"Nothing planned yet"));
+        if(!planned)meals.Add(ShoppingUi.Text("Leave room for inspiration, leftovers, or something you've been meaning to cook.",14));meals.Add(ShoppingUi.Button(AppLocalization.Text("Plan your week"),()=>AppNavigation.Root("MealPlanOverviewPage"),true));meals.Add(ShoppingUi.Button("Show household meal plan",()=>OpenHouseholdFeature(true,account),true));body.Add(Foldout("meals",AppLocalization.Text("On the menu today"),meals,planned?"Your meals are planned for today":"Nothing planned yet"));
         var favourites=new VerticalStackLayout{Spacing=10};foreach(var recipe in recipes.OrderByDescending(r=>RecipeBrowser.Tags(r).Contains("favourites")).ThenByDescending(r=>r.LastUpdated).Take(2))favourites.Add(RecipeCardView.Card(recipe,()=>RecipeAction(recipe.Id,account,false),()=>RecipeAction(recipe.Id,account,true)));
         if(recipes.Count==0)favourites.Add(ShoppingUi.Text("Save your first recipe to build your collection.",14));
         body.Add(Foldout("recipes",AppLocalization.Text("Back to your favourites"),favourites));
