@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Clearer navigation and reviewer setup", new[] {
+            "The selected Android bottom tab now has a visible highlight, bright icon and bold label. Other tabs stay labelled without shifting.",
+            "Finishing setup removes the guide from its original tab, so returning to Account opens your account. Completed setup shortcuts disappear from Home and Account; the guide remains available in Settings.",
+            "Administrators can create a separate reviewer account without signing themselves out, send its verification email and grant complimentary Premium. Manual email confirmation is available after the administration backend update."
+        }),
         new(new(2026,10,23), "Household roles and approval requests", new[] {
             "Owners can assign Adult or Restricted access and choose roles for invitations. Existing members keep Adult access until changed.",
             "Restricted members can check shopping items, but new shopping items and meals wait for owner/adult approval. Personal lists remain unrestricted. Requests can be approved, declined or cancelled from Household requests.",

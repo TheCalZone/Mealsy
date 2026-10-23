@@ -3,6 +3,7 @@ using RecipeApp.Services;
 namespace RecipeApp.Views;
 public partial class Homepage : ContentPage
 {
+    private readonly ToolbarItem setupItem;
     private ContentView householdQuick;
     private string quickAccount;
     private bool showing;
@@ -34,9 +35,10 @@ public partial class Homepage : ContentPage
         section.Add(panel);
         return ShoppingUi.Card(section);
     }
-    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Import recipe link"),null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
+    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Import recipe link"),null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
     protected override async void OnAppearing()
     {
+        if(OnboardingState.Completed)ToolbarItems.Remove(setupItem);
         base.OnAppearing();showing=true;HouseholdWarmup.Changed-=HouseholdChanged;HouseholdWarmup.Changed+=HouseholdChanged;var uid=AccountSession.UserId;Content=new LoadingIndicator("Getting your kitchen ready…");
         try{await RecipeService.GetRecipesForLocal();AccountSession.Check(uid);await Render(uid);}catch(Exception){Content=ShoppingUi.Text("Your local dashboard couldn't load. Open Shopping or Account from the tabs to continue.");}
     }

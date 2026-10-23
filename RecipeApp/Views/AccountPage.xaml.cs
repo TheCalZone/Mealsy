@@ -2,15 +2,17 @@ using RecipeApp.Services;
 namespace RecipeApp.Views;
 public partial class AccountPage : ContentPage
 {
+    private readonly ToolbarItem setupItem;
     private string account;
     private RecipeApp.Models.CommunityProfile community;
     private bool administrator;
-    public AccountPage(){InitializeComponent();Title=AppLocalization.Text("Your account");ShoppingUi.Theme(this);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));}
+    public AccountPage(){InitializeComponent();Title=AppLocalization.Text("Your account");ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));}
     private readonly LoadGeneration requests=new();
     private bool visible,loading;
     private string loadWarning;
     protected override async void OnAppearing()
     {
+        if(OnboardingState.Completed)ToolbarItems.Remove(setupItem);
         base.OnAppearing();visible=true;await RefreshAccountAsync();
     }
     protected override void OnDisappearing(){visible=false;requests.Invalidate();base.OnDisappearing();}

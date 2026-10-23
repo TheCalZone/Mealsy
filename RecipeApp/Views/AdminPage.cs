@@ -16,6 +16,7 @@ public class AdminPage : ContentPage
     private readonly bool premiumOnly;
     private readonly bool focusPremium;
     private readonly Button patchNotes;
+    private readonly Button createPremiumAccount;
     public AdminPage(bool premium=false)
     {
         focusPremium=premium;premiumOnly=premium||!ProductFeatures.SocialEnabled;Title = premium?"Complimentary Premium":"Administrator"; ShoppingUi.Theme(this);
@@ -26,6 +27,8 @@ public class AdminPage : ContentPage
         body.Add(ShoppingUi.Text("Complimentary Premium access",21,true));
         body.Add(ShoppingUi.Text("Find an existing account by email, then grant 30, 90 or 365 days without a purchase. A reason is required and every change is audited. This does not create an app-store subscription or grant administrator rights.",13));
         body.Add(email); body.Add(Action("Find account / manage Premium", FindUser));
+        createPremiumAccount=Action("＋ Create a new Premium account",()=>AppNavigation.Open(new CreatePremiumAccountPage(address=>{Check();email.Text=address;})));
+        createPremiumAccount.IsVisible=false;body.Add(createPremiumAccount);
         body.Add(Action("Administrator activity", () => Load("audit",true)));
         patchNotes=Action("Patch notes · what’s changed",ShowPatchNotes);patchNotes.IsVisible=false;body.Add(patchNotes);
         if(ProductFeatures.SocialEnabled)body.Add(Action("Verify businesses & creators",()=>Navigation.PushAsync(new BusinessVerificationPage())));
@@ -35,8 +38,8 @@ public class AdminPage : ContentPage
     }
     protected override async void OnAppearing()
     {
-        base.OnAppearing(); results.Clear(); more.IsVisible = false;patchNotes.IsVisible=false;
-        try { Check(); var role = await AdminService.Status(); Check(); if (!role.Admin) throw new HouseholdException("PERMISSION_DENIED","Administrator access is required."); patchNotes.IsVisible=true;if(premiumOnly){status.Text="Enter the recipient’s registered email to manage complimentary Premium.";if(focusPremium)email.Focus();}else await Load("posts",true); }
+        base.OnAppearing(); results.Clear(); more.IsVisible = false;patchNotes.IsVisible=false;createPremiumAccount.IsVisible=false;
+        try { Check(); var role = await AdminService.Status(); Check(); if (!role.Admin) throw new HouseholdException("PERMISSION_DENIED","Administrator access is required."); patchNotes.IsVisible=true;createPremiumAccount.IsVisible=true;if(premiumOnly){status.Text="Enter the recipient’s registered email to manage complimentary Premium.";if(focusPremium)email.Focus();}else await Load("posts",true); }
         catch (Exception e) { status.Text = e is HouseholdException ? e.Message : "Administration unavailable. Reopen this screen to retry."; }
     }
     private Task ShowPatchNotes()
@@ -129,6 +132,11 @@ public class AdminPage : ContentPage
             body.Add(ShoppingUi.Text(user.Username.Length>0?user.Username:user.Email,20,true));body.Add(ShoppingUi.Text(user.Email));
             body.Add(ShoppingUi.Text($"Account: {user.Uid}\nEmail {(user.EmailVerified?"confirmed":"unconfirmed")} · {(user.Admin?"Administrator":"Member")}{(user.Disabled?" · Disabled":"")}",13));
             string Expiry(long value)=>value>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()?DateTimeOffset.FromUnixTimeMilliseconds(value).ToLocalTime().ToString("g"):"None active";
+            if(!user.EmailVerified)
+            {
+                if(user.CanVerifyEmail)body.Add(Action("Mark email as confirmed…",()=>VerifyEmail(user)));
+                else body.Add(ShoppingUi.Text("Email verification is needed. Use the inbox link, or deploy the updated administration backend to enable manual confirmation here.",13));
+            }
             body.Add(ShoppingUi.Text("Complimentary Premium: "+Expiry(user.GrantExpiresAt)+"\nSubscription: "+Expiry(user.SubscriptionExpiresAt),13));
             body.Add(ShoppingUi.Text("Complimentary access includes personal Premium tools. It covers the household if this account owns it. No payment is taken. Revoking a grant does not cancel a paid subscription.",13));
             foreach(var days in new[]{30,90,365})body.Add(Action($"Give {days} days of Premium free",()=>Grant(user,days)));
@@ -139,6 +147,19 @@ public class AdminPage : ContentPage
             }));
             body.Add(Action("Revoke complimentary Premium…",()=>Grant(user,0)));results.Add(ShoppingUi.Card(body));
         } finally {busy=false;}
+    }
+    private async Task VerifyEmail(AdminUser user)
+    {
+        if(busy)return;busy=true;var updated=false;
+        try
+        {
+            Check();
+            if(!await DisplayAlert("Confirm email ownership?",$"Mark {user.Email} as verified in Firebase? Only do this after confirming ownership, such as a reviewer inbox you control. This bypasses the email-link check, but does not grant Premium or administrator rights.","Mark confirmed","Cancel"))return;
+            var reason=await Reason("Reason for confirming email");if(reason==null)return;Check();
+            await AdminService.Call<object>(new {action="verifyEmail",uid=user.Uid,email=user.Email,reason});Check();updated=true;
+        }
+        finally{busy=false;}
+        if(updated){await FindUser();await DisplayAlert("Email confirmed","The Firebase email is marked verified. Sign out and back in on the reviewer account to refresh its sign-in token.","OK");}
     }
     private async Task Grant(AdminUser user,int days)
     {

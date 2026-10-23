@@ -3,7 +3,7 @@ using RecipeApp.Models;
 namespace RecipeApp.Services;
 
 public record AdminStatus(bool Admin);
-public record AdminUser(string Uid, string Email, string Username, bool EmailVerified, bool Disabled, bool Admin, long GrantExpiresAt, long SubscriptionExpiresAt);
+public record AdminUser(string Uid, string Email, string Username, bool EmailVerified, bool Disabled, bool Admin, long GrantExpiresAt, long SubscriptionExpiresAt,bool CanVerifyEmail=false);
 public class AdminPost : FoodPost
 {
     public bool Hidden { get; set; }

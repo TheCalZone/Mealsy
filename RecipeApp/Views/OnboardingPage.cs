@@ -25,5 +25,17 @@ public class OnboardingPage:ContentPage
             AccountSession.Check(account);await HouseholdService.CallAsync<object>(new{action="join",code=invitation});AccountSession.Check(account);if(OnboardingState.PendingCode==invitation)OnboardingState.ClearCode();status.Text="You're in! Open My household from Account or choose Household in Shopping.";code.Text="";
         }catch(Exception e){status.Text=e is InvalidOperationException or HouseholdException?e.Message:"Couldn't join right now. Your code is kept; check your connection and retry.";}finally{busy=false;}
     }
-    private async Task Finish(string route){OnboardingState.Complete();await AppNavigation.Root(route);}
+    private async Task Finish(string route)
+    {
+        if(busy)return;busy=true;
+        try
+        {
+            OnboardingState.Complete();
+            // Shell remembers a separate stack for each tab. Clear the source
+            // stack before switching tabs, otherwise Account retains this guide.
+            if(Navigation.NavigationStack.Count>1)await Navigation.PopToRootAsync(false);
+            await AppNavigation.Root(route);
+        }
+        finally{busy=false;}
+    }
 }
