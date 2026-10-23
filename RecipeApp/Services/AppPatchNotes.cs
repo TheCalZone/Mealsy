@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Your lists, clearly separated", new[] {
+            "Switch between named lists using the scrolling tabs. Active Premium households open their shared list by default; explicit widget and recipe destinations take priority.",
+            "Free includes two personal lists; Premium lets you create more. Additional lists are stored on this device. Existing lists remain editable when Premium ends.",
+            "Rename or delete additional lists from list options, choose a personal destination for recipe imports, and configure each Android widget for a named list. Quick-add and visibility labels show where items go."
+        }),
         new(new(2026,10,22), "Choose what happens to checked shopping items", new[] {
             "Shopping's Checked item settings can keep checks visible, hide them, or delete items as you check them. Automatic removal supports Undo while the list stays open.",
             "The setting stays on this device. Deleting from a household list affects everyone; existing checked items and remotely checked items are not automatically removed."

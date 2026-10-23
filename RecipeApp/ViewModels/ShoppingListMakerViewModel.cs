@@ -104,6 +104,24 @@ public class ShoppingListMakerViewModel : ObservableObject
         {
             CheckAccount(); var selected=Review.Where(r => r.Included).Select(r => r.ToIngredient()).ToList();
             if (selected.Count==0) throw new InvalidOperationException("Tick at least one item that you need before creating your list.");
+            var lists=PersonalShoppingLists.All();
+            var destination=lists[0];
+            if(lists.Count>1)
+            {
+                var names=lists.Select((l,i)=>$"{i+1}. {l.Name}").ToArray();
+                var choice=await Shell.Current.DisplayActionSheet("Choose personal shopping list","Cancel",null,names);
+                CheckAccount();var index=Array.IndexOf(names,choice);if(index<0)return;
+                destination=lists[index];
+            }
+            if(destination.Id!="main")
+            {
+                var key=PersonalShoppingLists.StorageKey(destination.Id);
+                var stored=Preferences.Get(key,"");
+                var document=string.IsNullOrWhiteSpace(stored)?new ShoppingListDocument():ShoppingListDocument.Deserialize(stored);
+                if(replace)document.Replace(ShoppingListDocument.FromIngredients(selected));else document.AppendIngredients(selected);
+                Preferences.Set(key,document.Serialize());
+                Reset();await Shell.Current.GoToAsync("//ShoppingListPage?PersonalListId="+destination.Id);return;
+            }
             if (replace)
             {
                 // Validate existing storage before allowing an intentional replacement.

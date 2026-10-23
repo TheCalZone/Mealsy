@@ -1,0 +1,31 @@
+# Shopping lists — 23 October 2026
+
+The existing main personal shopping list retains its account-specific storage and
+Firebase sync. One active household list retains the existing membership checks,
+cloud sync and conflict recovery. When entering Shopping normally, verified
+active household access takes priority. Explicit main-personal, named-personal,
+household widget links and recipe import destinations override the default.
+
+Additional named personal lists are device-local, isolated by account (or guest),
+and labelled accordingly. Names live in ShoppingListStore.StateKey + `.lists`;
+additional documents use `.list.{guid}`. This is not a new Firebase schema or a
+claim of extra cloud lists. Existing local account cleanup removes uid-scoped
+preferences. Uninstall/device loss removes local lists; use Share for a copy.
+
+Free includes two personal lists, counting the existing main list. Additional
+creation checks Premium; downgrade never hides, deletes or locks existing lists.
+Household lists do not count towards the personal limit. Main may be renamed but
+cannot be deleted. Deleting an extra list asks for irreversible confirmation.
+Shared list management remains in Household. Existing shortcuts that directly
+append ingredients still target the main personal list; the recipe shopping-page
+import flow and recipe/checklist shopping creator offer a choice when multiple personal lists exist. A widget can
+explicitly target any named personal list; deleting it makes that widget require
+reconfiguration rather than silently recreating the list. Widget list labels are
+saved snapshots of their configured names; reconfigure after renaming if needed.
+
+Keep PlanPage's Premium benefits accurate. If cloud sync for all named lists is
+added later, implement a server-authorized list catalog, per-list IDs, membership
+and migration without mixing the main document with additional device lists.
+Android widget in-place additions for device lists deliberately skip the cloud
+personal endpoint. iOS shared UI is included; native iOS build/device validation
+still requires a Mac. No Firebase deployment is needed for these local additions.

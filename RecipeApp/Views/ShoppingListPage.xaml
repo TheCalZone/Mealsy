@@ -42,7 +42,10 @@
     <Grid Padding="16,8,16,8" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
         <Grid x:Name="ShoppingModeBar" IsVisible="False" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
             <Button Text="{loc:Translate 'Exit shopping'}" Clicked="ExitShopping_Clicked" HeightRequest="48" />
-            <Label Grid.Column="1" Text="{Binding RemainingText}" VerticalOptions="Center" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}" />
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                <Label x:Name="ShoppingModeListName" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}" />
+                <Label Text="{Binding RemainingText}" HorizontalTextAlignment="Center" TextColor="{DynamicResource ThemeText}" />
+            </VerticalStackLayout>
             <Button Grid.Column="2" Text="{loc:Translate 'Tools'}" Clicked="ShoppingTools_Clicked" Style="{StaticResource QuietButton}" />
         </Grid>
         <Border x:Name="ShoppingHeader" Padding="18,16" BackgroundColor="{DynamicResource ThemePrimary}" StrokeThickness="0" StrokeShape="RoundRectangle 20">
@@ -56,6 +59,10 @@
                         <Label Text="{Binding RemainingText}" FontSize="{DynamicResource ThemeFont12}" TextColor="White" />
                     </Border>
                 </Grid>
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout x:Name="ListTabs" Spacing="8" />
+                </ScrollView>
+                <Label x:Name="ListVisibility" Text="Only you" FontSize="12" TextColor="#C3DAC8" />
                 <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
                 <views:MembershipPrompt x:Name="ShoppingMembership" />
                 <Button Text="{loc:Translate 'Go shopping'}" Clicked="GoShopping_Clicked" BackgroundColor="White" TextColor="{DynamicResource ThemePrimary}" HeightRequest="48" />
