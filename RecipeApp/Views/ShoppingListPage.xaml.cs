@@ -34,6 +34,7 @@ public partial class ShoppingListPage : ContentPage
     private void SetShoppingMode(bool active){
         if(active==shoppingMode)return;
         if(active){previousNav=Shell.GetNavBarIsVisible(this);previousTabs=Shell.GetTabBarIsVisible(this);}
+        _=OptionsDrawer.SetOpenAsync(false,false);_=AddItemDrawer.SetOpenAsync(false,false);
         shoppingMode=active;ShoppingHeader.IsVisible=!active;ShoppingTools.IsVisible=!active;ShoppingFooterActions.IsVisible=!active;ShoppingModeBar.IsVisible=active;
         AppNavigation.DismissKeyboard();
         Shell.SetNavBarIsVisible(this,active?false:previousNav);Shell.SetTabBarIsVisible(this,active?false:previousTabs);
@@ -41,9 +42,41 @@ public partial class ShoppingListPage : ContentPage
     }
     private void GoShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(true);
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
-    private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
+    private async void ShoppingTools_Clicked(object sender,EventArgs e)
+    {
+        ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
+        await AddItemDrawer.SetOpenAsync(ShoppingTools.IsVisible);
+    }
+    private async void SaveStatus_Tapped(object sender,TappedEventArgs e)
+    {
+        if(!string.IsNullOrWhiteSpace(Model.StatusText))await DisplayAlert("Shopping list status",Model.StatusText,AppLocalization.Text("OK"));
+    }
+    private async void OptionsToggle_Clicked(object sender,EventArgs e)
+    {
+        AppNavigation.DismissKeyboard();
+        await Task.WhenAll(AddItemDrawer.SetOpenAsync(false),OptionsDrawer.SetOpenAsync(!OptionsDrawer.IsOpen));
+    }
+    private async void AddItemToggle_Clicked(object sender,EventArgs e)
+    {
+        AppNavigation.DismissKeyboard();
+        await Task.WhenAll(OptionsDrawer.SetOpenAsync(false),AddItemDrawer.SetOpenAsync(!AddItemDrawer.IsOpen));
+    }
+    private void UpdateDrawerTitles()
+    {
+        OptionsToggle.Text="Options "+(OptionsDrawer.IsOpen?"▴":"▾");
+        var title=Model.RestrictedHousehold?"Request an item":"Add an item";
+        AddItemToggle.Text="＋ "+title+" "+(AddItemDrawer.IsOpen?"▴":"▾");
+        SemanticProperties.SetDescription(OptionsToggle,"Shopping options, "+(OptionsDrawer.IsOpen?"expanded":"collapsed"));
+        SemanticProperties.SetDescription(AddItemToggle,title+", "+(AddItemDrawer.IsOpen?"expanded":"collapsed"));
+    }
+    protected override void OnSizeAllocated(double width,double height)
+    {
+        base.OnSizeAllocated(width,height);
+        if(OptionsDrawer==null||AddItemDrawer==null||height<=0)return;
+        OptionsDrawer.MaximumDrawerHeight=AddItemDrawer.MaximumDrawerHeight=Math.Clamp(height*.28,72,220);
+    }
     private string CacheKey => householdId == null ? PersonalShoppingLists.StorageKey(personalId) : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Household requests",null,async()=>await AppNavigation.Open(new HouseholdRequestsPage())){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Checked item settings",null,async()=>await CheckedItemSettings()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);OptionsDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();AddItemDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Household requests",null,async()=>await AppNavigation.Open(new HouseholdRequestsPage())){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Checked item settings",null,async()=>await CheckedItemSettings()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
     {
@@ -273,8 +306,9 @@ public partial class ShoppingListPage : ContentPage
         HouseholdRequestsButton.IsVisible=householdId!=null;
         HouseholdRequestsButton.Text=$"Household requests · {availableHousehold?.PendingRequests??0} pending";
         ShoppingModeListName.Text=current;
-        ListSelector.Text=current+" · Options ▾";
-        ListVisibility.Text=householdId!=null?(Model.RestrictedHousehold?"Restricted member · Additions need approval":"Shared with your household"):personalId=="main"?"Only you · Personal list":"Only you · Saved on this device";
+        ListSelector.Text=current;
+        UpdateDrawerTitles();
+        ListVisibility.Text=householdId!=null?(Model.RestrictedHousehold?"Shared · Additions need approval":"Shared with your household"):personalId=="main"?"Only you · Personal list":"Only you · Saved on this device";
         QuickAddEntry.Placeholder=(Model.RestrictedHousehold?"Request for ":"Add to ")+current;
     }
     private async Task CreatePersonalList()
