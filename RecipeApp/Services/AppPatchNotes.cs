@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Household roles and approval requests", new[] {
+            "Owners can assign Adult or Restricted access and choose roles for invitations. Existing members keep Adult access until changed.",
+            "Restricted members can check shopping items, but new shopping items and meals wait for owner/adult approval. Personal lists remain unrestricted. Requests can be approved, declined or cancelled from Household requests.",
+            "These permissions require the updated Firebase household and meal functions. Backend rollout and staging tests must finish before relying on restricted access."
+        }),
         new(new(2026,10,23), "Clearer household management", new[] {
             "Family members have expandable cards showing their role and available actions. Shared shopping and meal plans have clear shortcuts.",
             "Invitations, membership, device-list import and permanent household deletion are grouped into separate drawers. Only owners see invitation and removal controls."

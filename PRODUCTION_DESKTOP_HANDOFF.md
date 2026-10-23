@@ -1,5 +1,7 @@
 # Mealsy production handoff — desktop
 
+Latest household roles/request rollout: [HOUSEHOLD_ROLES_HANDOFF.md](HOUSEHOLD_ROLES_HANDOFF.md). Backend deployment and staging checks are required before relying on restricted access.
+
 Updated 22 October 2026. Start here when continuing locally or with a desktop
 coding assistant. **Production submission remains blocked.** This handoff records
 source/artifact evidence, not Google approval or confirmation of deployed services.

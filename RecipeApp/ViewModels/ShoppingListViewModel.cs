@@ -36,6 +36,12 @@ public class ShoppingListViewModel : CustomViewModelBase
         RefreshGroups();StatusText="Section order saved for this list on this device";
     }
     public void ResetSectionOrder(){Preferences.Remove(SectionOrderKey);RefreshGroups();StatusText="Default section order restored";}
+    private bool restrictedHousehold;
+    public bool RestrictedHousehold { get=>restrictedHousehold; set {
+        if(!SetProperty(ref restrictedHousehold,value))return;
+        EditItemCommand?.ChangeCanExecute();RemoveItemCommand?.ChangeCanExecute();
+        NotifySummary();
+    }}
     public bool IsShared => sharedKey != null;
     public void SelectList(string key)
     {
@@ -120,15 +126,15 @@ public class ShoppingListViewModel : CustomViewModelBase
     {
         AddItemCommand = new Command(AddItem, () => !string.IsNullOrWhiteSpace(QuickName));
         ToggleDetailsCommand = new Command(() => ShowDetails = !ShowDetails);
-        EditItemCommand = new Command<ShoppingListItem>(BeginEdit);
+        EditItemCommand = new Command<ShoppingListItem>(BeginEdit,_=>!RestrictedHousehold);
         ToggleItemCommand = new Command<ShoppingListItem>(item => { if (item != null) item.InBasket = !item.InBasket; });
-        RemoveItemCommand = new Command<ShoppingListItem>(item => { if (item == null) return; document.Remove(item.Id); Changed("Item removed · Undo available"); });
+        RemoveItemCommand = new Command<ShoppingListItem>(item => { if (item == null) return; document.Remove(item.Id); Changed("Item removed · Undo available"); },_=>!RestrictedHousehold);
         SaveEditCommand = new Command(() => _ = RunAsync(SaveEditAsync));
         CancelEditCommand = new Command(() => IsEditing = false);
         UndoCommand = new Command(() => { document.Undo(); Changed("Change undone"); }, () => document.CanUndo && !IsEditing);
         RedoCommand = new Command(() => { document.Redo(); Changed("Change restored"); }, () => document.CanRedo && !IsEditing);
-        ClearCollectedCommand = new Command(() => { document.ClearCollected(); Changed("Collected items removed · Undo available"); }, () => Collected > 0 && !IsEditing);
-        ClearListCommand = new Command(() => _ = RunAsync(ClearAsync), () => Total > 0 && !IsEditing);
+        ClearCollectedCommand = new Command(() => { document.ClearCollected(); Changed("Collected items removed · Undo available"); }, () => Collected > 0 && !IsEditing && !RestrictedHousehold);
+        ClearListCommand = new Command(() => _ = RunAsync(ClearAsync), () => Total > 0 && !IsEditing && !RestrictedHousehold);
         PasteCommand = new Command(() => _ = RunAsync(PasteAsync), () => !IsEditing);
         ShareCommand = new Command(() => _ = RunAsync(ShareAsync), () => Total > 0 && !IsEditing);
         UpdateCategories();
@@ -194,7 +200,7 @@ public class ShoppingListViewModel : CustomViewModelBase
         document.Add(new() { Name = QuickName, Quantity = QuickQuantity?.Trim() ?? "", Category = SelectedCategory, Note = QuickNote?.Trim() ?? "" });
         QuickName = QuickQuantity = QuickNote = "";
         SearchText = "";
-        Changed("Item added");
+        Changed(RestrictedHousehold?"Request waiting to sync · Not added to shared list yet":"Item added");
         IngredientSuggestionStore.Remember(HouseholdService.UserId,addedName);
     }
 
@@ -208,7 +214,7 @@ public class ShoppingListViewModel : CustomViewModelBase
 
     public void RemoveEditingItem()
     {
-        if (editingItem == null) return;
+        if (editingItem == null || RestrictedHousehold) return;
         document.Remove(editingItem.Id);
         IsEditing = false;
         Changed("Item removed · Undo available");
@@ -216,6 +222,7 @@ public class ShoppingListViewModel : CustomViewModelBase
 
     private async Task SaveEditAsync()
     {
+        if(RestrictedHousehold)throw new InvalidOperationException("Your household role does not allow editing shared items.");
         if (string.IsNullOrWhiteSpace(EditName))
         {
             await Shell.Current.DisplayAlert("Item name required", "Give this item a name before saving.", "OK");
@@ -245,7 +252,7 @@ public class ShoppingListViewModel : CustomViewModelBase
         if (batching || args.PropertyName is not (nameof(ShoppingListItem.InBasket) or nameof(ShoppingListItem.Name)
             or nameof(ShoppingListItem.Quantity) or nameof(ShoppingListItem.Note) or nameof(ShoppingListItem.Category))) return;
         if(args.PropertyName == nameof(ShoppingListItem.InBasket) && sender is ShoppingListItem checkedItem
-            && document.CommitCheckedItem(checkedItem.Id,DeleteCollectedOnCheck))
+            && document.CommitCheckedItem(checkedItem.Id,DeleteCollectedOnCheck&&!RestrictedHousehold))
         {
             if(editingItem?.Id == checkedItem.Id) IsEditing = false;
             Changed("Checked item removed · Undo available");

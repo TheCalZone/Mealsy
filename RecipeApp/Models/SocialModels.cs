@@ -9,3 +9,7 @@ public record SocialComments(List<FoodComment> Comments,string Cursor=null);
 public record HouseholdMealsCapabilities(int Version);
 public record HouseholdMeal(string Id,string Date,string Slot,string Title,int Servings,string Note,FeedRecipe Recipe,long Version=0,string UpdatedBy="");
 public record HouseholdWeek(string HouseholdId,string WeekStart,List<HouseholdMeal> Meals,long Revision);
+
+public record HouseholdMealSaveResult(long Version=0,bool Requested=false);
+public record HouseholdRequest(string Id,string Kind,string AuthorId,string AuthorName,string Status,long CreatedAt,ShoppingListItem Item,HouseholdMeal Meal,string WeekStart);
+public record HouseholdRequestsResult(List<HouseholdRequest> Requests,bool CanApprove);

@@ -2,12 +2,13 @@ const {randomBytes, createHash} = require('node:crypto');
 const {fail, applyChanges, requireMember, requireOwner} = require('./domain');
 const {requireFamily, active,memberLimit} = require('./entitlements');
 const {requestData} = require('./request');
+const {role,canManage,queue,restrictedShopping,forget}=require('./household-requests');
 const hash = token => createHash('sha256').update(token).digest('hex');
 function createHandler(db) {
 return async function handle(request) {
   if (!request.auth) fail('unauthenticated', 'Sign in to use household lists.');
   const uid = request.auth.uid;
-  const data = requestData(request, ['create', 'join', 'read', 'patch', 'status', 'leave', 'remove', 'delete', 'invite', 'revoke']);
+  const data = requestData(request, ['create', 'join', 'read', 'patch', 'status', 'leave', 'remove', 'delete', 'invite', 'revoke','setRole','requests','resolveRequest','cancelRequest']);
   if (['read', 'patch'].includes(data.action) && !['personal', 'household'].includes(data.scope))
     fail('invalid-argument', 'Choose a list.');
   const accountRef = db.doc(`householdAccounts/${uid}`);
@@ -41,7 +42,7 @@ return async function handle(request) {
       await requireFamily(tx, db, household.owner);
       const limit=memberLimit((await tx.get(db.doc(`seatEntitlements/${household.owner}`))).data());
       if (Object.keys(household.members).length >= limit) fail('resource-exhausted', `Your household includes ${limit} people. Extra paid places must be active before inviting more.`);
-      tx.update(ref, {members: {...household.members, [uid]: email}});
+      tx.update(ref, {members: {...household.members, [uid]: email},roles:{...household.roles,[uid]:invitation.role==='restricted'?'restricted':'adult'}});
       tx.create(accountRef, {householdId: ref.id});
       tx.delete(inviteRef); // Single use, including concurrent acceptance.
       return {householdId: ref.id};
@@ -72,28 +73,65 @@ return async function handle(request) {
       const grant = (await tx.get(db.doc(`familyGrants/${household.owner}`))).data();
       const seats=(await tx.get(db.doc(`seatEntitlements/${household.owner}`))).data();
       return {householdId: ref.id, name: household.name, owner: household.owner, familyEnabled: active(plan) || active(grant),
-        memberLimit:memberLimit(seats),members: Object.entries(household.members).map(([id, label]) => ({id, label}))};
+        permissionsVersion:1,memberLimit:memberLimit(seats),role:role(household,uid),pendingRequests:Object.values(household.requests||{}).filter(r=>r.status==='pending').length,members: Object.entries(household.members).map(([id, label]) => ({id, label,role:role(household,id)}))};
     }
     if (['read', 'patch'].includes(data.action)) {
       if (data.scope !== 'household' || data.householdId !== ref.id) fail('invalid-argument', 'Choose a list.');
       await requireFamily(tx, db, household.owner);
       const listRef = ref.collection('lists').doc('shopping');
       const current = (await tx.get(listRef)).data()?.items || {};
+      if(data.action==='patch'&&!canManage(household,uid)){
+        const result=restrictedShopping(household,uid,current,data.changes);
+        tx.set(listRef,{items:result.items});
+        tx.update(ref,{requests:result.requests,requestRates:household.requestRates||{}});
+        return{items:Object.values(result.items),requestedCount:result.requestedCount};
+      }
       const items = data.action === 'patch' ? applyChanges(current, data.changes) : current;
       if (data.action === 'patch') tx.set(listRef, {items});
       return {items: Object.values(items)};
     }
+    if(['requests','resolveRequest','cancelRequest'].includes(data.action)){
+      await requireFamily(tx,db,household.owner);
+      const requests={...household.requests};
+      if(data.action==='requests')return{requests:Object.values(requests).map(r=>({...r,authorName:household.members[r.authorId]||'Former member'})).sort((a,b)=>b.createdAt-a.createdAt),canApprove:canManage(household,uid)};
+      if(typeof data.requestId!=='string'||!/^[a-f0-9]{32}$/.test(data.requestId))fail('invalid-argument','Choose a valid request.');
+      const entry=requests[data.requestId];if(!entry)fail('not-found','This request no longer exists.');
+      const cancel=data.action==='cancelRequest';
+      if(cancel?entry.authorId!==uid:!canManage(household,uid))fail('permission-denied','Only adults can approve or decline household requests.');
+      if(!cancel&&!['approve','decline'].includes(data.decision))fail('invalid-argument','Choose approve or decline.');
+      if(entry.status!=='pending')return{status:entry.status};
+      if(!cancel&&data.decision==='approve'){
+        if(!Object.hasOwn(household.members,entry.authorId))fail('failed-precondition','The requester has left. Decline this request instead.');
+        if(entry.kind==='shopping'){
+          const listRef=ref.collection('lists').doc('shopping'),current=(await tx.get(listRef)).data()?.items||{};
+          const items=applyChanges(current,[{before:null,after:entry.item}]);tx.set(listRef,{items});
+        }else if(entry.kind==='meal'){
+          const weekRef=ref.collection('mealWeeks').doc(entry.weekStart),week=(await tx.get(weekRef)).data()||{revision:0,meals:{}};
+          if(week.meals[entry.meal.id])fail('aborted','This planned meal already exists. Refresh before approving.');
+          const meals={...week.meals,[entry.meal.id]:{...entry.meal,version:1,updatedBy:uid}};
+          if(Object.keys(meals).length>500||Object.values(meals).filter(m=>!m.deleted).length>100||Buffer.byteLength(JSON.stringify(meals))>750000)fail('resource-exhausted','This meal week is full.');
+          tx.set(weekRef,{revision:week.revision+1,meals,updatedAt:Date.now()});
+        }else fail('invalid-argument','Invalid request type.');
+      }
+      const status=cancel?'cancelled':data.decision==='approve'?'approved':'declined';
+      requests[entry.id]={...entry,status,resolvedBy:uid,resolvedAt:Date.now()};tx.update(ref,{requests});return{status};
+    }
+    if(data.action==='setRole'){
+      requireOwner(household,uid);
+      if(typeof data.member!=='string'||data.member===household.owner||!Object.hasOwn(household.members,data.member)||!['adult','restricted'].includes(data.role))fail('invalid-argument','Choose another member and a supported role.');
+      tx.update(ref,{roles:{...household.roles,[data.member]:data.role}});return{};
+    }
     if (data.action === 'leave') {
       if (household.owner === uid) fail('failed-precondition', 'The owner can delete the household, or remove other members.');
       const members = {...household.members}; delete members[uid];
-      tx.update(ref, {members}); tx.delete(accountRef); return {};
+      tx.update(ref, {members,...forget(household,uid)}); tx.delete(accountRef); return {};
     }
     requireOwner(household, uid);
     if (data.action === 'remove') {
       const member = String(data.member || '');
       if (member === uid || !Object.hasOwn(household.members, member)) fail('invalid-argument', 'Choose another household member.');
       const members = {...household.members}; delete members[member];
-      tx.update(ref, {members}); tx.delete(db.doc(`householdAccounts/${member}`)); return {};
+      tx.update(ref, {members,...forget(household,member)}); tx.delete(db.doc(`householdAccounts/${member}`)); return {};
     }
     if (data.action === 'delete') {
       for (const member of Object.keys(household.members)) tx.delete(db.doc(`householdAccounts/${member}`));
@@ -102,11 +140,12 @@ return async function handle(request) {
     }
     if (data.action === 'invite') {
       await requireFamily(tx, db, household.owner);
+      if(data.role!=null&&!['adult','restricted'].includes(data.role))fail('invalid-argument','Choose an invitation role.');
       const code = randomBytes(24).toString('hex');
       // One outstanding invitation per household. New code revokes its predecessor.
       if (household.inviteHash) tx.delete(db.doc(`householdInvites/${household.inviteHash}`));
       const inviteHash = hash(code);
-      tx.create(db.doc(`householdInvites/${inviteHash}`), {householdId: ref.id, expires: Date.now() + 7 * 86400000});
+      tx.create(db.doc(`householdInvites/${inviteHash}`), {householdId: ref.id, role:data.role||'adult',expires: Date.now() + 7 * 86400000});
       tx.update(ref, {inviteHash}); return {code};
     }
     if (data.action === 'revoke') {

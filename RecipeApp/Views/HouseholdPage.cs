@@ -33,7 +33,14 @@ public class HouseholdPage : ContentPage
     private async Task Invite(HouseholdInfo household)
     {
         CheckAccount();
-        var invite=await HouseholdService.CallAsync<System.Text.Json.JsonElement>(new {action="invite"});
+        var role="adult";
+        if(household.PermissionsVersion>=1)
+        {
+            var roleChoice=await DisplayActionSheet("Invitation access","Cancel",null,"Restricted · Request additions","Adult · Edit and approve");
+            if(roleChoice==null||roleChoice=="Cancel")return;
+            role=roleChoice.StartsWith("Restricted")?"restricted":"adult";CheckAccount();
+        }
+        var invite=await HouseholdService.CallAsync<System.Text.Json.JsonElement>(new {action="invite",role});
         CheckAccount();var code=invite.GetProperty("code").GetString();
         var choice=await DisplayActionSheet("Invitation ready · expires in 7 days","Cancel",null,"Share invitation","Copy code");
         CheckAccount();
@@ -109,14 +116,23 @@ public class HouseholdPage : ContentPage
                 content.Add(Action("Open shared shopping list",()=>AppNavigation.ShoppingList("//ShoppingListPage?OpenHouseholdId="+Uri.EscapeDataString(household.HouseholdId))));
                 content.Add(Action("Open shared meal plan",()=>AppNavigation.Open(new HouseholdMealsPage())));
             }
+            if(household.PermissionsVersion>=1)content.Add(Action($"Requests · {household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage())));
+            else content.Add(ShoppingUi.Text("Roles and approval requests need the updated Firebase household backend before they can be enabled.",13));
             content.Add(ShoppingUi.Text("Family members",21,true));
             content.Add(ShoppingUi.Text("Tap a person to see their role and available options.",13));
             foreach(var member in household.Members.OrderByDescending(m=>m.Id==household.Owner).ThenBy(m=>m.Label))
             {
                 var owner=member.Id==household.Owner;var self=member.Id==account;
                 var options=new VerticalStackLayout {Spacing=9};
-                options.Add(ShoppingUi.Text(owner?"Manages invitations and membership. Their Premium plan covers the household.":"Can use the shared shopping list and meal plan while the household has Premium.",14));
+                options.Add(ShoppingUi.Text(owner?"Manages invitations, roles and membership. Their Premium plan covers the household.":member.Role=="restricted"?"Can view shared lists and meals, check off shopping, and request additions. An adult approves requests. Personal lists stay unrestricted.":"Can edit shared shopping and meals, and approve or decline requests.",14));
                 if(self)options.Add(Action("Open my account",()=>AppNavigation.Root("AccountPage")));
+                if(isOwner&&!owner&&household.PermissionsVersion>=1)options.Add(Action("Change household role",async()=>{
+                    var choice=await DisplayActionSheet("Access for "+member.Label,"Cancel",null,"Adult · Edit and approve","Restricted · Request additions");
+                    if(choice==null||choice=="Cancel")return;
+                    var role=choice.StartsWith("Restricted")?"restricted":"adult";
+                    if(!await DisplayAlert("Change access?",role=="restricted"?"Shared additions will become requests. They can still check off items and use their personal lists freely.":"They will be able to edit shared shopping and meals and approve requests.","Change role","Keep current"))return;
+                    CheckAccount();await HouseholdService.CallAsync<object>(new {action="setRole",householdId=household.HouseholdId,member=member.Id,role});await Refresh();
+                }));
                 if(isOwner&&!owner)options.Add(Action("Remove from household",async()=>{
                     if(!await DisplayAlert("Remove "+member.Label+"?","They will lose access to shared shopping and meal plans. Their personal lists, recipes and account are kept.",AppLocalization.Text("Remove"),AppLocalization.Text("Cancel")))return;
                     CheckAccount();await HouseholdService.CallAsync<object>(new {action="remove",member=member.Id});expanded.Remove("member:"+member.Id);await Refresh();
@@ -126,7 +142,7 @@ public class HouseholdPage : ContentPage
                     CheckAccount();await HouseholdService.CallAsync<object>(new {action="leave"});expanded.Clear();await Refresh();
                 }));
                 if(!isOwner&&!self)options.Add(ShoppingUi.Text("Only the household owner can remove members.",13));
-                content.Add(Drawer("member:"+member.Id,member.Label,(owner?"Owner":"Member")+(self?" · You":""),options));
+                content.Add(Drawer("member:"+member.Id,member.Label,(owner?"Owner":member.Role=="restricted"?"Restricted member":"Adult")+(self?" · You":""),options));
             }
             if(isOwner)
             {

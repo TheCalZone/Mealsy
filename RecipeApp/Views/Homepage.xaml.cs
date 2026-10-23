@@ -64,6 +64,7 @@ public partial class Homepage : ContentPage
         else body.Add(ShoppingUi.Text("Checking your household shopping list…",14));
         body.Add(ShoppingUi.Button("Open household shopping list",()=>OpenHouseholdFeature(false,quickAccount)));
         body.Add(ShoppingUi.Button("Open household meal plan",()=>OpenHouseholdFeature(true,quickAccount),true));
+        if(view.Household.PermissionsVersion>=1)body.Add(ShoppingUi.Button($"Household requests · {view.Household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage()),true));
         body.Add(ShoppingUi.Button("Refresh household",async()=>await HouseholdWarmup.Start(true),true));
         var dinner=meals?.FirstOrDefault(meal=>meal.Slot=="dinner");
         householdQuick.Content=Foldout("household",view.Household.Name+" · Household",body,

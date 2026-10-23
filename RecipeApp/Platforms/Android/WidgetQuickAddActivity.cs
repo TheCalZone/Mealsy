@@ -72,7 +72,7 @@ public class WidgetQuickAddActivity : Activity
         }
         if(string.IsNullOrWhiteSpace(entry.Text)){entry.Error="Enter an item name.";return;}
         busy=true;add.Enabled=false;entry.Enabled=false;progress.Visibility=ViewStates.Visible;
-        var saved=false;
+        var saved=false;var requested=false;
         try
         {
             Check();
@@ -92,14 +92,14 @@ public class WidgetQuickAddActivity : Activity
                 var baseline=Preferences.Get(target.StorageKey+".synced","[]");
                 var changes=ShoppingListSync.Changes(baseline,sent);
                 var result=await HouseholdService.CallAsync<ShoppingSyncResult>(new{action="patch",scope=target.HouseholdId==null?"personal":"household",householdId=target.HouseholdId,changes});
-                Check();
+                Check();requested=result.RequestedCount>0;
                 var server=JsonSerializer.Serialize(result.Items);
                 var merged=ShoppingListSync.Reapply(sent,Preferences.Get(target.StorageKey,sent),server);
                 Preferences.Set(target.StorageKey+".synced",server);
                 if(target.HouseholdId==null)ShoppingListStore.Save(merged);else Preferences.Set(target.StorageKey,merged.Serialize());
                 WidgetShoppingStore.NotifyChanged(target.StorageKey);
             }
-            Toast.MakeText(this,"Added to "+target.Name,ToastLength.Short).Show();Finish();
+            Toast.MakeText(this,requested?"Request sent · Waiting for approval":"Added to "+target.Name,ToastLength.Short).Show();Finish();
         }
         catch(Exception error)
         {

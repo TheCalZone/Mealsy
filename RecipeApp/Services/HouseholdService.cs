@@ -5,8 +5,9 @@ using System.Text.Json;
 
 namespace RecipeApp.Services;
 
-public record HouseholdMember(string Id, string Label);
-public record HouseholdInfo(string HouseholdId, string Name, string Owner, List<HouseholdMember> Members, bool FamilyEnabled,int MemberLimit=4);
+public record HouseholdMember(string Id, string Label,string Role="adult");
+public record HouseholdInfo(string HouseholdId, string Name, string Owner, List<HouseholdMember> Members, bool FamilyEnabled,int MemberLimit=4,string Role="adult",int PendingRequests=0,int PermissionsVersion=0)
+{public bool Restricted=>Role=="restricted";}
 public class HouseholdException : Exception
 {
     public string Code { get; }
@@ -40,8 +41,8 @@ public static class HouseholdService
         var action=request.TryGetProperty("action",out var a)?a.GetString():null;
         string Text(string name)=>request.TryGetProperty(name,out var value)&&value.ValueKind==JsonValueKind.String?value.GetString():null;
         var listKey=endpoint==Endpoint&&action=="patch"?HouseholdReadPolicy.List(uid,Text("scope")=="household"?Text("householdId"):null):null;
-        var weekKey=endpoint==HouseholdMealsService.Endpoint&&action is "upsertMeal" or "deleteMeal"?HouseholdReadPolicy.Week(uid,Text("householdId"),Text("weekStart")):null;
-        var membership=endpoint==Endpoint&&action is "create" or "join" or "leave" or "remove" or "delete";
+        var weekKey=endpoint==HouseholdMealsService.Endpoint&&action is "upsertMeal" or "deleteMeal" or "requestMeal"?HouseholdReadPolicy.Week(uid,Text("householdId"),Text("weekStart")):null;
+        var membership=endpoint==Endpoint&&action is "create" or "join" or "leave" or "remove" or "delete" or "setRole" or "resolveRequest" or "cancelRequest";
         if(listKey!=null)Reads.Invalidate(listKey);if(weekKey!=null)Reads.Invalidate(weekKey);if(membership)Reads.Clear();
         var result=await CallEndpointUncachedAsync<T>(endpoint,data,forceRefresh);
         if(listKey!=null){Reads.Invalidate(listKey);Reads.Store(listKey,result,HouseholdReadPolicy.MaxAge);}
