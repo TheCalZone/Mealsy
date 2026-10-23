@@ -25,10 +25,10 @@
                 <Setter Property="Shell.ForegroundColor" Value="White" />
                 <Setter Property="Shell.TitleColor" Value="White" />
                 <Setter Property="Shell.DisabledColor" Value="#B4FFFFFF" />
-                <Setter Property="Shell.UnselectedColor" Value="#C3D4C3" />
+                <Setter Property="Shell.UnselectedColor" Value="#B4C6BA" />
                 <Setter Property="Shell.TabBarBackgroundColor" Value="{DynamicResource ThemePrimary}" />
                 <Setter Property="Shell.TabBarForegroundColor" Value="White" />
-                <Setter Property="Shell.TabBarUnselectedColor" Value="#C3D4C3" />
+                <Setter Property="Shell.TabBarUnselectedColor" Value="#B4C6BA" />
                 <Setter Property="Shell.TabBarTitleColor" Value="White" />
             </Style>
             <Style BasedOn="{StaticResource BaseStyle}" TargetType="TabBar" />

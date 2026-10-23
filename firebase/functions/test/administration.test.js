@@ -5,7 +5,7 @@ const {createAdministration}=require('../administration');
 function fixture() {
   const db=database();
   const users={owner:{uid:'owner',email:'owner@example.com',customClaims:{admin:true}},member:{uid:'member',email:'member@example.com',emailVerified:true,customClaims:{}}};
-  const auth={getUser:async uid=>{if(!users[uid])throw Error('No user');return users[uid];},getUserByEmail:async email=>{
+  const auth={updateUser:async(uid,change)=>{if(!users[uid])throw Error('No user');users[uid]={...users[uid],...change};return users[uid];},getUser:async uid=>{if(!users[uid])throw Error('No user');return users[uid];},getUserByEmail:async email=>{
     const user=Object.values(users).find(u=>u.email===email);if(user)return user;throw Object.assign(Error('Missing'),{code:'auth/user-not-found'});
   }};
   const handle=createAdministration(db,auth,()=>1000000);
@@ -17,7 +17,7 @@ test('administration requires a current server-owned admin role, not profile fla
   const f=fixture();await assert.rejects(f.call(null,{action:'status'}),{code:'unauthenticated'});
   f.db.docs.set('users/member',{admin:true});
   assert.deepEqual(await f.call('member',{action:'status'},{admin:true}),{admin:false});
-  for(const action of ['lookupUser','posts','setFamilyGrant','setPostHidden','resolveReport','pausePromotion','audit'])
+  for(const action of ['lookupUser','posts','setFamilyGrant','verifyEmail','setPostHidden','resolveReport','pausePromotion','audit'])
     await assert.rejects(f.call('member',{action,admin:true},{admin:true}),{code:'permission-denied'});
   assert.deepEqual(await f.call('owner',{action:'status'}),{admin:true});
   f.users.owner.customClaims.admin=false;
@@ -66,4 +66,27 @@ test('admin post pages include hidden posts and unresolved reports, without expo
   const f=fixture();f.db.docs.get('feedPosts/post').hidden=true;
   f.db.docs.set('feedPosts/post/reports/member',{reason:'Please review',resolved:false,createdAt:1});
   const page=await f.call('owner',{action:'posts'});assert.equal(page.posts.length,1);assert.equal(page.posts[0].hidden,true);assert.equal(page.posts[0].reports[0].reason,'Please review');
+});
+
+test('only a current administrator can verify a reviewed email; passwords and roles remain unchanged',async()=>{
+ const f=fixture();f.users.member.emailVerified=false;f.users.member.passwordHash='unchanged';
+ await assert.rejects(f.call('member',{action:'verifyEmail',uid:'member',email:'member@example.com',reason:'Reviewer inbox'}),{code:'permission-denied'});
+ await assert.rejects(f.call('owner',{action:'verifyEmail',uid:'member',email:'wrong@example.com',reason:'Reviewer inbox'}),{code:'failed-precondition'});
+ await assert.rejects(f.call('owner',{action:'verifyEmail',uid:'member',email:'member@example.com',reason:''}),{code:'invalid-argument'});
+ await f.call('owner',{action:'verifyEmail',uid:'member',email:'member@example.com',reason:'Controlled reviewer inbox'});
+ assert.equal(f.users.member.emailVerified,true);assert.deepEqual(f.users.member.customClaims,{});assert.equal(f.users.member.passwordHash,'unchanged');
+ const audit=(await f.call('owner',{action:'audit'})).entries;assert.equal(audit.length,1);assert.equal(audit[0].outcome,'completed');assert(!JSON.stringify(audit).includes('unchanged'));
+ await f.call('owner',{action:'verifyEmail',uid:'member',email:'member@example.com',reason:'Retry'});assert.equal((await f.call('owner',{action:'audit'})).entries.length,1);
+});
+test('verification refuses disabled or deleting targets without changing their Auth record',async()=>{
+ const f=fixture();f.users.member.emailVerified=false;f.users.member.disabled=true;
+ const data={action:'verifyEmail',uid:'member',email:'member@example.com',reason:'Test inbox'};
+ await assert.rejects(f.call('owner',data),{code:'failed-precondition'});f.users.member.disabled=false;
+ f.db.docs.set('accountDeletions/member',{status:'queued'});await assert.rejects(f.call('owner',data),{code:'failed-precondition'});assert.equal(f.users.member.emailVerified,false);
+});
+
+test('admin grants cannot recreate Premium while target account deletion is pending',async()=>{
+ const f=fixture();f.db.docs.set('accountDeletions/member',{status:'queued'});
+ await assert.rejects(f.call('owner',{action:'setFamilyGrant',uid:'member',days:30,reason:'Review'}),{code:'failed-precondition'});
+ assert(!f.db.docs.has('familyGrants/member'));
 });

@@ -10,7 +10,7 @@ function identifier(value) {
 function createAdministration(db, auth, clock = Date.now, feed = require('./feed').createFeedHandler(db)) {
   return async request => {
     if (!request.auth) fail('unauthenticated', 'Sign in to access administration.');
-    const data = requestData(request, ['status','lookupUser','posts','setPostHidden','resolveReport','pausePromotion','setFamilyGrant','audit']);
+    const data = requestData(request, ['status','lookupUser','posts','setPostHidden','resolveReport','pausePromotion','setFamilyGrant','verifyEmail','audit']);
     // Check the current Auth record on every call: an old ID token cannot retain
     // admin access after the administrator role has been removed.
     const actor = await auth.getUser(request.auth.uid);
@@ -27,7 +27,7 @@ function createAdministration(db, auth, clock = Date.now, feed = require('./feed
       return {uid: user.uid, email: user.email || '', username: profile.data()?.username || '', emailVerified: user.emailVerified === true,
         disabled: user.disabled === true, admin: user.customClaims?.admin === true,
         grantExpiresAt: grant.data()?.active === true ? grant.data().expiresAt || 0 : 0,
-        subscriptionExpiresAt: entitlement.data()?.active === true ? entitlement.data().expiresAt || 0 : 0};
+        canVerifyEmail:true,subscriptionExpiresAt: entitlement.data()?.active === true ? entitlement.data().expiresAt || 0 : 0};
     }
     if (data.action === 'posts') {
       // Existing moderation query returns public snapshots and bounded report pages.
@@ -46,6 +46,26 @@ function createAdministration(db, auth, clock = Date.now, feed = require('./feed
     if (typeof data.reason !== 'string' || !data.reason.trim() || data.reason.length > 500) fail('invalid-argument', 'Add a short reason for this change (up to 500 characters).');
     const auditRef = db.doc(`adminAudit/${randomUUID()}`);
     let target, after;
+    if(data.action==='verifyEmail'){
+      target=identifier(data.uid);
+      const user=await auth.getUser(target);
+      if(user.disabled||!user.email)fail('failed-precondition','Choose an enabled account with an email address.');
+      if(typeof data.email!=='string'||data.email.trim().toLowerCase()!==user.email.toLowerCase())fail('failed-precondition','The account email changed. Look up the account again before confirming verification.');
+      if(user.emailVerified)return{emailVerified:true};
+      await db.runTransaction(async tx=>{
+        if((await tx.get(db.doc(`accountDeletions/${target}`))).exists)fail('failed-precondition','This account is being deleted.');
+        tx.create(auditRef,{actor:uid,action:data.action,target,reason:data.reason.trim(),createdAt:clock(),before:{emailVerified:false},after:{emailVerified:true},outcome:'started'});
+      });
+      try{
+        const updated=await auth.updateUser(target,{emailVerified:true});
+        if(updated.email?.toLowerCase()!==user.email.toLowerCase()){await auth.updateUser(target,{emailVerified:false});fail('failed-precondition','The email changed during verification. It was left unconfirmed; review the account before sharing access.');}
+        await db.runTransaction(async tx=>tx.update(auditRef,{outcome:'completed',completedAt:clock()}));
+        return{emailVerified:true};
+      }catch(error){
+        await db.runTransaction(async tx=>tx.update(auditRef,{outcome:'unconfirmed',completedAt:clock()}));
+        throw error;
+      }
+    }
     if (data.action === 'setFamilyGrant') {
       target = identifier(data.uid);
       if (!Number.isInteger(data.days) || data.days < 0 || data.days > 365) fail('invalid-argument', 'Choose 0 to revoke or 1–365 days of Family access.');
@@ -55,6 +75,7 @@ function createAdministration(db, auth, clock = Date.now, feed = require('./feed
       const now = clock();
       if (data.action === 'setFamilyGrant') {
         const ref = db.doc(`familyGrants/${target}`), previous = (await tx.get(ref)).data();
+        if(data.days>0&&(await tx.get(db.doc(`accountDeletions/${target}`))).exists)fail('failed-precondition','This account is being deleted.');
         after = {active:data.days > 0,expiresAt:data.days > 0 ? now + data.days * 86400000 : 0,grantedAt:now,source:'administrator'};
         tx.set(ref, after);
         tx.create(auditRef,{actor:uid,action:data.action,target,reason:data.reason.trim(),createdAt:now,before:{active:previous?.active === true,expiresAt:previous?.expiresAt || 0},after});
