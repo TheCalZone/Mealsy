@@ -37,6 +37,11 @@ in europe-west1 and callable/scheduler functions in us-central1.
   on both new callable endpoints and the public website social-pause flag.
 - Messaging APIs and runtime permissions verified; no notification was sent.
 - Recovery scheduler enabled at `every 5 minutes`.
+- Final metadata check passed: both composite indexes READY, both required
+  collection-group indexes READY, deletion/notification TTL policies ACTIVE and
+  all nine checked active-scope functions ACTIVE.
+- Updated the policy-only `gh-pages` branch at `6aff5cb`; only the privacy page
+  changed. Corrected Windows path normalization in the allowlisted site builder.
 
 Use this read-only metadata check after deployment; nonzero means a required
 function/index/TTL policy/scheduler is missing, still building or unavailable:
