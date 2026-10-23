@@ -10,6 +10,7 @@ namespace RecipeApp.Platforms.Android;
 [MetaData("android.appwidget.provider",Resource="@xml/shopping_widget_info")]
 public class ShoppingQuickAddWidget : AppWidgetProvider
 {
+    internal static bool SystemDark(Context context)=>(context.Resources.Configuration.UiMode&global::Android.Content.Res.UiMode.NightMask)==global::Android.Content.Res.UiMode.NightYes;
     public override void OnUpdate(Context context,AppWidgetManager manager,int[] ids){foreach(var id in ids)Update(context,id);}
     public override void OnRestored(Context context,int[] oldIds,int[] newIds)
     {
@@ -30,6 +31,12 @@ public class ShoppingQuickAddWidget : AppWidgetProvider
     public static void Update(Context context,int id)
     {
         var views=new RemoteViews(context.PackageName,Resource.Layout.shopping_quick_add_widget);
+        var theme=ThemeColors.For(AppSettings.Current,SystemDark(context));
+        int Color(string hex)=>global::Android.Graphics.Color.ParseColor(hex).ToArgb();
+        views.SetInt(Resource.Id.widget_root,"setBackgroundResource",AppSettings.Current.IsDark(SystemDark(context))?Resource.Drawable.shopping_widget_background_dark:Resource.Drawable.shopping_widget_background);
+        views.SetTextColor(Resource.Id.widget_title,global::Android.Graphics.Color.ParseColor(theme.Accent));
+        views.SetTextColor(Resource.Id.widget_list,global::Android.Graphics.Color.ParseColor(theme.Text));
+        foreach(var button in new[]{Resource.Id.widget_add,Resource.Id.widget_choose,Resource.Id.widget_open})views.SetInt(button,"setColorFilter",Color(theme.Accent));
         var target=WidgetShoppingStore.Target(id);views.SetTextViewText(Resource.Id.widget_list,target==null?"Choose a shopping list":target.Name);
         PendingIntent Open(string action)
         {
@@ -66,7 +73,7 @@ internal static class WidgetNavigation
                 var route=target.OpenRoute(HouseholdService.UserId);
                 await MainThread.InvokeOnMainThreadAsync(async()=>await AppNavigation.ShoppingList(route));return;
             }
-            if(Shell.Current.CurrentPage is RecipeApp.Views.WidgetQuickAddPage existing&&existing.WidgetId==id)return;
+            if(Shell.Current.CurrentPage is RecipeApp.Views.WidgetQuickAddPage existing&&existing.WidgetId==id&&existing.IsConfiguration==configure)return;
             await MainThread.InvokeOnMainThreadAsync(async()=>await Shell.Current.Navigation.PushAsync(new RecipeApp.Views.WidgetQuickAddPage(id,configure)));
         }
         catch(Exception error){if(Shell.Current!=null)await Shell.Current.DisplayAlert("Widget unavailable",error is HouseholdException or InvalidOperationException?error.Message:"Open Mealsy and try the widget again.\nReference: "+AppDiagnostics.Report(error,"ui.action"),"OK");}

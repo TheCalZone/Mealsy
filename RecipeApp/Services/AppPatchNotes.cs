@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Widget controls and themes", new[] {
+            "The middle widget icon opens a dedicated list chooser, with item-entry controls hidden. Saving returns you to the app screen beneath it.",
+            "Widgets and the home-screen add dialog follow your selected colour palette and light/dark appearance. Changing the app theme refreshes installed widgets."
+        }),
         new(new(2026,10,23), "Name your household list", new[] {
             "Household owners can rename their shared list from Account → Household → Household membership. The name also identifies shared meal plans; items and members are preserved.",
             "Renaming requires the updated household backend. Shared shopping refreshes its name when reopened."

@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Runtime;
 
 namespace RecipeApp;
@@ -10,6 +10,12 @@ public class MainApplication : MauiApplication
 		: base(handle, ownership)
 	{
 	}
+
+    public override void OnConfigurationChanged(global::Android.Content.Res.Configuration newConfig)
+    {
+        base.OnConfigurationChanged(newConfig);
+        Platforms.Android.ShoppingQuickAddWidget.UpdateAll(this);
+    }
 
 	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 }
