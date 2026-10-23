@@ -6,6 +6,7 @@ namespace RecipeApp.Views;
 public class WidgetQuickAddPage : ContentPage
 {
     public int WidgetId{get;}
+    public bool IsConfiguration{get;}
     private readonly string account=HouseholdService.UserId;
     private readonly List<WidgetListTarget> targets=new();
     private readonly Picker picker=new(){Title="Choose a shopping list",HeightRequest=48};
@@ -14,7 +15,7 @@ public class WidgetQuickAddPage : ContentPage
     private readonly Entry name,quantity,note;private Guid pendingId=Guid.NewGuid();private bool busy;
     public WidgetQuickAddPage(int id,bool configure=false)
     {
-        WidgetId=id;Title="Quick shopping add";ShoppingUi.Theme(this);
+        WidgetId=id;IsConfiguration=configure;Title=configure?"Choose widget list":"Quick shopping add";ShoppingUi.Theme(this);
         name=ShoppingUi.Entry("","What do you need?",_=>{});quantity=ShoppingUi.Entry("","Quantity · optional",_=>{});note=ShoppingUi.Entry("","Note · optional",_=>{},500);
         suggestions.Configure(name,quantity,()=>Array.Empty<string>());
         var saved=WidgetShoppingStore.Target(id);targets.Add(new(account,null,PersonalShoppingLists.All()[0].Name));
@@ -23,12 +24,19 @@ public class WidgetQuickAddPage : ContentPage
         picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=saved==null?0:saved.BelongsTo(account)?targets.FindIndex(t=>t.HouseholdId==saved.HouseholdId&&t.PersonalListId==saved.PersonalListId):-1;
         picker.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
         if(saved!=null&&!saved.BelongsTo(account))status.Text="This widget was configured for another account. Explicitly choose a list for your current account.";
-        var body=new VerticalStackLayout {Padding=20,Spacing=14,Children={ShoppingUi.Text("Add it before you forget",27,true),picker,
+        var body=new VerticalStackLayout {Padding=20,Spacing=14,Children={ShoppingUi.Text(configure?"Choose this widget’s list":"Add it before you forget",27,true),picker,
             ShoppingUi.Button("Find my household list",()=>Run(async()=>{Check();var household=await HouseholdService.StatusAsync();Check();if(household.HouseholdId==null)throw new InvalidOperationException("Create or join a household first.");if(!household.FamilyEnabled)throw new InvalidOperationException("Your household needs an active Premium plan.");targets.RemoveAll(t=>t.HouseholdId!=null);targets.Add(new(account,household.HouseholdId,household.Name+" · household"));picker.ItemsSource=targets.Select(t=>t.Name).ToList();picker.SelectedIndex=targets.Count-1;}),true),
-            ShoppingUi.Button("Remember this list for this widget",()=>Run(async()=>{var target=Selected();await Verify(target);Check();WidgetShoppingStore.SetTarget(WidgetId,target);UpdateWidget();status.Text="Widget list selected: "+target.Name;}),true),
+            ShoppingUi.Button("Remember this list for this widget",()=>Run(async()=>{var target=Selected();await Verify(target);Check();WidgetShoppingStore.SetTarget(WidgetId,target);UpdateWidget();status.Text="Widget list selected: "+target.Name;if(configure)await Navigation.PopAsync();}),true),
             name,suggestions,quantity,note,ShoppingUi.Button("Add item",()=>Run(Add)),status,
             ShoppingUi.Button("Open selected shopping list",()=>Run(async()=>{var target=Selected();await Verify(target);Check();await AppNavigation.ShoppingList(target.OpenRoute(account));}),true)
         }};Content=new ScrollView {Content=body};
+        if(configure)
+        {
+            name.IsVisible=suggestions.IsVisible=quantity.IsVisible=note.IsVisible=false;
+            // Configuration is a list picker, never an item entry screen.
+            foreach(var child in body.Children.OfType<Button>().Where(b=>b.Text is "Add item" or "Open selected shopping list"))child.IsVisible=false;
+            status.Text="Choose a list, then tap Remember. Each home-screen widget keeps its own selection.";
+        }
         if(!configure)Dispatcher.Dispatch(()=>name.Focus());
     }
     protected override async void OnAppearing()

@@ -33,19 +33,13 @@ public static class ThemeService
     {
         var app = Application.Current;
         var dark = AppSettings.Current.IsDark(app.RequestedTheme == AppTheme.Dark);
-        var (primary, accent) = AppSettings.Current.Palette switch {
-            "Ocean" => ("#164E69", "#286D89"),
-            "Berry" => ("#66344F", "#914768"),
-            "Terracotta" => ("#743E2D", "#9B5138"),
-            "Slate" => ("#334155", "#50627B"),
-            _ => ("#214D35", "#386347")
-        };
+        var theme = ThemeColors.For(AppSettings.Current, app.RequestedTheme == AppTheme.Dark);
         var colors = new Dictionary<string, string> {
-            ["ThemePrimary"] = primary, ["ThemeAccent"] = dark ? accent : primary,
-            ["ThemeOnAccent"] = "#FFFFFF", ["ThemeText"] = dark ? "#EEF1F5" : "#202A32",
-            ["ThemeMuted"] = dark ? "#B7C2CC" : "#5B6873",
-            ["ThemeBackground"] = dark ? "#11171D" : "#F5F7F8",
-            ["ThemeSurface"] = dark ? "#1D2730" : "#FFFFFF",
+            ["ThemePrimary"] = theme.Primary, ["ThemeAccent"] = theme.Accent,
+            ["ThemeOnAccent"] = "#FFFFFF", ["ThemeText"] = theme.Text,
+            ["ThemeMuted"] = theme.Muted,
+            ["ThemeBackground"] = theme.Background,
+            ["ThemeSurface"] = theme.Surface,
             ["ThemeSubtle"] = dark ? "#2C3A46" : "#E7EDF1",
             ["ThemeOutline"] = dark ? "#485966" : "#CDD7DF"
         };
@@ -53,6 +47,9 @@ public static class ThemeService
         for (var size = 10; size <= 36; size++) app.Resources["ThemeFont" + size] = size * (AppSettings.Current.LargerText ? 1.18 : 1.0);
         app.Resources["ThemeShowPhotos"] = AppSettings.Current.ShowPhotos;
         ApplySystemBars();
+#if ANDROID
+        RecipeApp.Platforms.Android.ShoppingQuickAddWidget.UpdateAll(global::Android.App.Application.Context);
+#endif
     }
     public static void ApplySystemBars()
     {

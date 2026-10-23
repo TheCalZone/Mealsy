@@ -29,6 +29,8 @@ public class WidgetQuickAddActivity : Activity
 
     protected override void OnCreate(Bundle savedInstanceState)
     {
+        var dark=AppSettings.Current.IsDark(ShoppingQuickAddWidget.SystemDark(this));
+        SetTheme(dark?global::Android.Resource.Style.ThemeMaterialDialogNoActionBar:global::Android.Resource.Style.ThemeMaterialLightDialogNoActionBar);
         base.OnCreate(savedInstanceState);
         try { Plugin.Firebase.Core.Platforms.Android.CrossFirebase.Initialize(this); }
         catch (Exception) { Toast.MakeText(this,"Open Mealsy once before using quick add.",ToastLength.Long).Show();Finish();return; }
@@ -50,6 +52,14 @@ public class WidgetQuickAddActivity : Activity
         add=new Button(this){Text=target?.BelongsTo(account)==true?"Add item":"Choose list"};actions.AddView(add);body.AddView(actions);
         add.Click+=async(_,_)=>await Save();
         entry.EditorAction+=async(_,e)=>{if(e.ActionId==ImeAction.Done){e.Handled=true;await Save();}};
+        var theme=ThemeColors.For(AppSettings.Current,ShoppingQuickAddWidget.SystemDark(this));
+        global::Android.Graphics.Color Color(string hex)=>global::Android.Graphics.Color.ParseColor(hex);
+        body.SetBackgroundColor(Color(theme.Surface));title.SetTextColor(Color(theme.Text));status.SetTextColor(Color(theme.Muted));
+        entry.SetTextColor(Color(theme.Text));entry.SetHintTextColor(Color(theme.Muted));entry.BackgroundTintList=global::Android.Content.Res.ColorStateList.ValueOf(Color(theme.Accent));
+        add.BackgroundTintList=global::Android.Content.Res.ColorStateList.ValueOf(Color(theme.Accent));add.SetTextColor(global::Android.Graphics.Color.White);
+        cancel.SetTextColor(Color(theme.Text));
+        progress.IndeterminateTintList=global::Android.Content.Res.ColorStateList.ValueOf(Color(theme.Accent));
+        Window.SetBackgroundDrawable(new global::Android.Graphics.Drawables.ColorDrawable(Color(theme.Surface)));
         SetContentView(body);
         Window.SetLayout(ViewGroup.LayoutParams.MatchParent,ViewGroup.LayoutParams.WrapContent);
         if(target?.BelongsTo(account)==true){entry.RequestFocus();Window.SetSoftInputMode(SoftInput.StateAlwaysVisible|SoftInput.AdjustResize);}else entry.Visibility=ViewStates.Gone;
