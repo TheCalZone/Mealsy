@@ -1,5 +1,12 @@
 # Mealsy backend deployment
 
+## Latest deployment — 23 October 2026
+
+All 16 functions, deletion-guard rules, required indexes/TTL and Hosting policy
+pages deployed to `mealsy-b732b`. See [rollout evidence](../FIREBASE_ROLLOUT_2026_10_23.md)
+for tests, on-demand metadata checks and outstanding staging/device acceptance.
+Household notifications are available while social notifications stay paused.
+
 ## Latest deployment — 18 October 2026
 
 Functions and the paused Hosting release are deployed to `mealsy-b732b`.

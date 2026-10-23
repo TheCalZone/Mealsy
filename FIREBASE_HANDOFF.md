@@ -1,5 +1,9 @@
 # Firebase handoff: friends, privacy, household meals and content sharing
 
+**23 October rollout:** Active household, admin and deletion handoffs have now
+been deployed. See [rollout evidence and remaining acceptance](FIREBASE_ROLLOUT_2026_10_23.md).
+Social and creator work remains paused. Historical deployment notes below are superseded.
+
 Reviewer creation and optional manual email confirmation: [REVIEWER_ACCOUNT_HANDOFF.md](REVIEWER_ACCOUNT_HANDOFF.md). Creation uses existing sign-up/grant services; manual confirmation needs the administration backend update.
 
 Latest household roles/request rollout: [HOUSEHOLD_ROLES_HANDOFF.md](HOUSEHOLD_ROLES_HANDOFF.md). Backend deployment and staging checks are required before relying on restricted access.

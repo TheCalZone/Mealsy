@@ -1,5 +1,9 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Firebase update, 23 October:** See [current rollout evidence](FIREBASE_ROLLOUT_2026_10_23.md)
+for deployed household roles/questions/attribution, admin confirmation and automatic
+deletion infrastructure. Social remains paused; staging/device acceptance remains open.
+
 For the remaining production-release work, start with
 [PRODUCTION_DESKTOP_HANDOFF.md](PRODUCTION_DESKTOP_HANDOFF.md) (22 October 2026).
 It records the latest hosting, Android compatibility, Firebase deletion and Play

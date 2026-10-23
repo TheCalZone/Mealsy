@@ -19,6 +19,27 @@ before(async () => {
 });
 after(async () => { if (rules) await rules.cleanup(); if (app) await deleteApp(app); });
 const call = (uid, data) => handle({auth: uid ? {uid, token: {email: `${uid}@example.com`}} : null, data});
+
+test('household questions commit trusted alerts atomically and lose access on removal',async()=>{
+ const householdId='questions-home',owner='questions-owner',member='questions-member';
+ const itemId='33333333-3333-3333-3333-333333333333';
+ await db.doc(`households/${householdId}`).set({owner,members:{[owner]:'Owner',[member]:'Member'}});
+ for(const uid of [owner,member])await db.doc(`householdAccounts/${uid}`).set({householdId});
+ await db.doc(`familyGrants/${owner}`).set({active:true,expiresAt:Date.now()+86400000});
+ await db.doc(`households/${householdId}/lists/shopping`).set({items:{[itemId]:{Id:itemId,Name:'Bread',AddedBy:owner}}});
+ const service=require('./functions/shopping-questions').createShoppingQuestions(db);
+ const invoke=(uid,data)=>service({auth:{uid},data:{householdId,itemId,...data}});
+ const send={action:'send',messageId:'c'.repeat(32),text:'Which bread?'};
+ await invoke(member,send);await invoke(member,send);
+ assert.equal((await invoke(owner,{action:'read'})).messages.length,1);
+ const inbox=require('./functions/notifications').createNotifications(db,{socialEnabled:false});
+ assert.equal((await inbox({auth:{uid:owner},data:{action:'list'}})).items.length,1);
+ const client=rules.authenticatedContext(member).firestore();
+ await assertFails(getDoc(doc(client,`households/${householdId}/conversations/shopping`)));
+ await call(owner,{action:'remove',member});
+ await assert.rejects(invoke(member,{action:'read'}),{code:'permission-denied'});
+ assert.equal((await invoke(owner,{action:'read'})).messages[0].authorId,'former-member');
+});
 test('shared household weeks enforce real transaction conflicts, privacy and recursive deletion',async()=>{
  const service=require('./functions/household-meals').createHouseholdMeals(db,{getUser:async()=>({disabled:false})});
  const invoke=(uid,data)=>service({auth:{uid},data});const householdId='meal-household';

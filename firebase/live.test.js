@@ -11,6 +11,8 @@ test('deployed website preserves the social pause and invitation landing page',a
 for (const [name, data] of [
   ['household', {action: 'read', scope: 'personal'}],
   ['householdMeals',{action:'capabilities'}],
+  ['householdQuestions',{action:'list',householdId:'none'}],
+  ['accountDeletion',{action:'prepare'}],
   ['foodFeed', {action: 'list'}],
   ['billing', {action: 'status'}],
   ['administration', {action: 'status'}],
