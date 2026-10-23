@@ -10,12 +10,14 @@ public class ShoppingSyncConflictException : Exception { }
 /// <summary>Computes changes against the last acknowledged server state, including deletions.</summary>
 public static class ShoppingListSync
 {
+    // Attribution belongs to the server and is not a user-editable shopping field.
+    private static bool SameContent(ShoppingListItem a,ShoppingListItem b) => a?.Id==b?.Id && a?.Name==b?.Name && a?.Category==b?.Category && a?.Quantity==b?.Quantity && a?.Note==b?.Note && a?.InBasket==b?.InBasket;
     public static List<ShoppingItemChange> Changes(string baseline, string current)
     {
         var before = ShoppingListDocument.Deserialize(baseline).Items.ToDictionary(i => i.Id);
         var after = ShoppingListDocument.Deserialize(current).Items.ToDictionary(i => i.Id);
         return before.Keys.Union(after.Keys).Select(id => new ShoppingItemChange(before.GetValueOrDefault(id), after.GetValueOrDefault(id)))
-            .Where(c => JsonSerializer.Serialize(c.before) != JsonSerializer.Serialize(c.after)).ToList();
+            .Where(c => !SameContent(c.before,c.after)).ToList();
     }
 
     // While the request was in flight, the user may have continued typing. Reapply only
@@ -29,13 +31,13 @@ public static class ShoppingListSync
             result.TryGetValue(id, out var remote);
             if (change.after == null)
             {
-                if (remote != null && JsonSerializer.Serialize(remote) != JsonSerializer.Serialize(change.before)) throw new ShoppingSyncConflictException();
+                if (remote != null && !SameContent(remote,change.before)) throw new ShoppingSyncConflictException();
                 result.Remove(id); continue;
             }
             if (change.before == null)
             {
-                if (remote != null && JsonSerializer.Serialize(remote) != JsonSerializer.Serialize(change.after)) throw new ShoppingSyncConflictException();
-                result[id] = change.after; continue;
+                if (remote != null && !SameContent(remote,change.after)) throw new ShoppingSyncConflictException();
+                result[id] = remote ?? change.after; continue;
             }
             if (remote == null) throw new ShoppingSyncConflictException();
             static bool Conflicts<T>(T before, T after, T remote) => !Equals(before, after) && !Equals(remote, before) && !Equals(remote, after);

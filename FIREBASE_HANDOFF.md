@@ -388,3 +388,7 @@ support contact. Publish/review them and then configure the app/Console policy
 URL. PLAY_POLICY_AUDIT.md records remaining target-SDK/native-page-size and store
 configuration blockers; PLAY_DATA_SAFETY.md is a draft inventory, not a submitted
 declaration. No production account was deleted or backend deployed here.
+
+## Shared shopping contributor badges
+
+See [SHOPPING_ATTRIBUTION_HANDOFF.md](SHOPPING_ATTRIBUTION_HANDOFF.md) for trusted Added by / Requested by fields, compatibility, anonymization and the required household + deletion-worker deployment. New badges need both the updated app and backend; existing items are not backfilled.

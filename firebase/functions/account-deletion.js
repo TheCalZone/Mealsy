@@ -1,3 +1,4 @@
+const {anonymizeContributor}=require('./domain');
 const {randomUUID,createHash}=require('node:crypto');
 const {FieldPath}=require('firebase-admin/firestore');
 const {fail}=require('./domain');
@@ -54,7 +55,7 @@ function createAccountDeletion(db,auth,clock=Date.now){
     if(!job.deleteOwnedSpaces)throw new Error('Owner confirmation missing.');
     for(const member of Object.keys(home.members||{}))await db.runTransaction(async tx=>{const r=db.doc(`householdAccounts/${member}`),v=(await tx.get(r)).data();if(v?.householdId===ref.id)tx.delete(r);});
     await eraseQuery(db.collection('householdInvites').where('householdId','==',ref.id));await erase(ref);
-   }else await db.runTransaction(async tx=>{const v=(await tx.get(ref)).data();if(!v)return;const members={...v.members};delete members[uid];const roles={...v.roles};delete roles[uid];const requestRates={...v.requestRates};delete requestRates[uid];const requests=Object.fromEntries(Object.entries(v.requests||{}).filter(([,r])=>r.authorId!==uid).map(([id,r])=>[id,r.resolvedBy===uid?{...r,resolvedBy:'deleted-user'}:r]));tx.update(ref,{members,roles,requestRates,requests});});
+   }else await db.runTransaction(async tx=>{const v=(await tx.get(ref)).data();if(!v)return;const listRef=ref.collection('lists').doc('shopping');const list=(await tx.get(listRef)).data();if(list)tx.set(listRef,{...list,items:anonymizeContributor(list.items,uid)});const members={...v.members};delete members[uid];const roles={...v.roles};delete roles[uid];const requestRates={...v.requestRates};delete requestRates[uid];const requests=Object.fromEntries(Object.entries(v.requests||{}).filter(([,r])=>r.authorId!==uid).map(([id,r])=>[id,r.resolvedBy===uid?{...r,resolvedBy:'deleted-user'}:r]));tx.update(ref,{members,roles,requestRates,requests});});
   }
   async function cleanBusiness(ref){
    const business=(await ref.get()).data();if(!business)return;

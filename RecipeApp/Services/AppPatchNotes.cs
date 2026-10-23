@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Who added it?", new[] {
+            "New shared shopping items show a small member-coloured Added by badge. Approved requests show Requested by and keep the original requester’s name.",
+            "Attribution requires the updated Firebase household function. Older items remain unlabelled, and personal lists stay uncluttered."
+        }),
         new(new(2026,10,23), "Widget controls and themes", new[] {
             "The middle widget icon opens a dedicated list chooser, with item-entry controls hidden. Saving returns you to the app screen beneath it.",
             "Widgets and the home-screen add dialog follow your selected colour palette and light/dark appearance. Changing the app theme refreshes installed widgets."

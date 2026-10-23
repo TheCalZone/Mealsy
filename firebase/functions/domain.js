@@ -37,7 +37,7 @@ function item(value) {
   return clean;
 }
 // Three-way field merge: independent fields/items merge; competing edits never silently win.
-function applyChanges(current, changes) {
+function applyChanges(current, changes, contributor = null) {
   if (!Array.isArray(changes) || changes.length > 500) fail('invalid-argument', 'Too many changes.');
   const result = structuredClone(current || {});
   const seen = new Set();
@@ -51,13 +51,13 @@ function applyChanges(current, changes) {
       fail('invalid-argument', 'Invalid change.');
     seen.add(id);
     const remote = result[id] || null;
-    if (isDeepStrictEqual(remote, after)) continue; // Safe retry after a lost response.
+    if (remote && after && isDeepStrictEqual(item(remote), after)) continue; // Safe retry after a lost response.
     if (!before) {
       if (remote) fail('aborted', 'An item changed on another device.');
-      result[id] = after;
+      result[id] = contributor ? {...after,AddedBy:contributor.id,AddedByName:contributor.name,AdditionKind:contributor.kind} : after;
     } else if (!after) {
       if (!remote) continue;
-      if (!isDeepStrictEqual(remote, before)) fail('aborted', 'An item was edited before it could be removed.');
+      if (!isDeepStrictEqual(item(remote), before)) fail('aborted', 'An item was edited before it could be removed.');
       delete result[id];
     } else {
       if (!remote) fail('aborted', 'An item was removed on another device.');
@@ -81,4 +81,11 @@ function requireOwner(household, uid) {
   requireMember(household, uid);
   if (household.owner !== uid) fail('permission-denied', 'Only the household owner can do this.');
 }
-module.exports = {DomainError, fail, item, applyChanges, requireMember, requireOwner};
+function contributor(household,uid,kind='added') {
+  const label=String(household.members[uid]||'Household member').trim();
+  return {id:uid,name:(label.includes('@')?label.split('@')[0]:label).slice(0,80)||'Household member',kind};
+}
+function anonymizeContributor(items,uid){
+  return Object.fromEntries(Object.entries(items||{}).map(([id,value])=>[id,value.AddedBy===uid?{...value,AddedBy:'deleted-user',AddedByName:'Former member'}:value]));
+}
+module.exports = {contributor,anonymizeContributor,DomainError, fail, item, applyChanges, requireMember, requireOwner};

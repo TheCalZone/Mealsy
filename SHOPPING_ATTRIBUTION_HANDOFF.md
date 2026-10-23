@@ -1,0 +1,13 @@
+# Household shopping attribution
+
+New shared shopping items show a compact coloured name badge below their quantity. Direct additions say Added by; approved shopping requests say Requested by and identify the requester, not the approver. Requests use the same member colour. Colours are deterministic per member (a finite palette can repeat); the name and wording communicate identity independently of colour. Badges use dark text on white for light/dark theme contrast. Existing items have no invented author. Personal list additions receive no attribution.
+
+Firebase assigns AddedBy, AddedByName and AdditionKind inside the shared shopping transaction. Names come from household membership labels (email local part where labels contain an email), not client payloads. Ordinary edits/checks preserve the original contributor. There is no per-edit audit history or new listener/read on item rendering. Offline additions receive attribution after successful sync. Recipe/meal-plan imports and widget additions use the same shared patch path.
+
+Backend rollout, not performed here: deploy household and processAccountDeletion from the households codebase using the repository's normal deployment workflow. For the current firebase.json: `firebase deploy --only functions:households:household,functions:households:processAccountDeletion` from the repository root. No rules, index or migration change is required. Older servers still work but do not supply badges.
+
+Server comparison ignores contributor fields sent by any client, preserving existing conflict protection while allowing old clients to edit/delete attributed items and retry safely. The app ignores attribution-only changes when generating edits and preserves server attribution while reapplying edits made during sync.
+
+On leave/removal/account deletion, retained shared items are anonymized as Former member; item content remains. Removal and deletion worker must both be deployed so author identifiers do not outlive membership. Offline copies may display their cached labels until refreshed.
+
+Staging: add as two adults, request as a restricted member and approve as another adult; verify labels on another device after sync. Retry a lost response, edit/check/delete from an older client, import ingredients and add through a widget. Confirm personal lists and legacy items show no badge; confirm account deletion and member leave/removal anonymize labels. Verify badge legibility in light and dark mode. Automated tests cover trusted attribution, request authors, retries, old-client operations, in-flight merging, serialization, and cleanup; no physical device or live Firebase deployment tested here.

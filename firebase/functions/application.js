@@ -1,5 +1,5 @@
 const {randomBytes, createHash} = require('node:crypto');
-const {fail, applyChanges, requireMember, requireOwner} = require('./domain');
+const {fail, applyChanges, requireMember, requireOwner,contributor,anonymizeContributor} = require('./domain');
 const {requireFamily, active,memberLimit} = require('./entitlements');
 const {requestData} = require('./request');
 const {role,canManage,queue,restrictedShopping,forget}=require('./household-requests');
@@ -86,7 +86,7 @@ return async function handle(request) {
         tx.update(ref,{requests:result.requests,requestRates:household.requestRates||{}});
         return{items:Object.values(result.items),requestedCount:result.requestedCount};
       }
-      const items = data.action === 'patch' ? applyChanges(current, data.changes) : current;
+      const items = data.action === 'patch' ? applyChanges(current, data.changes,contributor(household,uid)) : current;
       if (data.action === 'patch') tx.set(listRef, {items});
       return {items: Object.values(items)};
     }
@@ -104,7 +104,7 @@ return async function handle(request) {
         if(!Object.hasOwn(household.members,entry.authorId))fail('failed-precondition','The requester has left. Decline this request instead.');
         if(entry.kind==='shopping'){
           const listRef=ref.collection('lists').doc('shopping'),current=(await tx.get(listRef)).data()?.items||{};
-          const items=applyChanges(current,[{before:null,after:entry.item}]);tx.set(listRef,{items});
+          const items=applyChanges(current,[{before:null,after:entry.item}],contributor(household,entry.authorId,'requested'));tx.set(listRef,{items});
         }else if(entry.kind==='meal'){
           const weekRef=ref.collection('mealWeeks').doc(entry.weekStart),week=(await tx.get(weekRef)).data()||{revision:0,meals:{}};
           if(week.meals[entry.meal.id])fail('aborted','This planned meal already exists. Refresh before approving.');
@@ -123,6 +123,8 @@ return async function handle(request) {
     }
     if (data.action === 'leave') {
       if (household.owner === uid) fail('failed-precondition', 'The owner can delete the household, or remove other members.');
+      const listRef=ref.collection('lists').doc('shopping'),list=(await tx.get(listRef)).data();
+      if(list)tx.set(listRef,{...list,items:anonymizeContributor(list.items,uid)});
       const members = {...household.members}; delete members[uid];
       tx.update(ref, {members,...forget(household,uid)}); tx.delete(accountRef); return {};
     }
@@ -134,6 +136,8 @@ return async function handle(request) {
     if (data.action === 'remove') {
       const member = String(data.member || '');
       if (member === uid || !Object.hasOwn(household.members, member)) fail('invalid-argument', 'Choose another household member.');
+      const listRef=ref.collection('lists').doc('shopping'),list=(await tx.get(listRef)).data();
+      if(list)tx.set(listRef,{...list,items:anonymizeContributor(list.items,member)});
       const members = {...household.members}; delete members[member];
       tx.update(ref, {members,...forget(household,member)}); tx.delete(db.doc(`householdAccounts/${member}`)); return {};
     }
