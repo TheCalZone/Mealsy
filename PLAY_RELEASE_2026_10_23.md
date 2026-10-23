@@ -1,3 +1,15 @@
+# Version 4 — email confirmation display (23 October 2026)
+
+The Account screen now checks the current Auth user's email verification state
+independently of the paused social service. It reloads the user and refreshes the
+ID token when checking, shows confirmed status for verified accounts, offers a
+confirmation email only for unverified accounts, and treats unavailable status as
+unknown. The send action checks again and skips sending if already confirmed.
+Signing out does not change server verification status.
+
+Version 4 includes the version 3 household crash fix. Real-account sign-out/sign-in
+and email-link acceptance still require a phone check.
+
 # Version 3 — household crash fix (23 October 2026)
 
 Reproduced the reported process exit in a Release API 34 x64 emulator with an

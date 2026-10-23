@@ -1,5 +1,13 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Email confirmation, 23 October:** Version code 4 fixes the Account screen's
+unconditional confirmation prompt while social is paused. Account loading reloads
+the signed-in Auth user and token, uses the current verification flag, and offers
+resending only for accounts known to be unverified. Unknown/offline status has retry
+copy rather than being treated as unverified. Sending also checks live status first
+and skips delivery for already-confirmed users. No verification flags are set locally
+or changed by the app; existing server enforcement remains authoritative.
+
 **Shopping attribution, 23 October:** Household shopping tags now resolve the
 contributor's account first/last name from `users/{uid}`, including existing items
 and approved requests. Missing names fall back to “Household member”; emails are

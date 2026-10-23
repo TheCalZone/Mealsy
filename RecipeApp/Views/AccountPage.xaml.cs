@@ -6,6 +6,7 @@ public partial class AccountPage : ContentPage
     private string account;
     private RecipeApp.Models.CommunityProfile community;
     private bool administrator;
+    private bool? emailVerified;
     public AccountPage(){InitializeComponent();Title=AppLocalization.Text("Your account");ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));}
     private readonly LoadGeneration requests=new();
     private bool visible,loading;
@@ -26,13 +27,14 @@ public partial class AccountPage : ContentPage
         if(!visible)return;
         var uid=AccountSession.UserId;var ticket=requests.Begin(uid);
         if(account!=uid)community=null;
-        account=uid;administrator=false;loadWarning=null;loading=uid!=null;Render();
+        account=uid;emailVerified=AccountSession.EmailVerified==true?true:null;administrator=false;loadWarning=null;loading=uid!=null;Render();
         if(uid==null)return;
         var unavailable=false;
         async Task Profile(){try{await AccountSession.LoadProfile();}catch(Exception){unavailable=true;}}
         async Task Community(){try{var saved=await FoodFeedService.Profile();if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))community=saved;}catch(Exception){unavailable=true;}}
         async Task Role(){try{var saved=await AdminService.Status();if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))administrator=saved.Admin;}catch(Exception){unavailable=true;}}
-        try{await Task.WhenAll(Profile(),ProductFeatures.SocialEnabled?Community():Task.CompletedTask,Role());}
+        async Task Verification(){try{var confirmed=await AccountSession.RefreshEmailVerification();if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))emailVerified=confirmed;}catch(Exception){unavailable=true;}}
+        try{await Task.WhenAll(Profile(),ProductFeatures.SocialEnabled?Community():Task.CompletedTask,Role(),Verification());}
         finally
         {
             if(visible&&requests.IsCurrent(ticket,AccountSession.UserId))
@@ -58,16 +60,18 @@ public partial class AccountPage : ContentPage
                 if(loading)throw new InvalidOperationException("Wait for your account details to finish loading.");AccountSession.Check(account);await FoodFeedService.Call<object>(new{action="setUsername",username=username.Text??""});
                 var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();
             }));
-            body.Add(ShoppingUi.Text(loading?"Checking email confirmation…":community?.EmailVerified==true?"✓ Email confirmed · You can share recipes":"Confirm your email before sharing recipes",14,true));
-            if(!loading&&community?.EmailVerified!=true)body.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.",AppLocalization.Text("OK"));},true));
-            body.Add(ShoppingUi.Button("Check email confirmation",async()=>{var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();},true));
         }
         else
         {
             body.Add(ShoppingUi.Text(AppLocalization.Text("Email confirmation"),22,true));
-            body.Add(ShoppingUi.Text(AppLocalization.Text("Keep your email address confirmed for household invitations and account access."),13));
-            body.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{AccountSession.Check(account);await AccountSession.SendVerification();await DisplayAlert("Check your inbox","If confirmation is needed, open the link sent to your email address.",AppLocalization.Text("OK"));},true));
         }
+        body.Add(ShoppingUi.Text(emailVerified==true?"✓ Email confirmed":loading?"Checking email confirmation…":emailVerified==false?"Your email address has not been confirmed yet.":"Email confirmation status is unavailable. Retry when connected.",14,true));
+        if(!loading&&emailVerified==false)body.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{
+            AccountSession.Check(account);var sent=await AccountSession.SendVerification();AccountSession.Check(account);
+            if(!sent){emailVerified=true;Render();await DisplayAlert("Email confirmed","Your email address is already confirmed. No further confirmation is needed.",AppLocalization.Text("OK"));return;}
+            await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.",AppLocalization.Text("OK"));
+        },true));
+        if(!loading&&emailVerified!=true)body.Add(ShoppingUi.Button("Check email confirmation",RefreshAccountAsync,true));
         body.Add(status);body.Add(ShoppingUi.Button(AppLocalization.Text("Sync my account"),async()=>{AccountSession.Check(account);status.Text="Syncing your recipes and checklists…";status.Text=await AccountSession.SyncSafely();},true));
         body.Add(ShoppingUi.Button(AppLocalization.Text("Edit my profile"),()=>AppNavigation.Open(new EditdetailsPage())));
         body.Add(ShoppingUi.Button("Copy device recipes into this account…",async()=>{
