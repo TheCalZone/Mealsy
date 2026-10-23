@@ -1,0 +1,124 @@
+{
+  "target_sdk": 34,
+  "api35_floor_met": false,
+  "advertising_id_permission": false,
+  "backup_disabled": true,
+  "debuggable": false,
+  "native_64bit_library_count": 16,
+  "native_16kb_failures": [
+    "lib/x86_64/libxamarin-app.so",
+    "lib/arm64-v8a/libSystem.IO.Compression.Native.so",
+    "lib/arm64-v8a/libSystem.Native.so",
+    "lib/arm64-v8a/libSystem.Security.Cryptography.Native.Android.so",
+    "lib/arm64-v8a/libmono-component-marshal-ilgen.so",
+    "lib/arm64-v8a/libmonosgen-2.0.so",
+    "lib/arm64-v8a/libmonodroid.so",
+    "lib/x86_64/libSystem.IO.Compression.Native.so",
+    "lib/x86_64/libSystem.Native.so",
+    "lib/x86_64/libSystem.Security.Cryptography.Native.Android.so",
+    "lib/x86_64/libmono-component-marshal-ilgen.so",
+    "lib/x86_64/libmonosgen-2.0.so",
+    "lib/x86_64/libmonodroid.so",
+    "lib/arm64-v8a/libe_sqlite3.so",
+    "lib/x86_64/libe_sqlite3.so"
+  ],
+  "native_libraries": [
+    {
+      "library": "lib/arm64-v8a/libxamarin-app.so",
+      "minimum_load_alignment": 65536,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libxamarin-app.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.IO.Compression.Native.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.Native.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.Security.Cryptography.Native.Android.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libmono-component-marshal-ilgen.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libmonosgen-2.0.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libmonodroid.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libSystem.IO.Compression.Native.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libSystem.Native.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libSystem.Security.Cryptography.Native.Android.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libmono-component-marshal-ilgen.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libmonosgen-2.0.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libmonodroid.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libe_sqlite3.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/x86_64/libe_sqlite3.so",
+      "minimum_load_alignment": 4096,
+      "elf_16kb": false,
+      "zip_16kb": true
+    }
+  ],
+  "limitations": "API 35 is a historical minimum floor, not verification of the current Play deadline. ELF/ZIP inspection does not replace 16 KB device and final AAB checks. Test signing is not production signing."
+}
