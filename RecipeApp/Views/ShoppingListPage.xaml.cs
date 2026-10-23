@@ -166,7 +166,7 @@ public partial class ShoppingListPage : ContentPage
             if (householdId != null && string.IsNullOrEmpty(requestedHousehold))
             {
                 var info = await HouseholdService.StatusAsync();
-                if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();else Model.RestrictedHousehold=info.Restricted;
+                if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();else {Model.RestrictedHousehold=info.Restricted;sharedName=info.Name;availableHousehold=info;}
             }
             if (!visible) return;
             var incoming = IngredientsJson; IngredientsJson = null;

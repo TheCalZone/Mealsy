@@ -87,3 +87,21 @@ test('approval conflicts preserve the pending request without overwriting an edi
  assert.equal((await f.requestList('owner')).requests[0].status,'pending');
  assert.equal((await f.call('owner',{action:'read',scope:'household'})).items[0].Quantity,'3 L');
 });
+
+test('household rename is owner-only, trimmed and preserves membership and shopping',async()=>{
+ const f=fixture();await f.patch('owner',[{after:item()}]);
+ assert.equal((await f.call('owner',{action:'status'})).canRenameHousehold,true);
+ for(const uid of ['adult','child'])await assert.rejects(f.call(uid,{action:'rename',name:'Spoof'}),{code:'permission-denied'});
+ await assert.rejects(f.call('outsider',{action:'rename',name:'Spoof'}),{code:'failed-precondition'});
+ await assert.rejects(f.call('owner',{action:'rename',householdId:'other',name:'Spoof'}),{code:'permission-denied'});
+ const shopping=structuredClone(f.db.docs.get('households/home/lists/shopping'));
+ const before=structuredClone(f.db.docs.get('households/home'));f.db.docs.delete('familyGrants/owner');
+ await f.call('owner',{action:'rename',name:'  Family groceries  '});
+ assert.deepEqual(f.db.docs.get('households/home'),{...before,name:'Family groceries'});
+ assert.equal((await f.call('child',{action:'status'})).name,'Family groceries');
+ assert.deepEqual(f.db.docs.get('households/home/lists/shopping'),shopping);
+});
+test('household rename rejects invalid names without changing the name',async()=>{
+ const f=fixture();for(const name of [null,12,'','   ','a'.repeat(81)])await assert.rejects(f.call('owner',{action:'rename',name}),{code:'invalid-argument'});
+ assert.equal(f.db.docs.get('households/home').name,'Home');
+});
