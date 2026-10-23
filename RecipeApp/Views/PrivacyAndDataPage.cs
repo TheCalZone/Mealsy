@@ -9,6 +9,8 @@ public class PrivacyAndDataPage:ContentPage
         var body=new VerticalStackLayout{Padding=20,Spacing=14};
         body.Add(ShoppingUi.Text("Your food. Your account. Your choices.",25,true));
         body.Add(ShoppingUi.Text("Device mode keeps recipes, lists, meal plans and drafts on this device. Signing in uses Firebase Authentication and syncs your profile, recipes, personal shopping list and checklists. Personal meal plans, reusable weeks and saved shopping trips stay on this device. Household lists and meal plans are shared with household members."));
+        body.Add(ShoppingUi.Text("Household shopping conversations",18,true));
+        body.Add(ShoppingUi.Text("Item questions and replies are visible to household members. Optional Android alerts use Firebase Cloud Messaging and generic alert text; messages stay in the app. When a member leaves, is removed or deletes their account, retained conversations show Former member instead of their account identifier. Message text remains for the household until an adult clears the conversation or the household is deleted. Avoid putting sensitive personal information in messages."));
         body.Add(ShoppingUi.Text("Photos and dietary information",18,true));
         body.Add(ShoppingUi.Text("Recipe photos can be stored with your recipes. Dietary profile details are optional; avoid adding sensitive information you do not want stored. Recipe-link importing contacts the selected website only when you ask it to import."));
         body.Add(ShoppingUi.Text("Diagnostics and advertisements",18,true));

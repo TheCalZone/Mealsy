@@ -29,3 +29,9 @@ and migration without mixing the main document with additional device lists.
 Android widget in-place additions for device lists deliberately skip the cloud
 personal endpoint. iOS shared UI is included; native iOS build/device validation
 still requires a Mac. No Firebase deployment is needed for these local additions.
+
+## Destination selection across shortcuts
+
+Recipe/meal-plan shopping review, Home quick-add, saved-trip saving/reuse and guest-list import now choose an exact destination. Household choices are available to entitled members; restricted members' additions remain requests. Named personal lists are labelled as device-only. Cancelling never defaults to the main list. Replacement offers personal lists only, then confirms the chosen name. Legacy ingredient routes ask unless an explicit destination was already supplied, and append rather than replace.
+
+ShoppingListDestinations provides the chooser and shared-list preparation; ShoppingDestinationStore checks the account/catalog and reads/writes the exact target. Shared additions load/rebase the chosen list before combining quantities, then open it for the existing sync path. Failed access checks do not redirect ingredients into a personal list. Widget targets remain explicit and do not ask again for each quick add. Additional personal lists remain device-only; this change does not introduce cloud sync for them.

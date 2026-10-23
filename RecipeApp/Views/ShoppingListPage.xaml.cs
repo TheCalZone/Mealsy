@@ -1,3 +1,4 @@
+using RecipeApp.Models;
 using RecipeApp.ViewModels;
 using RecipeApp.Services;
 using System.Text.Json;
@@ -134,18 +135,25 @@ public partial class ShoppingListPage : ContentPage
         try
         {
             var uid = HouseholdService.UserId;
-            var explicitPersonal=OpenPersonal||!string.IsNullOrEmpty(IngredientsJson)||!string.IsNullOrEmpty(PersonalListId);
+            var incoming=IngredientsJson;IngredientsJson=null;var cancelledIncoming=false;
             var requestedPersonal=PersonalListId;PersonalListId=null;
-            if(listAccount!=uid){openingDefault=true;availableHousehold=null;}
-            if(!string.IsNullOrEmpty(IngredientsJson)&&listAccount==uid)Model.Persist();
-            if (listAccount != uid || !string.IsNullOrEmpty(IngredientsJson) || OpenPersonal) SelectPersonal();
-            OpenPersonal=false;
             var requestedHousehold=OpenHouseholdId;OpenHouseholdId=null;
+            if(!string.IsNullOrWhiteSpace(incoming)&&!OpenPersonal&&string.IsNullOrEmpty(requestedPersonal)&&string.IsNullOrEmpty(requestedHousehold))
+            {
+                var destination=await ShoppingListDestinations.ChooseAsync("Add recipe ingredients to which list?");AccountSession.Check(uid);
+                if(destination==null){incoming=null;cancelledIncoming=true;}
+                else if(destination.HouseholdId!=null)requestedHousehold=destination.HouseholdId;
+                else requestedPersonal=destination.PersonalListId??"main";
+            }
+            var explicitPersonal=OpenPersonal||!string.IsNullOrEmpty(requestedPersonal);
+            if(listAccount!=uid){openingDefault=true;availableHousehold=null;}
+            if(listAccount!=uid||OpenPersonal)SelectPersonal();
+            OpenPersonal=false;
             if(!string.IsNullOrEmpty(requestedHousehold))
             {
                 var info=await HouseholdService.StatusAsync();
                 if(info.HouseholdId!=requestedHousehold||!info.FamilyEnabled)throw new InvalidOperationException("Household access ended.");
-                generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.RestrictedHousehold=info.Restricted;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
+                generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
             }
             if (householdId == null) ListSelector.Text = uid == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
             if(!string.IsNullOrEmpty(requestedPersonal))
@@ -169,17 +177,10 @@ public partial class ShoppingListPage : ContentPage
                 if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();else {Model.RestrictedHousehold=info.Restricted;sharedName=info.Name;availableHousehold=info;}
             }
             if (!visible) return;
-            var incoming = IngredientsJson; IngredientsJson = null;
-            if(!string.IsNullOrWhiteSpace(incoming)&&PersonalShoppingLists.All().Count>1)
-            {
-                var lists=PersonalShoppingLists.All();
-                var names=lists.Select((l,i)=>$"{i+1}. {l.Name}").ToArray();
-                var choice=await DisplayActionSheet("Send recipe ingredients to", "Keep on main personal list",null,names);
-                AccountSession.Check(uid);
-                var index=Array.IndexOf(names,choice);
-                if(index>=0)SelectNamedPersonal(lists[index].Id);
-            }
-            Model.Load(IsManualList, incoming);
+            if(!string.IsNullOrWhiteSpace(incoming)&&householdId!=null)
+                await ShoppingListDestinations.ReadAsync(new WidgetListTarget(uid,householdId,sharedName));
+            AccountSession.Check(uid);
+            Model.Load(IsManualList||cancelledIncoming, incoming);
             _=QuickSuggestions.Refresh();
             RenderListTabs();StartTimer();
             await SyncAsync();
@@ -192,7 +193,7 @@ public partial class ShoppingListPage : ContentPage
         generation++; householdId = sharedName = null; conflict = false;
         if(listAccount!=HouseholdService.UserId)availableHousehold=null;
         listAccount = HouseholdService.UserId;
-        personalId="main";Model.RestrictedHousehold=false;Model.SelectList(null); ListSelector.Text = listAccount == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
+        personalId="main";Model.HouseholdList=false;Model.RestrictedHousehold=false;Model.SelectList(null); ListSelector.Text = listAccount == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
         RenderListTabs();
     }
     private void StartTimer()
@@ -281,7 +282,7 @@ public partial class ShoppingListPage : ContentPage
     {
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++;conflict=false;householdId=info.HouseholdId;sharedName=info.Name;listAccount=HouseholdService.UserId;
-        Model.RestrictedHousehold=info.Restricted;Model.SelectList(CacheKey);
+        Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.SelectList(CacheKey);
     }
     private void RenderListTabs()
     {
@@ -416,5 +417,11 @@ public partial class ShoppingListPage : ContentPage
         if (shoppingMode) { SetShoppingMode(false); return true; }
         return base.OnBackButtonPressed();
     }
+    private async void AskItem_Clicked(object sender,EventArgs e)
+    {
+        if(householdId==null||sender is not SwipeItem {BindingContext:ShoppingListItem item})return;
+        await AppNavigation.Open(new HouseholdShoppingQuestionsPage(householdId,item.Id.ToString()));
+    }
+    private async void ShoppingQuestions_Clicked(object sender,EventArgs e)=>await AppNavigation.Open(new HouseholdShoppingInboxPage());
     private void RemoveEditingItem_Clicked(object sender, EventArgs e) => Model.RemoveEditingItem();
 }

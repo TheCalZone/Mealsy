@@ -76,6 +76,7 @@ public partial class AccountPage : ContentPage
         if(ProductFeatures.SocialEnabled)body.Add(ShoppingUi.Button("Friends & public profile",()=>AppNavigation.Open(new FriendsPage()),true));
         body.Add(ShoppingUi.Button(AppLocalization.Text("Household meal plan"),()=>AppNavigation.Open(new HouseholdMealsPage()),true));
         body.Add(ShoppingUi.Button(AppLocalization.Text("My recipes"),()=>AppNavigation.Root("RecipePage"),true));
+        body.Add(ShoppingUi.Button("Shopping questions & replies",()=>AppNavigation.Open(new HouseholdShoppingInboxPage()),true));
         body.Add(ShoppingUi.Button(AppLocalization.Text("My household"),()=>AppNavigation.Open(new HouseholdPage()),true));
         if(ProductFeatures.SocialEnabled)body.Add(FoodFeedPage.Button("Mealsy Business & creators",()=>AppNavigation.Open(new BusinessHubPage())));
         if(administrator){body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));body.Add(FoodFeedPage.Button("Give complimentary Premium",()=>AppNavigation.Open(new AdminPage(true))));}

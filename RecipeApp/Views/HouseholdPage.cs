@@ -157,6 +157,7 @@ public class HouseholdPage : ContentPage
                 }));
                 content.Add(Drawer("invitations","Invite family","Share or revoke an invitation",invitations));
             }
+            content.Add(Action("Shopping questions & replies",()=>AppNavigation.Open(new HouseholdShoppingInboxPage())));
             var membership=new VerticalStackLayout {Spacing=9};
             membership.Add(ShoppingUi.Text(isOwner?"Your Premium membership covers this household. Each member keeps their own login and personal lists.":"The owner's Premium membership covers you. You do not need a separate subscription for household sharing.",14));
             if(isOwner)membership.Add(Action("Rename household list",async()=>{
@@ -179,17 +180,17 @@ public class HouseholdPage : ContentPage
             }}));
         }
         var deviceOptions=new VerticalStackLayout {Spacing=9};
-        deviceOptions.Add(ShoppingUi.Text("Switch lists using the scrolling tabs in Shopping. This optional import copies the original guest list into your main personal list.",14));
-        deviceOptions.Add(Action("Copy original device list to my personal list", async () => {
+        deviceOptions.Add(ShoppingUi.Text("Switch lists using the scrolling tabs in Shopping. This optional import copies the original guest list into a personal list you choose.",14));
+        deviceOptions.Add(Action("Copy original device list to a personal list…", async () => {
             if (!await DisplayAlert("Copy device list?", "The original list may have been used by other people on this device. Copy its items into your private personal list?", "Copy", AppLocalization.Text("Cancel"))) return;
             CheckAccount();
             var saved = Preferences.Get("ShoppingList.v2", "");
             var source = string.IsNullOrWhiteSpace(saved) ? new ShoppingListDocument() : ShoppingListDocument.Deserialize(saved);
             if (string.IsNullOrWhiteSpace(saved)) source.MergeLegacyText(Preferences.Get("ShoppingListText", ""));
-            var targetJson = Preferences.Get(ShoppingListStore.StateKey, "[]");
-            var target = ShoppingListDocument.Deserialize(targetJson);
-            foreach (var item in source.Items) if (!target.Items.Any(i => i.Id == item.Id)) target.Add(item);
-            ShoppingListStore.Save(target); status.Text = "Copied to your personal list. Open it to sync.";
+            var destination=await ShoppingListDestinations.ChooseAsync("Copy device items to which personal list?",personalOnly:true);CheckAccount();if(destination==null)return;
+            var target=ShoppingDestinationStore.Read(destination,account);
+            foreach(var item in source.Items)if(!target.Items.Any(i=>i.Id==item.Id))target.Add(item);
+            ShoppingDestinationStore.Save(destination,account,target);status.Text="Copied to "+destination.Name+". Open it to sync.";
         }));
         content.Add(Drawer("device","Device list import","Optional · Keeps the original list",deviceOptions));
         status.SetDynamicResource(Label.TextColorProperty, "ThemeText"); content.Add(status);

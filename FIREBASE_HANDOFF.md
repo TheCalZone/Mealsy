@@ -392,3 +392,7 @@ declaration. No production account was deleted or backend deployed here.
 ## Shared shopping contributor badges
 
 See [SHOPPING_ATTRIBUTION_HANDOFF.md](SHOPPING_ATTRIBUTION_HANDOFF.md) for trusted Added by / Requested by fields, compatibility, anonymization and the required household + deletion-worker deployment. New badges need both the updated app and backend; existing items are not backfilled.
+
+## Household shopping questions and notifications
+
+See [HOUSEHOLD_SHOPPING_QUESTIONS_HANDOFF.md](HOUSEHOLD_SHOPPING_QUESTIONS_HANDOFF.md) for the new callable, household-only notification path, index, cleanup, opt-in Android push and bounded/manual loading. Deploy the listed backend functions together; no live Firebase changes were made here.

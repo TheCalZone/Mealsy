@@ -45,22 +45,22 @@ public class SavedShoppingTripsPage:ContentPage
     private async Task Render()
     {
         var entries=await PremiumLibrary.Load<SavedShoppingTrip>(account,"shopping");AccountSession.Check(account);
-        var body=new VerticalStackLayout{Padding=16,Spacing=14};body.Add(ShoppingUi.Text("Shop your favourites again",26,true));body.Add(ShoppingUi.Text("Save a snapshot of your personal list before clearing it. Reuse a whole trip with quantities and notes, with every item reset to uncollected. These snapshots stay private on this device; the household list is separate.",14));
-        body.Add(ShoppingUi.Button("Save my current personal list",()=>Run(async()=>{
+        var body=new VerticalStackLayout{Padding=16,Spacing=14};body.Add(ShoppingUi.Text("Shop your favourites again",26,true));body.Add(ShoppingUi.Text("Choose a personal or household list to save before clearing it. Reuse a whole trip with quantities and notes, with every item reset to uncollected. These snapshots stay private on this device, even when copied from a household list.",14));
+        body.Add(ShoppingUi.Button("Save a shopping list…",()=>Run(async()=>{
             if(!await PremiumAccess.Require("Saved shopping trips"))return;AccountSession.Check(account);
-            var list=ShoppingListDocument.Deserialize(Preferences.Get(ShoppingListStore.StateKey,"[]"));if(list.Items.Count==0)throw new InvalidOperationException("Add items to your personal shopping list first.");
+            var source=await ShoppingListDestinations.ChooseAsync("Save which shopping list?");AccountSession.Check(account);if(source==null)return;var list=await ShoppingListDestinations.ReadAsync(source);if(list.Items.Count==0)throw new InvalidOperationException("This shopping list is empty.");
             var name=await DisplayPromptAsync("Name this shopping trip","e.g. Weekly basics or Pasta night",maxLength:80);if(name==null)return;AccountSession.Check(account);
             await PremiumLibrary.Add(account,"shopping",SavedShoppingTrip.Create(name,list));await Render();
         })));
-        if(entries.Count==0)body.Add(ShoppingUi.Text("No saved trips yet. Save a personal list here to reuse it next time."));
+        if(entries.Count==0)body.Add(ShoppingUi.Text("No saved trips yet. Save a list here to reuse it next time."));
         foreach(var entry in entries)
         {
             var items=entry.ReusableItems();var card=new VerticalStackLayout{Spacing=8};card.Add(ShoppingUi.Text(entry.Name,21,true));card.Add(ShoppingUi.Text($"{items.Count} items · {entry.SavedAt.LocalDateTime:d}",12));card.Add(ShoppingUi.Text(string.Join(" · ",items.Take(5).Select(i=>i.Name))+(items.Count>5?"…":""),14));
-            card.Add(ShoppingUi.Button("Add trip to personal list…",()=>Run(async()=>{
+            card.Add(ShoppingUi.Button("Add trip to a list…",()=>Run(async()=>{
                 if(!await PremiumAccess.Require("Saved shopping trips"))return;AccountSession.Check(account);
-                if(!await DisplayAlert("Add these items?",$"Add {items.Count} uncollected items from {entry.Name} to your personal list? Existing items are kept; compatible quantities combine.","Add items","Cancel"))return;
-                AccountSession.Check(account);var list=ShoppingListDocument.Deserialize(Preferences.Get(ShoppingListStore.StateKey,"[]"));list.AppendReusableItems(entry.ReusableItems());ShoppingListStore.Save(list);
-                await DisplayAlert("Trip added","Your personal shopping list is ready. Open Shopping to review and sync it.",AppLocalization.Text("OK"));
+                var target=await ShoppingListDestinations.ChooseAsync("Add saved trip to which list?");AccountSession.Check(account);if(target==null)return;
+                if(!await DisplayAlert("Add these items?",$"Add {items.Count} uncollected items from {entry.Name} to {target.Name}? Existing items are kept; compatible quantities combine.","Add items",AppLocalization.Text("Cancel")))return;
+                AccountSession.Check(account);await ShoppingListDestinations.AddAsync(target,ShoppingListDestinations.Ingredients(entry.ReusableItems()));
             })));
             card.Add(ShoppingUi.Button("Delete saved trip…",()=>Run(async()=>{if(!await DisplayAlert("Delete saved trip?","Your current shopping list is kept.",AppLocalization.Text("Delete"),AppLocalization.Text("Keep")))return;AccountSession.Check(account);await PremiumLibrary.Remove<SavedShoppingTrip>(account,"shopping",e=>e.Id==entry.Id);await Render();}),true));body.Add(ShoppingUi.Card(card));
         }

@@ -28,7 +28,7 @@ public partial class ShoppingListMakerPage : ContentPage
         var layout=new Grid { RowDefinitions=new() { new(GridLength.Auto),new(GridLength.Star),new(GridLength.Auto) } };
         layout.Add(header,0,0); layout.Add(pane,0,1); layout.Add(footer,0,2); Content=layout;
         model.Changed += UpdateSummary;
-        ToolbarItems.Add(new ToolbarItem("Open current shopping list",null,async()=>await AppNavigation.ShoppingList()));
+        ToolbarItems.Add(new ToolbarItem("Choose a shopping list…",null,async()=>{var target=await ShoppingListDestinations.ChooseAsync("Open which shopping list?");if(target!=null)await AppNavigation.ShoppingList(target.OpenRoute(AccountSession.UserId));}));
         ToolbarItems.Add(new ToolbarItem("Cupboard ingredients",null,async()=>await Navigation.PushAsync(new CupboardIngredientsPage())));
         ToolbarItems.Add(new ToolbarItem("Start over",null,async () => {
             if (!await DisplayAlert("Start a fresh plan?","Your saved shopping list and reusable checklists will be kept.","Start over","Keep planning")) return;
@@ -62,10 +62,8 @@ public partial class ShoppingListMakerPage : ContentPage
         }));
         else
         {
-            footer.Add(ShoppingUi.Button("Add to my current list",async () => await model.WriteList(false)));
-            footer.Add(ShoppingUi.Button("Replace my personal list…",async () => {
-                if (await DisplayAlert("Replace your personal shopping list?","Every existing item and collected checkmark in your personal list will be replaced. Your household list won't change.","Replace","Keep current list")) await model.WriteList(true);
-            },true));
+            footer.Add(ShoppingUi.Button("Add to a shopping list…",async () => await model.WriteList(false)));
+            footer.Add(ShoppingUi.Button("Replace a personal list…",async()=>await model.WriteList(true),true));
         }
     }
     private void RenderRecipes()
