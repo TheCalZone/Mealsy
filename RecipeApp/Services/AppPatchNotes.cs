@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Name your household list", new[] {
+            "Household owners can rename their shared list from Account → Household → Household membership. The name also identifies shared meal plans; items and members are preserved.",
+            "Renaming requires the updated household backend. Shared shopping refreshes its name when reopened."
+        }),
         new(new(2026,10,23), "More room for your shopping list", new[] {
             "Shopping now opens with a compact list name, sharing label and remaining count. Lists and options live in a quick animated drawer; the item adder has its own drawer.",
             "Drawers are height-limited and only one opens at a time, keeping the list visible. Undo stays within reach; extra actions move out of the main list area."

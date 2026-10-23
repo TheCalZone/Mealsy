@@ -159,6 +159,15 @@ public class HouseholdPage : ContentPage
             }
             var membership=new VerticalStackLayout {Spacing=9};
             membership.Add(ShoppingUi.Text(isOwner?"Your Premium membership covers this household. Each member keeps their own login and personal lists.":"The owner's Premium membership covers you. You do not need a separate subscription for household sharing.",14));
+            if(isOwner)membership.Add(Action("Rename household list",async()=>{
+                if(!household.CanRenameHousehold){await DisplayAlert("Household update needed","The household backend needs updating before names can be changed.","OK");return;}
+                var name=await DisplayPromptAsync("Rename household list","This updates the household name used for shared shopping and meal plans. Items and members stay the same.","Save",AppLocalization.Text("Cancel"),maxLength:80,initialValue:household.Name);
+                if(name==null)return;
+                name=name.Trim();
+                if(name.Length==0){await DisplayAlert("Name needed","Enter a name for your household list.","OK");return;}
+                if(name==household.Name)return;
+                CheckAccount();await HouseholdService.CallAsync<object>(new {action="rename",householdId=household.HouseholdId,name});await Refresh();
+            }));
             if(isOwner)membership.Add(Action("Manage Premium & household places",()=>AppNavigation.Open(new PlanPage())));
             content.Add(Drawer("membership","Household membership",household.FamilyEnabled?"Sharing active":"Sharing paused",membership));
             if(isOwner)content.Add(Drawer("delete","Delete household","Permanent removal · Owner only",new VerticalStackLayout {Spacing=9,Children={

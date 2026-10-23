@@ -8,7 +8,7 @@ function createHandler(db) {
 return async function handle(request) {
   if (!request.auth) fail('unauthenticated', 'Sign in to use household lists.');
   const uid = request.auth.uid;
-  const data = requestData(request, ['create', 'join', 'read', 'patch', 'status', 'leave', 'remove', 'delete', 'invite', 'revoke','setRole','requests','resolveRequest','cancelRequest']);
+  const data = requestData(request, ['create', 'join', 'read', 'patch', 'status', 'leave', 'remove', 'delete', 'invite', 'revoke','setRole','requests','resolveRequest','cancelRequest','rename']);
   if (['read', 'patch'].includes(data.action) && !['personal', 'household'].includes(data.scope))
     fail('invalid-argument', 'Choose a list.');
   const accountRef = db.doc(`householdAccounts/${uid}`);
@@ -73,7 +73,7 @@ return async function handle(request) {
       const grant = (await tx.get(db.doc(`familyGrants/${household.owner}`))).data();
       const seats=(await tx.get(db.doc(`seatEntitlements/${household.owner}`))).data();
       return {householdId: ref.id, name: household.name, owner: household.owner, familyEnabled: active(plan) || active(grant),
-        permissionsVersion:1,memberLimit:memberLimit(seats),role:role(household,uid),pendingRequests:Object.values(household.requests||{}).filter(r=>r.status==='pending').length,members: Object.entries(household.members).map(([id, label]) => ({id, label,role:role(household,id)}))};
+        canRenameHousehold:true,permissionsVersion:1,memberLimit:memberLimit(seats),role:role(household,uid),pendingRequests:Object.values(household.requests||{}).filter(r=>r.status==='pending').length,members: Object.entries(household.members).map(([id, label]) => ({id, label,role:role(household,id)}))};
     }
     if (['read', 'patch'].includes(data.action)) {
       if (data.scope !== 'household' || data.householdId !== ref.id) fail('invalid-argument', 'Choose a list.');
@@ -127,6 +127,10 @@ return async function handle(request) {
       tx.update(ref, {members,...forget(household,uid)}); tx.delete(accountRef); return {};
     }
     requireOwner(household, uid);
+    if (data.action === 'rename') {
+      if(typeof data.name!=='string'||!data.name.trim()||data.name.trim().length>80) fail('invalid-argument','Enter a household name of 1–80 characters.');
+      const name=data.name.trim();tx.update(ref,{name});return {name};
+    }
     if (data.action === 'remove') {
       const member = String(data.member || '');
       if (member === uid || !Object.hasOwn(household.members, member)) fail('invalid-argument', 'Choose another household member.');
