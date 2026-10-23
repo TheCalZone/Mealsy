@@ -156,6 +156,9 @@
                                     </Label>
                                     <Label Text="{Binding Quantity}" IsVisible="{Binding HasQuantity}" FontSize="{DynamicResource ThemeFont14}" FontAttributes="Bold"
                                            TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
+                                    <Border IsVisible="{Binding HasContributor}" HorizontalOptions="Start" Padding="6,2" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 6">
+                                        <Label Text="{Binding ContributorLabel}" TextColor="{Binding ContributorColor}" FontSize="11" MaxLines="1" LineBreakMode="TailTruncation" />
+                                    </Border>
                                     <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </VerticalStackLayout>
                                 <Label Grid.Column="2" Text="☰" FontSize="20" TextColor="{DynamicResource ThemeText}"

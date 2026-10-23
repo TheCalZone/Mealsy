@@ -34,7 +34,10 @@ public class HouseholdRequestsPage:SocialPage
         {
             var card=new VerticalStackLayout {Spacing=8};
             card.Add(ShoppingUi.Text(request.Kind=="meal"?request.Meal?.Title:request.Item?.Name,20,true));
-            card.Add(ShoppingUi.Text(request.AuthorName+" · "+(request.Kind=="meal"?"Meal suggestion":"Shopping request")+" · "+request.Status,13));
+            var author=ShoppingUi.Text(request.AuthorName,12,true);
+            author.TextColor=Color.FromArgb(new ShoppingListItem{AddedBy=request.AuthorId}.ContributorColor);
+            card.Add(new Border {Content=author,Padding=new Thickness(6,2),BackgroundColor=Colors.White,StrokeThickness=0,HorizontalOptions=LayoutOptions.Start});
+            card.Add(ShoppingUi.Text((request.Kind=="meal"?"Meal suggestion":"Shopping request")+" · "+request.Status,13));
             if(request.Kind=="shopping"&&request.Item!=null)
             {
                 if(!string.IsNullOrWhiteSpace(request.Item.Quantity))card.Add(ShoppingUi.Text("Quantity: "+request.Item.Quantity,14));

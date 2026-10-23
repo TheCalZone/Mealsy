@@ -67,4 +67,26 @@ public class ShoppingListSyncTests
         var server = ShoppingListDocument.Deserialize(sent); server.Items[0].Quantity = "3 L";
         Assert.Throws<ShoppingSyncConflictException>(() => ShoppingListSync.Reapply(sent, latest.Serialize(), server.Serialize()));
     }
+
+    [Fact]
+    public void ServerAttributionDoesNotCreateChangesOrBlockInFlightEditsAndDeletion()
+    {
+        var item=new ShoppingListItem{Name="Milk"};var sent=List(item).Serialize();
+        var server=ShoppingListDocument.Deserialize(sent);server.Items[0].AddedBy="adult";server.Items[0].AddedByName="Alex";server.Items[0].AdditionKind="added";
+        Assert.Empty(ShoppingListSync.Changes(sent,server.Serialize()));
+        var latest=ShoppingListDocument.Deserialize(sent);latest.Items[0].Quantity="2 L";
+        var result=ShoppingListSync.Reapply(sent,latest.Serialize(),server.Serialize());
+        Assert.Equal("adult",result.Items[0].AddedBy);Assert.Equal("2 L",result.Items[0].Quantity);
+        Assert.Empty(ShoppingListSync.Reapply(sent,"[]",server.Serialize()).Items);
+        var duplicate=ShoppingListSync.Reapply("[]",sent,server.Serialize());
+        Assert.Equal("Alex",duplicate.Items[0].AddedByName);
+    }
+    [Fact]
+    public void ContributorBadgeDistinguishesRequestsAndSurvivesSerialization()
+    {
+        var item=new ShoppingListItem{Name="Bread",AddedBy="child",AddedByName="Sam",AdditionKind="requested"};
+        var copy=ShoppingListDocument.Deserialize(List(item).Serialize()).Items[0];
+        Assert.True(copy.HasContributor);Assert.Equal("Requested by Sam",copy.ContributorLabel);Assert.Equal(item.ContributorColor,copy.ContributorColor);
+        Assert.False(new ShoppingListItem{Name="Legacy"}.HasContributor);
+    }
 }

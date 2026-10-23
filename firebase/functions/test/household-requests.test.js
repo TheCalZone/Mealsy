@@ -105,3 +105,33 @@ test('household rename rejects invalid names without changing the name',async()=
  const f=fixture();for(const name of [null,12,'','   ','a'.repeat(81)])await assert.rejects(f.call('owner',{action:'rename',name}),{code:'invalid-argument'});
  assert.equal(f.db.docs.get('households/home').name,'Home');
 });
+
+test('shared additions get trusted attribution, survive old-client edits/deletes, and cannot be spoofed',async()=>{
+ const f=fixture(),milk=item();
+ await f.patch('adult',[{after:{...milk,AddedBy:'owner',AddedByName:'Forged',AdditionKind:'requested'}}]);
+ let stored=(await f.call('owner',{action:'read',scope:'household'})).items[0];
+ assert.equal(stored.AddedBy,'adult');assert.equal(stored.AddedByName,'Adult');assert.equal(stored.AdditionKind,'added');
+ await f.patch('owner',[{after:milk}]); // Lost response retry must not change the author.
+ await f.patch('owner',[{before:milk,after:{...milk,Quantity:'2 L',AddedBy:'owner'}}]);
+ stored=(await f.call('owner',{action:'read',scope:'household'})).items[0];assert.equal(stored.AddedBy,'adult');assert.equal(stored.Quantity,'2 L');
+ await f.patch('child',[{before:{...milk,Quantity:'2 L'},after:{...milk,Quantity:'2 L',InBasket:true}}]);
+ stored=(await f.call('owner',{action:'read',scope:'household'})).items[0];assert.equal(stored.AddedBy,'adult');
+ await f.patch('owner',[{before:{...milk,Quantity:'2 L',InBasket:true},after:null}]);assert.equal((await f.call('owner',{action:'read',scope:'household'})).items.length,0);
+ await f.call('adult',{action:'patch',scope:'personal',changes:[{after:milk}]});
+ assert.equal((await f.call('adult',{action:'read',scope:'personal'})).items[0].AddedBy,undefined);
+});
+test('approved shopping keeps requester attribution across approvals and retries',async()=>{
+ const f=fixture();await f.patch('child',[{after:item()}]);const request=(await f.requestList('owner')).requests[0];
+ await f.resolve('adult',request.id);await f.resolve('owner',request.id);
+ const stored=(await f.call('owner',{action:'read',scope:'household'})).items[0];
+ assert.equal(stored.AddedBy,'child');assert.equal(stored.AddedByName,'Child');assert.equal(stored.AdditionKind,'requested');
+});
+
+test('leaving and removal anonymize contributions without removing shopping items',async()=>{
+ for(const action of ['leave','remove']){
+  const f=fixture();await f.patch('adult',[{after:item()}]);
+  await f.call(action==='leave'?'adult':'owner',{action,member:'adult'});
+  const stored=(await f.call('owner',{action:'read',scope:'household'})).items[0];
+  assert.equal(stored.Name,'Milk');assert.equal(stored.AddedBy,'deleted-user');assert.equal(stored.AddedByName,'Former member');
+ }
+});
