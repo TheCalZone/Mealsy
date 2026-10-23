@@ -1,5 +1,11 @@
 # Mealsy production handoff — desktop
 
+**23 October update:** The Android .NET/MAUI 10 migration and Firebase rollout
+are now implemented. Refer to [the current release record](PLAY_RELEASE_2026_10_23.md)
+and [backend evidence](FIREBASE_ROLLOUT_2026_10_23.md). Historical instructions below
+to perform those source/deployment changes are superseded. Device/Console and
+full deletion/billing acceptance remain required; do not infer production approval.
+
 Latest household roles/request rollout: [HOUSEHOLD_ROLES_HANDOFF.md](HOUSEHOLD_ROLES_HANDOFF.md). Backend deployment and staging checks are required before relying on restricted access.
 
 Updated 22 October 2026. Start here when continuing locally or with a desktop

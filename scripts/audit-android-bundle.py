@@ -12,11 +12,13 @@ p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('bundle')
 p.add_argument('--manifest', required=True)
 p.add_argument('--required-target-sdk', type=int, default=36)
+p.add_argument('--required-min-sdk', type=int, default=24)
 p.add_argument('--output', required=True)
 args = p.parse_args()
 android = '{http://schemas.android.com/apk/res/android}'
 manifest = ET.parse(args.manifest).getroot()
 sdk = int(manifest.find('uses-sdk').get(android + 'targetSdkVersion'))
+minimum_sdk = int(manifest.find('uses-sdk').get(android + 'minSdkVersion'))
 application = manifest.find('application')
 libraries = []
 with zipfile.ZipFile(args.bundle) as bundle:
@@ -43,6 +45,8 @@ report = {
     'version_code': manifest.get(android + 'versionCode'),
     'version_name': manifest.get(android + 'versionName'),
     'target_sdk': sdk, 'required_target_sdk': args.required_target_sdk,
+    'minimum_sdk': minimum_sdk, 'required_minimum_sdk': args.required_min_sdk,
+    'minimum_requirement_met': minimum_sdk >= args.required_min_sdk,
     'target_requirement_met': sdk >= args.required_target_sdk,
     'debuggable': application.get(android + 'debuggable', 'false') == 'true',
     'backup_disabled': application.get(android + 'allowBackup') == 'false',

@@ -15,13 +15,13 @@ namespace RecipeApp.Custom_Handlers
     class CustomEditorHandler : EditorHandler
     {
 #if ANDROID
-        protected override void ConnectHandler(AppCompatEditText platformView)
+        protected override void ConnectHandler(Microsoft.Maui.Platform.MauiAppCompatEditText platformView)
         {
             base.ConnectHandler(platformView);
             platformView.EditorAction += OnEditorAction;
         }
 
-        protected override void DisconnectHandler(AppCompatEditText platformView)
+        protected override void DisconnectHandler(Microsoft.Maui.Platform.MauiAppCompatEditText platformView)
         {
             base.DisconnectHandler(platformView);
             platformView.EditorAction -= OnEditorAction;

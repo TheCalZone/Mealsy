@@ -1,5 +1,20 @@
 # Mealsy iOS client branch
 
+## Shared source migration — 23 October 2026
+
+The Android release work now targets .NET/MAUI 10 and upgrades the shared Firebase
+wrappers (Core 4.2, Auth 5, Firestore/Crashlytics 4), UI toolkit and SQLite packages.
+The opt-in iOS target is now `net10.0-ios`; the old Xamarin Firebase iOS Core 8
+pin and Xamarin compatibility toolkit have been removed. The new wrappers resolve
+AdamE native bindings. Ads SDK packages are excluded. This supersedes the old
+source-version assessment below, not the Mac acceptance requirements.
+
+No Mac/native iOS build was available. Install the matching .NET 10 iOS workload,
+review native binding/privacy requirements and UIScene lifecycle/URL forwarding
+for the selected Xcode, then test sign-in, SQLite upgrades, photo import and shared
+household flows. Android build success is not iOS readiness. StoreKit and APNs
+remain unimplemented; social remains paused.
+
 ## Current assessment — 18 October 2026
 
 The preparation commit has now been integrated into the latest Android branch,

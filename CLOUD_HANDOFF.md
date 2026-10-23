@@ -1,5 +1,11 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Android migration, 23 October:** Source now uses .NET/MAUI 10, minimum SDK 24,
+target SDK 36 and version code 2. A new upload-signed ARM64 AAB and phone APK pass
+static bundle/signature/16 KB native checks; 447 shared tests and the transitive
+NuGet advisory check pass. Start with [the current release record](PLAY_RELEASE_2026_10_23.md).
+Device, store-flow and iOS acceptance remain open; social remains paused.
+
 **Firebase update, 23 October:** See [current rollout evidence](FIREBASE_ROLLOUT_2026_10_23.md)
 for deployed household roles/questions/attribution, admin confirmation and automatic
 deletion infrastructure. Social remains paused; staging/device acceptance remains open.

@@ -44,7 +44,9 @@ public static class MauiProgram
 #if ANDROID
             handlers.AddHandler(typeof(Shell),typeof(RecipeApp.Platforms.Android.MealsyShellRenderer));
             handlers.AddHandler(typeof(RecipeApp.Views.RecipePressLayout), typeof(RecipeApp.Platforms.Android.RecipePressHandler));
+#if MEALSY_ADS
             handlers.AddHandler(typeof(RecipeApp.Controls.AdBanner), typeof(RecipeApp.Platforms.Android.AdBannerHandler));
+#endif
 #endif
         });
 
@@ -76,7 +78,7 @@ public static class MauiProgram
             {
                 try
                 {
-                    CrossFirebase.Initialize(activity);
+                    CrossFirebase.Initialize(activity, () => Platform.CurrentActivity);
                     AppDiagnostics.ApplyCollection();
                 }
                 catch (Exception error)

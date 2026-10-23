@@ -33,7 +33,7 @@ public static class AccountSession
     {
         if(UserId!=null)throw new InvalidOperationException("Sign out before signing in to another account.");
         var address=AccountInput.Email(email);if(string.IsNullOrEmpty(password))throw new InvalidOperationException("Enter your password.");
-        try{await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(address,password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.sign-in",e.Reason.ToString()));}
+        try{await CrossFirebaseAuth.Current.SignInWithEmailAndPasswordAsync(address,password);}catch(CrossPlatformFirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.sign-in",AccountAuthErrors.Reason(e)));}
         catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.sign-in"));}
         ClearOldPassword();_=HouseholdWarmup.Start();_=SyncSafely();
     }
@@ -42,7 +42,7 @@ public static class AccountSession
         if(UserId!=null)throw new InvalidOperationException("Sign out before creating another account.");
         AccountInput.Registration(email,password,confirmation,first);
         if((last??"").Length>80||(diet??"").Length>500||(cuisines??"").Length>500)throw new InvalidOperationException("Shorten your optional profile details.");
-        try{await CrossFirebaseAuth.Current.CreateUserAsync(AccountInput.Email(email),password);}catch(FirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.register",e.Reason.ToString()));}
+        try{await CrossFirebaseAuth.Current.CreateUserAsync(AccountInput.Email(email),password);}catch(CrossPlatformFirebaseAuthException e){throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.register",AccountAuthErrors.Reason(e)));}
         catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.register"));}
         // Creating the Auth account succeeded. Profile or sync failure must not suggest registering again.
         try{SaveProfile(new AppUser {FirebaseUID=UserId,Email=Email,FirstName=first.Trim(),LastName=last?.Trim()??"",DietRestrictions=diet?.Trim()??"",FavouriteCuisines=cuisines?.Trim()??""});}catch(Exception){ }
@@ -52,7 +52,7 @@ public static class AccountSession
     {
         var address=AccountInput.Email(email);
         try{await CrossFirebaseAuth.Current.SendPasswordResetEmailAsync(address);}
-        catch(FirebaseAuthException e){if(e.Reason.ToString()!="UserNotFound")throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.reset",e.Reason.ToString()));}
+        catch(CrossPlatformFirebaseAuthException e){if(AccountAuthErrors.Reason(e)!="UserNotFound")throw new InvalidOperationException(AppDiagnostics.AccountFailure(e,"account.reset",AccountAuthErrors.Reason(e)));}
         catch(Exception error){throw new InvalidOperationException(AppDiagnostics.AccountFailure(error,"account.reset"));}
     }
     internal static async Task WaitForSyncBeforeDeletion(){await sync.WaitAsync();sync.Release();}

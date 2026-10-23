@@ -1,5 +1,15 @@
 # Mealsy Android Play policy readiness audit — 22 October 2026
 
+## Migration result — 23 October 2026
+
+The new v2 AAB fixes the reported minimum SDK issue (**24**) and targets **36**.
+.NET/MAUI 10 migration, modern Firebase/UI/SQLite dependencies, clean transitive
+NuGet advisory scan and 171/171 native ELF alignment checks now pass. The generated
+APK also passes 16 KB ZIP alignment and signature verification. Ads SDK packages
+and their advertising permissions are excluded; social remains paused.
+See [the current candidate and remaining device/Console gates](PLAY_RELEASE_2026_10_23.md).
+The older API 34/MAUI 8/native-vulnerability findings below describe the superseded artifact.
+
 ## Rechecked locally — 23 October 2026
 
 **A Release AAB was built, signed and validated, but remains blocked for Play submission.**

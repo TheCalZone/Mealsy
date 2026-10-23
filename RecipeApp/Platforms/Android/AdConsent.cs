@@ -1,3 +1,4 @@
+#if MEALSY_ADS
 using RecipeApp.Services;
 using Xamarin.Google.UserMesssagingPlatform;
 
@@ -55,3 +56,5 @@ public static class AdConsent
     private sealed class Dismissed(Action<FormError> action) : Java.Lang.Object, IConsentFormOnConsentFormDismissedListener
     { public void OnConsentFormDismissed(FormError error) => action(error); }
 }
+
+#endif

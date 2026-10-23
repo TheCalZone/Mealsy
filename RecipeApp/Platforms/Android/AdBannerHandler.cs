@@ -1,3 +1,4 @@
+#if MEALSY_ADS
 using Google.Android.Gms.Ads;
 using Android.Widget;
 using Android.Views;
@@ -73,3 +74,5 @@ public class AdBannerHandler : ViewHandler<AdBanner, FrameLayout>
     private sealed class Listener(Action loaded) : AdListener
     { public override void OnAdLoaded() => loaded(); }
 }
+
+#endif
