@@ -1,3 +1,4 @@
+const {forgetQuestions}=require('./shopping-questions');
 const {randomBytes, createHash} = require('node:crypto');
 const {fail, applyChanges, requireMember, requireOwner,contributor,anonymizeContributor} = require('./domain');
 const {requireFamily, active,memberLimit} = require('./entitlements');
@@ -124,6 +125,8 @@ return async function handle(request) {
     if (data.action === 'leave') {
       if (household.owner === uid) fail('failed-precondition', 'The owner can delete the household, or remove other members.');
       const listRef=ref.collection('lists').doc('shopping'),list=(await tx.get(listRef)).data();
+      const questionsRef=ref.collection('conversations').doc('shopping'),questions=(await tx.get(questionsRef)).data();
+      if(questions)tx.set(questionsRef,forgetQuestions(questions,uid));
       if(list)tx.set(listRef,{...list,items:anonymizeContributor(list.items,uid)});
       const members = {...household.members}; delete members[uid];
       tx.update(ref, {members,...forget(household,uid)}); tx.delete(accountRef); return {};
@@ -137,6 +140,8 @@ return async function handle(request) {
       const member = String(data.member || '');
       if (member === uid || !Object.hasOwn(household.members, member)) fail('invalid-argument', 'Choose another household member.');
       const listRef=ref.collection('lists').doc('shopping'),list=(await tx.get(listRef)).data();
+      const questionsRef=ref.collection('conversations').doc('shopping'),questions=(await tx.get(questionsRef)).data();
+      if(questions)tx.set(questionsRef,forgetQuestions(questions,member));
       if(list)tx.set(listRef,{...list,items:anonymizeContributor(list.items,member)});
       const members = {...household.members}; delete members[member];
       tx.update(ref, {members,...forget(household,member)}); tx.delete(db.doc(`householdAccounts/${member}`)); return {};

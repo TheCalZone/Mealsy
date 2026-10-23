@@ -211,3 +211,7 @@ public hosting, live billing or production deletion success was established.
 Do not mark production-ready until these outstanding checks are evidenced. The
 iOS branch still needs its own Mac/Xcode build, signing, device and store review;
 Android success does not establish iOS readiness.
+
+### List destinations and household shopping questions
+
+The shared destination chooser now covers recipe/meal-plan shopping, Home quick-add, saved trip snapshots/reuse and guest-list import (see MULTIPLE_SHOPPING_LISTS.md). New household item conversations, bounded in-app notifications and opt-in Android push require the coordinated backend/index rollout in HOUSEHOLD_SHOPPING_QUESTIONS_HANDOFF.md. Publish the updated privacy policy source, including the separately hosted GitHub Pages copy where applicable. Test Android notification permission, sign-out/account switching, quotas, cleanup and two-phone delivery locally. iOS includes the conversation/inbox UI but still needs native background push setup and Mac/device validation. Nothing from this change was deployed to Firebase here.

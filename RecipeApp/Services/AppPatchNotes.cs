@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Choose your list and ask before you buy", new[] {
+            "Recipe ingredients, meal-plan shops, Home quick-add, saved shopping trips and device-list copies ask which list to use. Household lists appear alongside named personal lists; cancelling changes nothing. Replacing a list names the chosen personal list before confirmation.",
+            "Swipe a household item and choose Ask to clarify details with its adder. Conversations are visible within the household; questions and replies have an inbox, with optional Android phone alerts. This requires the new Firebase questions, notifications, cleanup and index deployment.",
+            "No live conversation listeners or background inbox polling. Messages, history and device registration are bounded to keep household costs down."
+        }),
         new(new(2026,10,23), "Who added it?", new[] {
             "New shared shopping items show a small member-coloured Added by badge. Approved requests show Requested by and keep the original requester’s name.",
             "Attribution requires the updated Firebase household function. Older items remain unlabelled, and personal lists stay uncluttered."

@@ -65,7 +65,15 @@ public class MainActivity : MauiAppCompatActivity
     }
     private static bool openingShare;
     protected override void OnResume(){base.OnResume();Services.ThemeService.ApplySystemBars();_=Platforms.Android.ActivityNotifications.Refresh();}
-    private static async void OpenActivity(Intent intent){if(!Services.ProductFeatures.SocialEnabled||intent?.GetBooleanExtra("mealsy_activity",false)!=true)return;intent.RemoveExtra("mealsy_activity");for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);if(App.InitialAccountReady&&Shell.Current!=null&&RecipeApp.Services.HouseholdService.UserId!=null)await RecipeApp.Services.AppNavigation.Open(new RecipeApp.Views.ActivityPage());}
+    private static async void OpenActivity(Intent intent){
+        var household=intent?.GetBooleanExtra("mealsy_household_activity",false)==true;
+        if(!household&&(!Services.ProductFeatures.SocialEnabled||intent?.GetBooleanExtra("mealsy_activity",false)!=true))return;
+        intent.RemoveExtra("mealsy_household_activity");intent.RemoveExtra("mealsy_activity");
+        for(var i=0;i<200&&(!App.InitialAccountReady||Shell.Current==null);i++)await Task.Delay(100);
+        if(App.InitialAccountReady&&Shell.Current!=null&&RecipeApp.Services.HouseholdService.UserId!=null)
+            await RecipeApp.Services.AppNavigation.Open(household?new RecipeApp.Views.HouseholdShoppingInboxPage():new RecipeApp.Views.ActivityPage());
+    }
+
     private static readonly Queue<string> sharedRecipes=new();
     private static async void OpenSharedRecipe(Intent intent)
     {

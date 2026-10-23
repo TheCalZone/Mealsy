@@ -20,18 +20,20 @@ const {socialHandler,socialEnabled}=require('./product-features');
 exports.householdMeals=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./household-meals').createHouseholdMeals(getFirestore(),require('firebase-admin/auth').getAuth()),'householdMeals'));
 const business=require('./business').createBusiness(getFirestore(),require('firebase-admin/auth').getAuth());
 exports.business=onCall({region:'us-central1',maxInstances:10,timeoutSeconds:60},protect(socialHandler(business),'business'));
-exports.notifications=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(socialHandler(require('./notifications').createNotifications(getFirestore())),'notifications'));
+exports.notifications=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./notifications').createNotifications(getFirestore(),{socialEnabled}),'notifications'));
 exports.promotions=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(socialHandler(require('./campaign-ledger').createCampaignLedger(getFirestore())),'promotions'));
 const {onDocumentCreated,onDocumentDeleted}=require('firebase-functions/v2/firestore');
 exports.cleanupHousehold=onDocumentDeleted({document:'households/{householdId}',region:'europe-west1',retry:true,maxInstances:3},async event=>{
   await getFirestore().recursiveDelete(getFirestore().doc(`households/${event.params.householdId}`));
 });
+exports.householdQuestions=onCall({region:'us-central1',maxInstances:5,timeoutSeconds:30},protect(require('./shopping-questions').createShoppingQuestions(getFirestore()),'householdQuestions'));
 exports.deliverActivity=onDocumentCreated({document:'notifications/{uid}/items/{itemId}',region:'europe-west1',retry:true,maxInstances:5},async event=>{
-  if(!socialEnabled||!event.data||Date.now()-(event.data.data().createdAt||0)>3600000)return; // Paused/stale alerts do not query devices or send push.
+  if(!event.data||(!socialEnabled&&event.data.data().type!=='householdQuestion')||Date.now()-(event.data.data().createdAt||0)>3600000)return;
+  if(event.data.data().type==='householdQuestion'){const n=event.data.data(),home=(await getFirestore().doc(`households/${n.householdId}`).get()).data();if(!Object.hasOwn(home?.members||{},event.params.uid))return;} // Paused/stale alerts do not query devices or send push.
   const db=getFirestore(),devices=await db.collection('notificationDevices').where('uid','==',event.params.uid).limit(10).get();
   await Promise.all(devices.docs.map(async doc=>{
     const device=doc.data();if(Date.now()-device.updatedAt>90*86400000)return;
-    try{await require('firebase-admin/messaging').getMessaging().send({token:device.token,data:{recipient:event.params.uid,eventId:event.params.itemId},android:{priority:'high',ttl:3600000,collapseKey:'mealsy-activity'}});}
+    try{await require('firebase-admin/messaging').getMessaging().send({token:device.token,data:{recipient:event.params.uid,eventId:event.params.itemId,type:event.data.data().type==='householdQuestion'?'householdQuestion':'activity'},android:{priority:'high',ttl:3600000,collapseKey:'mealsy-activity'}});}
     catch(error){if(['messaging/registration-token-not-registered','messaging/invalid-registration-token'].includes(error.code))await db.runTransaction(async tx=>{const current=(await tx.get(doc.ref)).data();if(current?.uid===device.uid&&current?.updatedAt===device.updatedAt)tx.delete(doc.ref);});else throw new Error('Activity delivery temporarily unavailable.');}
   }));
 });

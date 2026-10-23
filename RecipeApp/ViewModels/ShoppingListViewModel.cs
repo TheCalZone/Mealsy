@@ -36,6 +36,8 @@ public class ShoppingListViewModel : CustomViewModelBase
         RefreshGroups();StatusText="Section order saved for this list on this device";
     }
     public void ResetSectionOrder(){Preferences.Remove(SectionOrderKey);RefreshGroups();StatusText="Default section order restored";}
+    private bool householdList;
+    public bool HouseholdList {get=>householdList;set=>SetProperty(ref householdList,value);}
     private bool restrictedHousehold;
     public bool RestrictedHousehold { get=>restrictedHousehold; set {
         if(!SetProperty(ref restrictedHousehold,value))return;
@@ -168,7 +170,7 @@ public class ShoppingListViewModel : CustomViewModelBase
             ImportIngredients(incomingJson);
             SearchText = "";
             HideCollected = false;
-            Changed("New recipe list ready · Undo available");
+            Changed("Ingredients added to this list · Undo available");
         }
         else if (!IsShared && (legacy != Preferences.Get(ExportKey, "") || (Total == 0 && !string.IsNullOrWhiteSpace(legacy))))
         {
@@ -190,7 +192,8 @@ public class ShoppingListViewModel : CustomViewModelBase
         List<Ingredient> ingredients;
         try { ingredients = JsonSerializer.Deserialize<List<Ingredient>>(json); }
         catch (JsonException) { ingredients = JsonSerializer.Deserialize<List<Ingredient>>(Uri.UnescapeDataString(json)); }
-        document.Replace(ShoppingListDocument.FromIngredients(ingredients ?? new()));
+        if(RestrictedHousehold)foreach(var item in ShoppingListDocument.FromIngredients(ingredients??new()))document.Add(item);
+        else document.AppendIngredients(ingredients ?? new());
     }
 
     private void AddItem()
