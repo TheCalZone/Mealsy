@@ -157,8 +157,10 @@ public partial class ShoppingListPage : ContentPage
     {
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++; householdId = sharedName = null; conflict = false;
+        if(listAccount!=HouseholdService.UserId)availableHousehold=null;
         listAccount = HouseholdService.UserId;
         personalId="main";Model.SelectList(null); ListSelector.Text = listAccount == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
+        RenderListTabs();
     }
     private void StartTimer()
     {
@@ -208,7 +210,7 @@ public partial class ShoppingListPage : ContentPage
             if (generation != currentGeneration || HouseholdService.UserId != uid) return;
             if (e.Code == "ABORTED") { conflict = true; Model.StatusText = "Conflicting edits kept on this device. Open Resolve sync conflict."; }
             else if (householdId != null && e.Code is "PERMISSION_DENIED" or "FAILED_PRECONDITION")
-            { SelectPersonal(); Model.Load(true, null); Model.StatusText = "Household access ended. Your personal list is open."; }
+            { availableHousehold=null;SelectPersonal(); Model.Load(true, null); Model.StatusText = "Household access ended. Your personal list is open."; }
             else Model.StatusText = "Saved on device · " + e.Message;
             if (manual) await DisplayAlert("Shopping list sync", Model.StatusText, AppLocalization.Text("OK"));
         }
