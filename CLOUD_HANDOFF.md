@@ -1,5 +1,13 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Shopping attribution, 23 October:** Household shopping tags now resolve the
+contributor's account first/last name from `users/{uid}`, including existing items
+and approved requests. Missing names fall back to “Household member”; emails are
+not used as tag labels. Profile reads are limited to distinct current contributors
+and the caller, within the membership-checked transaction. All 146 backend tests pass.
+The Android “My household” process exit remains under investigation, awaiting a
+current-version diagnostic report; this attribution change does not fix that crash.
+
 **Android migration, 23 October:** Source now uses .NET/MAUI 10, minimum SDK 24,
 target SDK 36 and version code 2. A new upload-signed ARM64 AAB and phone APK pass
 static bundle/signature/16 KB native checks; 447 shared tests and the transitive

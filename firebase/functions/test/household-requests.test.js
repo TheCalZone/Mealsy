@@ -120,6 +120,19 @@ test('shared additions get trusted attribution, survive old-client edits/deletes
  await f.call('adult',{action:'patch',scope:'personal',changes:[{after:milk}]});
  assert.equal((await f.call('adult',{action:'read',scope:'personal'})).items[0].AddedBy,undefined);
 });
+test('shopping attribution uses account names for new and existing items without disclosing email',async()=>{
+ const f=fixture(),milk=item();
+ f.db.docs.get('households/home').members.adult='alex@example.com';
+ f.db.docs.set('users/adult',{first_name:' Alex ',last_name:' Smith '});
+ await f.patch('adult',[{after:{...milk,AddedByName:'Spoof'}}]);
+ assert.equal(f.db.docs.get('households/home/lists/shopping').items[milk.Id].AddedByName,'Alex Smith');
+ f.db.docs.get('households/home/lists/shopping').items[milk.Id].AddedByName='alex@example.com';
+ f.db.docs.set('users/adult',{first_name:'Alexandra',last_name:'Smith'});
+ assert.equal((await f.call('owner',{action:'read',scope:'household'})).items[0].AddedByName,'Alexandra Smith');
+ f.db.docs.delete('users/adult');
+ assert.equal((await f.call('owner',{action:'read',scope:'household'})).items[0].AddedByName,'Household member');
+});
+
 test('approved shopping keeps requester attribution across approvals and retries',async()=>{
  const f=fixture();await f.patch('child',[{after:item()}]);const request=(await f.requestList('owner')).requests[0];
  await f.resolve('adult',request.id);await f.resolve('owner',request.id);

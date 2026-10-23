@@ -5,6 +5,18 @@ const {requireFamily, active,memberLimit} = require('./entitlements');
 const {requestData} = require('./request');
 const {role,canManage,queue,restrictedShopping,forget}=require('./household-requests');
 const hash = token => createHash('sha256').update(token).digest('hex');
+function memberName(profile, fallback) {
+  const name = [profile?.first_name, profile?.last_name].filter(v=>typeof v==='string').map(v=>v.trim()).filter(Boolean).join(' ');
+  const label = name || (typeof fallback==='string' ? fallback.trim() : '');
+  return label && !label.includes('@') ? label.slice(0,80) : 'Household member';
+}
+async function namedMembers(tx, db, household, ids) {
+  const members={...household.members};
+  await Promise.all([...new Set(ids)].filter(id=>Object.hasOwn(members,id)).map(async id=>{
+    members[id]=memberName((await tx.get(db.doc(`users/${id}`))).data(),members[id]);
+  }));
+  return {...household,members};
+}
 function createHandler(db) {
 return async function handle(request) {
   if (!request.auth) fail('unauthenticated', 'Sign in to use household lists.');
@@ -13,7 +25,6 @@ return async function handle(request) {
   if (['read', 'patch'].includes(data.action) && !['personal', 'household'].includes(data.scope))
     fail('invalid-argument', 'Choose a list.');
   const accountRef = db.doc(`householdAccounts/${uid}`);
-  const email = request.auth.token.email || 'Family member';
   if (data.action === 'create') {
     if (typeof data.name !== 'string') fail('invalid-argument', 'Choose a household name.');
     const name = data.name.trim();
@@ -22,7 +33,8 @@ return async function handle(request) {
     await db.runTransaction(async tx => {
       if ((await tx.get(accountRef)).exists) fail('failed-precondition', 'Leave your current household first.');
       await requireFamily(tx, db, uid);
-      tx.create(ref, {name, owner: uid, members: {[uid]: email}});
+      const memberLabel=memberName((await tx.get(db.doc(`users/${uid}`))).data(),request.auth.token?.name);
+      tx.create(ref, {name, owner: uid, members: {[uid]: memberLabel}});
       tx.create(accountRef, {householdId: ref.id});
     });
     return {householdId: ref.id};
@@ -43,7 +55,8 @@ return async function handle(request) {
       await requireFamily(tx, db, household.owner);
       const limit=memberLimit((await tx.get(db.doc(`seatEntitlements/${household.owner}`))).data());
       if (Object.keys(household.members).length >= limit) fail('resource-exhausted', `Your household includes ${limit} people. Extra paid places must be active before inviting more.`);
-      tx.update(ref, {members: {...household.members, [uid]: email},roles:{...household.roles,[uid]:invitation.role==='restricted'?'restricted':'adult'}});
+      const memberLabel=memberName((await tx.get(db.doc(`users/${uid}`))).data(),request.auth.token?.name);
+      tx.update(ref, {members: {...household.members, [uid]: memberLabel},roles:{...household.roles,[uid]:invitation.role==='restricted'?'restricted':'adult'}});
       tx.create(accountRef, {householdId: ref.id});
       tx.delete(inviteRef); // Single use, including concurrent acceptance.
       return {householdId: ref.id};
@@ -66,7 +79,7 @@ return async function handle(request) {
       fail('failed-precondition', 'Create or join a household first.');
     }
     const ref = db.doc(`households/${account.householdId}`);
-    const household = (await tx.get(ref)).data();
+    let household = (await tx.get(ref)).data();
     requireMember(household, uid);
     if (data.householdId && data.householdId !== ref.id) fail('permission-denied', 'The household changed. Reopen its list.');
     if (data.action === 'status') {
@@ -81,15 +94,17 @@ return async function handle(request) {
       await requireFamily(tx, db, household.owner);
       const listRef = ref.collection('lists').doc('shopping');
       const current = (await tx.get(listRef)).data()?.items || {};
+      household=await namedMembers(tx,db,household,[uid,...Object.values(current).map(item=>item.AddedBy)]);
+      const displayItems=items=>Object.values(items).map(item=>item.AddedBy?{...item,AddedByName:Object.hasOwn(household.members,item.AddedBy)?household.members[item.AddedBy]:memberName(null,item.AddedByName)}:item);
       if(data.action==='patch'&&!canManage(household,uid)){
         const result=restrictedShopping(household,uid,current,data.changes);
         tx.set(listRef,{items:result.items});
         tx.update(ref,{requests:result.requests,requestRates:household.requestRates||{}});
-        return{items:Object.values(result.items),requestedCount:result.requestedCount};
+        return{items:displayItems(result.items),requestedCount:result.requestedCount};
       }
       const items = data.action === 'patch' ? applyChanges(current, data.changes,contributor(household,uid)) : current;
       if (data.action === 'patch') tx.set(listRef, {items});
-      return {items: Object.values(items)};
+      return {items: displayItems(items)};
     }
     if(['requests','resolveRequest','cancelRequest'].includes(data.action)){
       await requireFamily(tx,db,household.owner);
@@ -105,6 +120,7 @@ return async function handle(request) {
         if(!Object.hasOwn(household.members,entry.authorId))fail('failed-precondition','The requester has left. Decline this request instead.');
         if(entry.kind==='shopping'){
           const listRef=ref.collection('lists').doc('shopping'),current=(await tx.get(listRef)).data()?.items||{};
+          household=await namedMembers(tx,db,household,[entry.authorId]);
           const items=applyChanges(current,[{before:null,after:entry.item}],contributor(household,entry.authorId,'requested'));tx.set(listRef,{items});
         }else if(entry.kind==='meal'){
           const weekRef=ref.collection('mealWeeks').doc(entry.weekStart),week=(await tx.get(weekRef)).data()||{revision:0,meals:{}};
