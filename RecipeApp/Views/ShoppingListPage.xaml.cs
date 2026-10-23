@@ -6,10 +6,15 @@ namespace RecipeApp.Views;
 
 [QueryProperty(nameof(IsManualList), nameof(IsManualList))]
 [QueryProperty(nameof(OpenPersonal), nameof(OpenPersonal))]
+[QueryProperty(nameof(PersonalListId), nameof(PersonalListId))]
 [QueryProperty(nameof(OpenHouseholdId), nameof(OpenHouseholdId))]
 [QueryProperty(nameof(IngredientsJson), "ingredientsJson")]
 public partial class ShoppingListPage : ContentPage
 {
+    public string PersonalListId { get; set; }
+    private string personalId="main";
+    private HouseholdInfo availableHousehold;
+    private bool openingDefault=true;
     public bool OpenPersonal { get; set; }
     public string OpenHouseholdId { get; set; }
     public bool IsManualList { get; set; }
@@ -37,7 +42,7 @@ public partial class ShoppingListPage : ContentPage
     private void GoShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(true);
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
     private void ShoppingTools_Clicked(object sender,EventArgs e)=>ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
-    private string CacheKey => householdId == null ? ShoppingListStore.StateKey : $"ShoppingList.household.{listAccount}.{householdId}";
+    private string CacheKey => householdId == null ? PersonalShoppingLists.StorageKey(personalId) : $"ShoppingList.household.{listAccount}.{householdId}";
     public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Checked item settings",null,async()=>await CheckedItemSettings()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()));ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
@@ -96,6 +101,10 @@ public partial class ShoppingListPage : ContentPage
         try
         {
             var uid = HouseholdService.UserId;
+            var explicitPersonal=OpenPersonal||!string.IsNullOrEmpty(IngredientsJson)||!string.IsNullOrEmpty(PersonalListId);
+            var requestedPersonal=PersonalListId;PersonalListId=null;
+            if(listAccount!=uid){openingDefault=true;availableHousehold=null;}
+            if(!string.IsNullOrEmpty(IngredientsJson)&&listAccount==uid)Model.Persist();
             if (listAccount != uid || !string.IsNullOrEmpty(IngredientsJson) || OpenPersonal) SelectPersonal();
             OpenPersonal=false;
             var requestedHousehold=OpenHouseholdId;OpenHouseholdId=null;
@@ -106,7 +115,20 @@ public partial class ShoppingListPage : ContentPage
                 generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
             }
             if (householdId == null) ListSelector.Text = uid == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
+            if(!string.IsNullOrEmpty(requestedPersonal))
+            {
+                if(!PersonalShoppingLists.All().Any(l=>l.Id==requestedPersonal))throw new InvalidOperationException("List no longer exists.");
+                SelectNamedPersonal(requestedPersonal);
+            }
             listAccount = uid;
+            if(uid!=null)
+            {
+                try { availableHousehold=await HouseholdService.StatusAsync();AccountSession.Check(uid); }
+                catch { if(listAccount!=AccountSession.UserId)throw;availableHousehold=null; }
+            }
+            if(openingDefault&&!explicitPersonal&&string.IsNullOrEmpty(requestedHousehold)&&availableHousehold is {FamilyEnabled:true,HouseholdId:not null})
+                SelectHousehold(availableHousehold);
+            openingDefault=false;
             // Confirm continuing membership before displaying a cached household list.
             if (householdId != null && string.IsNullOrEmpty(requestedHousehold))
             {
@@ -115,19 +137,30 @@ public partial class ShoppingListPage : ContentPage
             }
             if (!visible) return;
             var incoming = IngredientsJson; IngredientsJson = null;
+            if(!string.IsNullOrWhiteSpace(incoming)&&PersonalShoppingLists.All().Count>1)
+            {
+                var lists=PersonalShoppingLists.All();
+                var names=lists.Select((l,i)=>$"{i+1}. {l.Name}").ToArray();
+                var choice=await DisplayActionSheet("Send recipe ingredients to", "Keep on main personal list",null,names);
+                AccountSession.Check(uid);
+                var index=Array.IndexOf(names,choice);
+                if(index>=0)SelectNamedPersonal(lists[index].Id);
+            }
             Model.Load(IsManualList, incoming);
             _=QuickSuggestions.Refresh();
-            StartTimer();
+            RenderListTabs();StartTimer();
             await SyncAsync();
         }
-        catch (Exception) { SelectPersonal(); Model.Load(true, null); StartTimer(); Model.StatusText = "Personal list opened. Household access could not be confirmed."; }
+        catch (Exception) { SelectPersonal(); Model.Load(true, null); StartTimer(); Model.StatusText = "Personal list opened. Household access could not be confirmed."; RenderListTabs(); }
     }
     private void SelectPersonal()
     {
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++; householdId = sharedName = null; conflict = false;
+        if(listAccount!=HouseholdService.UserId)availableHousehold=null;
         listAccount = HouseholdService.UserId;
-        Model.SelectList(null); ListSelector.Text = listAccount == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
+        personalId="main";Model.SelectList(null); ListSelector.Text = listAccount == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
+        RenderListTabs();
     }
     private void StartTimer()
     {
@@ -140,6 +173,7 @@ public partial class ShoppingListPage : ContentPage
     {
         if (!visible || !App.IsForeground) return;
         if (HouseholdService.UserId != listAccount) { SelectPersonal(); Model.Load(true, null); }
+        if(personalId!="main"&&householdId==null){Model.StatusText="Only you · Saved on this device";return;}
         if (syncing || conflict || Model.IsEditing || sectionDrag?.IsDragging==true || itemDrag?.IsDragging==true || listAccount == null) return;
         if(!manual&&retryScope==CacheKey&&DateTimeOffset.UtcNow<retryAfter)return;
         syncing = true;
@@ -176,7 +210,7 @@ public partial class ShoppingListPage : ContentPage
             if (generation != currentGeneration || HouseholdService.UserId != uid) return;
             if (e.Code == "ABORTED") { conflict = true; Model.StatusText = "Conflicting edits kept on this device. Open Resolve sync conflict."; }
             else if (householdId != null && e.Code is "PERMISSION_DENIED" or "FAILED_PRECONDITION")
-            { SelectPersonal(); Model.Load(true, null); Model.StatusText = "Household access ended. Your personal list is open."; }
+            { availableHousehold=null;SelectPersonal(); Model.Load(true, null); Model.StatusText = "Household access ended. Your personal list is open."; }
             else Model.StatusText = "Saved on device · " + e.Message;
             if (manual) await DisplayAlert("Shopping list sync", Model.StatusText, AppLocalization.Text("OK"));
         }
@@ -194,31 +228,92 @@ public partial class ShoppingListPage : ContentPage
             else if(!failed)retryScope=null;
         }
     }
+    private void SelectNamedPersonal(string id)
+    {
+        SelectPersonal();personalId=id;
+        Model.SelectList(id=="main"?null:PersonalShoppingLists.StorageKey(id));
+    }
+    private void SelectHousehold(HouseholdInfo info)
+    {
+        sectionDrag?.Cancel();itemDrag?.Cancel();
+        generation++;conflict=false;householdId=info.HouseholdId;sharedName=info.Name;listAccount=HouseholdService.UserId;
+        Model.SelectList(CacheKey);
+    }
+    private void RenderListTabs()
+    {
+        ListTabs.Clear();
+        var account=AccountSession.UserId;
+        List<PersonalShoppingList> personalLists;
+        try {personalLists=PersonalShoppingLists.All();}
+        catch {ListSelector.Text="List options unavailable";ListVisibility.Text="List names couldn't load. Saved data is kept.";return;}
+        void Tab(string text,bool selected,Func<Task> action)
+        {
+            var button=ShoppingUi.Button((selected?"✓ ":"")+text,async()=>{AccountSession.Check(account);if(Model.IsEditing)throw new InvalidOperationException("Save or cancel your item edit first.");await action();},!selected);
+            SemanticProperties.SetDescription(button,text+(selected?", selected":""));
+            ListTabs.Add(button);
+        }
+        async Task SwitchPersonal(string id){Model.Persist();SelectNamedPersonal(id);Model.Load(true,null);RenderListTabs();await SyncAsync();}
+        if(availableHousehold is {FamilyEnabled:true,HouseholdId:not null})
+            Tab("⌂ "+availableHousehold.Name,householdId==availableHousehold.HouseholdId,async()=>{Model.Persist();SelectHousehold(availableHousehold);Model.Load(true,null);RenderListTabs();await SyncAsync();});
+        else Tab("⌂ Household",false,()=>ChooseHousehold());
+        foreach(var list in personalLists)Tab(list.Name,householdId==null&&personalId==list.Id,()=>SwitchPersonal(list.Id));
+        Tab("＋ New list",false,CreatePersonalList);
+        var current=householdId!=null?sharedName:personalLists.First(l=>l.Id==personalId).Name;
+        ShoppingModeListName.Text=current;
+        ListSelector.Text=current+" · Options ▾";
+        ListVisibility.Text=householdId!=null?"Shared with your household":personalId=="main"?"Only you · Personal list":"Only you · Saved on this device";
+        QuickAddEntry.Placeholder="Add to "+current;
+    }
+    private async Task CreatePersonalList()
+    {
+        var account=AccountSession.UserId;
+        var premium=PremiumEntitlement.IsActive(PlanService.Cached,DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        if(PersonalShoppingLists.All().Count>=2&&!premium)
+        {
+            if(!await PremiumAccess.Require("More than two personal shopping lists"))return;
+            AccountSession.Check(account);premium=true;
+        }
+        var name=await DisplayPromptAsync("New personal list","Additional lists are saved on this device. Free includes two personal lists; Premium lets you create more.",maxLength:40);
+        if(name==null)return;AccountSession.Check(account);
+        var created=PersonalShoppingLists.Create(name,premium);
+        Model.Persist();SelectNamedPersonal(created.Id);Model.Load(true,null);RenderListTabs();
+    }
+    private async Task ChooseHousehold()
+    {
+        if(AccountSession.UserId==null){await PremiumAccess.Require("Shared household shopping");return;}
+        var account=AccountSession.UserId;var info=await HouseholdService.StatusAsync();AccountSession.Check(account);
+        if(info.HouseholdId==null){await AppNavigation.Open(new HouseholdPage());return;}
+        if(!info.FamilyEnabled){await AppNavigation.Open(new UpgradeFeaturesPage());return;}
+        availableHousehold=info;Model.Persist();SelectHousehold(info);Model.Load(true,null);RenderListTabs();await SyncAsync();
+    }
     private async void ListSelector_Clicked(object sender, EventArgs e)
     {
-        if (Model.IsEditing) return;
-        var choice = await DisplayActionSheet("Choose shopping list", "Cancel", null, "Personal list", "Household list", "Manage household");
-        if (choice == "Personal list") { Model.Persist(); SelectPersonal(); Model.Load(true, null); await SyncAsync(); }
-        else if (choice == "Manage household") await Navigation.PushAsync(new HouseholdPage());
-        else if (choice == "Household list")
+        try
         {
-            try
+            if(Model.IsEditing)return;
+            var account=AccountSession.UserId;
+            var choice=await DisplayActionSheet("List options","Cancel",null,"New personal list","Rename personal list","Delete personal list","Manage household");
+            AccountSession.Check(account);
+            if(choice=="New personal list")await CreatePersonalList();
+            else if(choice=="Manage household")await AppNavigation.Open(new HouseholdPage());
+            else if(choice=="Rename personal list"||choice=="Delete personal list")
             {
-                if(AccountSession.UserId==null)
+                if(householdId!=null){await DisplayAlert("Household list","Manage shared household details from Account → Household. Select a personal list to rename or delete it.","OK");return;}
+                if(choice=="Rename personal list")
                 {
-                    if(await DisplayAlert("Share your household shopping","Create a free account first. Sharing a household list requires an active Premium household plan; your personal list stays free.","Create free account","Not now"))await AppNavigation.Open(new SignupPage());
-                    return;
+                    var name=await DisplayPromptAsync("Rename list","Choose a name",initialValue:PersonalShoppingLists.All().First(l=>l.Id==personalId).Name,maxLength:40);
+                    AccountSession.Check(account);if(name==null)return;PersonalShoppingLists.Rename(personalId,name);
                 }
-                var info = await HouseholdService.StatusAsync();
-                if (info.HouseholdId == null) { await Navigation.PushAsync(new HouseholdPage()); return; }
-                if (!info.FamilyEnabled) { await Navigation.PushAsync(new PlanPage()); return; }
-                Model.Persist(); generation++; conflict = false; householdId = info.HouseholdId; sharedName = info.Name; listAccount = HouseholdService.UserId;
-                Model.SelectList(CacheKey); Model.Load(true, null); ListSelector.Text = sharedName + " ▾";
-                await SyncAsync();
+                else
+                {
+                    if(personalId=="main"){await DisplayAlert("Keep your main list","You can rename or clear your main personal list, but it cannot be deleted.","OK");return;}
+                    if(!await DisplayAlert("Delete this list?","Permanently remove this personal list and its items from this device? This cannot be undone.","Delete list","Keep"))return;
+                    AccountSession.Check(account);PersonalShoppingLists.Delete(personalId);SelectPersonal();Model.Load(true,null);
+                }
+                RenderListTabs();
             }
-            catch (HouseholdException ex) { await DisplayAlert(AppLocalization.Text("Household"), ex.Message, AppLocalization.Text("OK")); }
-            catch (Exception) { await DisplayAlert("Household unavailable", "Check your connection and try again.", AppLocalization.Text("OK")); }
         }
+        catch(Exception error){await DisplayAlert("Shopping lists",error is InvalidOperationException?error.Message:"Couldn't change lists. Your saved lists are kept.","OK");}
     }
     private async void Widget_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new WidgetHelpPage());
     private async void Creator_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new ShoppingListMakerPage());
@@ -226,6 +321,7 @@ public partial class ShoppingListPage : ContentPage
     private async void Sync_Clicked(object sender, EventArgs e) => await SyncAsync(true);
     private async void Resolve_Clicked(object sender, EventArgs e)
     {
+        if(personalId!="main"&&householdId==null){await DisplayAlert("Device list","This personal list is stored on this device and has no cloud conflict to resolve.","OK");return;}
         if (!conflict)
         {
             var recovery = Preferences.Get(CacheKey + ".recovery", "");
@@ -256,6 +352,7 @@ public partial class ShoppingListPage : ContentPage
     });
     protected override void OnDisappearing()
     {
+        openingDefault=true;
         WidgetShoppingStore.Changed -= WidgetChanged;
         SetShoppingMode(false);
         _ = SyncAsync(); // Flush pending online edits when leaving; failures remain saved for retry.

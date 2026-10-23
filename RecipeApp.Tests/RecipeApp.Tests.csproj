@@ -66,6 +66,7 @@
     <Compile Include="../RecipeApp/Services/ShoppingSectionOrder.cs" Link="ShoppingSectionOrder.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListDocument.cs" Link="ShoppingListDocument.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListSync.cs" Link="ShoppingListSync.cs" />
+    <Compile Include="../RecipeApp/Services/PersonalShoppingLists.cs" Link="PersonalShoppingLists.cs" />
     <Compile Include="../RecipeApp/Services/ShoppingListStore.cs" Link="ShoppingListStore.cs" />
     <Compile Include="../RecipeApp/Models/FoodPost.cs" Link="FoodPost.cs" />
     <Compile Include="../RecipeApp/Models/ShoppingListItem.cs" Link="ShoppingListItem.cs" />

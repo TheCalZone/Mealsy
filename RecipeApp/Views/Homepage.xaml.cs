@@ -171,7 +171,7 @@ public partial class Homepage : ContentPage
         var tools=new VerticalStackLayout{Spacing=8};tools.Add(ShoppingUi.Button("Use what you have · Find a recipe",()=>AppNavigation.Open(new LeftoverRecipesPage()),true));if(ClientPlatform.HomeScreenWidgetAvailable)tools.Add(ShoppingUi.Button("Home-screen shopping widget",()=>AppNavigation.Open(new WidgetHelpPage()),true));
         body.Add(Foldout("tools","Kitchen tools",tools));
         body.Add(Foldout("premium","Explore Premium",new VerticalStackLayout{Spacing=8,Children={
-            ShoppingUi.Text("Recipe-link imports, reusable meal plans, shopping history and household sharing.",14),
+            ShoppingUi.Text("More personal shopping lists, recipe-link imports, reusable meal plans and household sharing.",14),
             ShoppingUi.Button("Plans & benefits",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true)}}));
         if(account==null)body.Add(ShoppingUi.Button(AppLocalization.Text("Sign in or create an account"),()=>AppNavigation.Root("AccountPage"),true));body.Add(new RecipeApp.Controls.AdBanner());Content=new ScrollView{Content=body};
     }

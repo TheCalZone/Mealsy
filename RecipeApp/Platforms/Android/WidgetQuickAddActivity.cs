@@ -86,7 +86,7 @@ public class WidgetQuickAddActivity : Activity
             var item=new ShoppingListItem{Id=pendingId,Name=entry.Text.Trim(),Quantity="",Note="",Category="Other"};
             var sent=WidgetShoppingStore.Add(target,account,item);saved=true;
             IngredientSuggestionStore.Remember(account,item.Name);
-            if(account!=null)
+            if(account!=null&&target.PersonalListId==null)
             {
                 status.Text="Saved on this device · Syncing…";
                 var baseline=Preferences.Get(target.StorageKey+".synced","[]");
