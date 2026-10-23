@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Clearer household management", new[] {
+            "Family members have expandable cards showing their role and available actions. Shared shopping and meal plans have clear shortcuts.",
+            "Invitations, membership, device-list import and permanent household deletion are grouped into separate drawers. Only owners see invitation and removal controls."
+        }),
         new(new(2026,10,23), "Your lists, clearly separated", new[] {
             "Switch between named lists using the scrolling tabs. Active Premium households open their shared list by default; explicit widget and recipe destinations take priority.",
             "Free includes two personal lists; Premium lets you create more. Additional lists are stored on this device. Existing lists remain editable when Premium ends.",
