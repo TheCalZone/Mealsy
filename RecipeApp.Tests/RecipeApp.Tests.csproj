@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -14,14 +14,16 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
-    <PackageReference Include="Plugin.Firebase.Auth" Version="2.0.7" />
-    <PackageReference Include="Plugin.Firebase.Firestore" Version="2.0.6" />
-    <PackageReference Include="Plugin.Firebase.Crashlytics" Version="2.0.3" />
+    <PackageReference Include="Plugin.Firebase.Auth" Version="5.0.1" />
+    <PackageReference Include="Plugin.Firebase.Firestore" Version="4.0.0" />
+    <PackageReference Include="Plugin.Firebase.Crashlytics" Version="4.0.0" />
     <PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
-    <PackageReference Include="sqlite-net-pcl" Version="1.9.141-beta" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
     <PackageReference Include="SQLiteNetExtensions.Async" Version="2.1.0" />
     <PackageReference Include="SQLiteNetExtensions" Version="2.1.0" />
-    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.8" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+        <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../RecipeApp/Services/StoreSubscriptionOffer.cs" Link="StoreSubscriptionOffer.cs" />
@@ -41,6 +43,7 @@
     <Compile Include="../RecipeApp/Services/SettingsOptions.cs" Link="SettingsOptions.cs" />
     <Compile Include="../RecipeApp/Services/ReviewerAccountSignup.cs" Link="ReviewerAccountSignup.cs" />
     <Compile Include="../RecipeApp/Services/AccountInput.cs" Link="AccountInput.cs" />
+    <Compile Include="../RecipeApp/Services/AccountAuthErrors.cs" Link="AccountAuthErrors.cs" />
     <Compile Include="../RecipeApp/Services/LeftoverRecipes.cs" Link="LeftoverRecipes.cs" />
     <Compile Include="../RecipeApp/Services/RecipeBrowser.cs" Link="RecipeBrowser.cs" />
     <Compile Include="../RecipeApp/Services/NavigationCatalog.cs" Link="NavigationCatalog.cs" />

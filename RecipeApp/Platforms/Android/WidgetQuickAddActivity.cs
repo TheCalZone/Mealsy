@@ -32,7 +32,7 @@ public class WidgetQuickAddActivity : Activity
         var dark=AppSettings.Current.IsDark(ShoppingQuickAddWidget.SystemDark(this));
         SetTheme(dark?global::Android.Resource.Style.ThemeMaterialDialogNoActionBar:global::Android.Resource.Style.ThemeMaterialLightDialogNoActionBar);
         base.OnCreate(savedInstanceState);
-        try { Plugin.Firebase.Core.Platforms.Android.CrossFirebase.Initialize(this); }
+        try { Plugin.Firebase.Core.Platforms.Android.CrossFirebase.Initialize(this, () => this); }
         catch (Exception) { Toast.MakeText(this,"Open Mealsy once before using quick add.",ToastLength.Long).Show();Finish();return; }
         ShoppingListStore.AccountId=()=>AccountSession.UserId;
         widgetId=Intent?.GetIntExtra("mealsy_widget_id",-1)??-1;

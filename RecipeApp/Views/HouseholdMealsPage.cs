@@ -27,7 +27,7 @@ public class HouseholdMealsPage:SocialPage
         if(household.Restricted)Body.Add(ShoppingUi.Text("You can view meals and send suggestions. An adult approves changes to the shared plan.",14));
         Body.Add(ShoppingUi.Text(freshness,12));Body.Add(ShoppingUi.Text(household.Name+" · Shared by everyone in your household",14));
         Body.Add(ShoppingUi.Text("Meals here are separate from your personal planner. Changes are saved to the household; refresh to see another person's latest edits.",13));
-        var picker=new DatePicker{Date=weekStart,Format="ddd d MMM yyyy"};picker.DateSelected+=async(_,e)=>{weekStart=e.NewDate.Date;await Run(()=>Load());};Body.Add(ShoppingUi.Text("Week starts",12,true));Body.Add(picker);
+        var picker=new DatePicker{Date=weekStart,Format="ddd d MMM yyyy"};picker.DateSelected+=async(_,e)=>{weekStart=(e.NewDate??weekStart).Date;await Run(()=>Load());};Body.Add(ShoppingUi.Text("Week starts",12,true));Body.Add(picker);
         var jump=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};jump.Add(ShoppingUi.Button("Previous week",()=>Run(async()=>{weekStart=weekStart.AddDays(-7);await Load();}),true),0);jump.Add(ShoppingUi.Button("Next week",()=>Run(async()=>{weekStart=weekStart.AddDays(7);await Load();}),true),1);Body.Add(jump);
         for(var day=0;day<7;day++)
         {
@@ -81,7 +81,7 @@ public class HouseholdMealEditorPage:SocialPage
             if(await DisplayAlert("Review latest meal",$"{current.Title} · {current.Servings} portions\n{current.Note}\n\nKeep your form's draft and use it to replace this version on the next Save? Another edit will still cause a conflict.","Use my draft","Keep reviewing"))version=current.Version;
         }),true));
         Body.Add(ShoppingUi.Button(requestOnly?"Send meal request":AppLocalization.Text("Save to household"),()=>Run(async()=>{
-            if(saved)return;if(!int.TryParse(servings.Text,out var portions))throw new InvalidOperationException("Enter whole-number portions.");var meal=new HouseholdMeal(id,SocialPolicy.DateKey(this.date.Date),slot.SelectedItem?.ToString(),title.Text?.Trim(),portions,note.Text??"",recipe,version);SocialPolicy.ValidateMeal(meal);
+            if(saved)return;if(!int.TryParse(servings.Text,out var portions))throw new InvalidOperationException("Enter whole-number portions.");var meal=new HouseholdMeal(id,SocialPolicy.DateKey(this.date.Date??throw new InvalidOperationException("Choose a meal date.")),slot.SelectedItem?.ToString(),title.Text?.Trim(),portions,note.Text??"",recipe,version);SocialPolicy.ValidateMeal(meal);
             await HouseholdMealsService.Require();Check();var result=await HouseholdMealsService.Call<HouseholdMealSaveResult>(new{action=requestOnly?"requestMeal":"upsertMeal",householdId,weekStart=SocialPolicy.DateKey(weekStart),meal,expectedVersion=version});Check();if(result.Requested)await DisplayAlert("Request sent","An adult can approve this meal from Household requests. It is not in the meal plan yet.","OK");saved=true;await AppNavigation.Back();
         })));Body.Add(ShoppingUi.Text(requestOnly?"This suggestion waits for an owner or adult to approve it. Ingredients are not automatically added to shopping.":"If another person edits this meal first, the server must reject the conflict and keep your form open. Reopen the meal to review their latest version before replacing it.",13));
     }

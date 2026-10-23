@@ -1,5 +1,12 @@
 # Mealsy iOS extensions
 
+**23 October update:** The branch now includes the shared .NET/MAUI 10 migration
+and modern Firebase bindings. Host/extension source build number is 2; helpers
+derive defaults from the host project and propagate explicit archive overrides.
+For the first app-only run use `bash scripts/run-ios-simulator.sh`; opt into
+extensions with `IOS_INCLUDE_EXTENSIONS=1` after installing XcodeGen. The native
+Swift/MAUI build and device acceptance below remain outstanding on the Mac.
+
 Native source for an iOS 17+ medium WidgetKit widget and a browser Share extension.
 Generated using XcodeGen; no Firebase SDK/dependency belongs in either extension.
 The containing MAUI app owns authentication, recipe imports and shopping edits.

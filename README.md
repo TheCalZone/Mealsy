@@ -1,40 +1,43 @@
 # Mealsy
 
-Mealsy is a .NET 8 MAUI Android app for recipes, meal planning, and shopping lists.
+Mealsy is a .NET 10 MAUI app for recipes, meal planning, and shopping lists.
 
 For the latest implementation, deployed state, test commands and remaining store/iOS work, start with the [cloud handoff](CLOUD_HANDOFF.md).
 
 ## Plans and feature inventory
 
-The free tier keeps personal cooking/planning and the food community. **Mealsy
+The free tier keeps personal cooking/planning. Social and creator features are paused. **Mealsy
 Premium (£5.99/month or £49.99/year in the UK)** adds recipe-link imports, saved weekly templates and reusable shopping trips, plus household sharing and ad removal for the
 owner and their household. Live billing/ads require publisher setup; see
 [monetization setup](MONETIZATION.md) and the [complete current features](FEATURES.md).
 
 ## Android development
 
-Prerequisites: .NET SDK 8, the `maui-android` workload, JDK 17, and Android SDK
-platform/build tools 34. The project uses MAUI 8.0.3. Install the workload with
+Prerequisites: .NET SDK 10.0.402 (see global.json), the `maui-android` workload,
+JDK 21, and Android SDK platform/build tools 36. The project uses MAUI 10.0.120.
+Android minimum SDK is 24 and target SDK is 36. Install the workload with
 `dotnet workload install maui-android`.
 
 From the repository root, with `ANDROID_HOME` pointing to the Android SDK and
-`JAVA_HOME` pointing to JDK 17:
+`JAVA_HOME` pointing to JDK 21:
 
 ```sh
 dotnet restore RecipeApp/RecipeApp.csproj
-dotnet build RecipeApp/RecipeApp.csproj -f net8.0-android -c Debug \
+dotnet build RecipeApp/RecipeApp.csproj -f net10.0-android -c Debug \
   -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
 ```
 
-The Debug APK embeds its managed assemblies and can be installed directly:
+The bundle-derived Release test APK can be installed directly (ARM64 phones):
 
 ```sh
-adb install -r RecipeApp/bin/Debug/net8.0-android/com.companyname.recipeapp-Signed.apk
+adb install -r artifacts/android/Mealsy-v2-api36-min24-phone-test.apk
 adb shell am start -a android.intent.action.MAIN \
   -c android.intent.category.LAUNCHER -p com.companyname.recipeapp
 ```
 
-Use an Android device or a running emulator (Android 6/API 23 or newer).
+Use an ARM64 Android device (Android 7/API 24 or newer). This APK uses the upload
+signer; an older development-signed install cannot be updated in place. Preserve
+device-only data before considering uninstalling an older build.
 For startup diagnostics, inspect `adb logcat -b crash -d` and confirm the app
 stays open. Exercise recipe creation and shopping-list navigation as a smoke test.
 Run the platform-independent SQLite regression tests with:

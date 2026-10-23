@@ -1,5 +1,23 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**iOS branch preparation, 23 October:** `codex/ios-client-support` now merges the
+Android source through `cb837b4`, retaining Swift widget/share source. Added a MAUI
+scene delegate with warm/cold invitation/widget routing and a Mac simulator
+build/install/launch helper. Extension versions follow the host build. See
+[current Mac instructions](IOS_SETUP.md). Metadata/helper tests pass on Windows;
+native iOS/Swift compilation, simulator launch, signing and device acceptance
+remain unverified. The first app-only simulator run omits extensions by default.
+
+**Android migration, 23 October:** Source now uses .NET/MAUI 10, minimum SDK 24,
+target SDK 36 and version code 2. A new upload-signed ARM64 AAB and phone APK pass
+static bundle/signature/16 KB native checks; 447 shared tests and the transitive
+NuGet advisory check pass. Start with [the current release record](PLAY_RELEASE_2026_10_23.md).
+Device, store-flow and iOS acceptance remain open; social remains paused.
+
+**Firebase update, 23 October:** See [current rollout evidence](FIREBASE_ROLLOUT_2026_10_23.md)
+for deployed household roles/questions/attribution, admin confirmation and automatic
+deletion infrastructure. Social remains paused; staging/device acceptance remains open.
+
 For the remaining production-release work, start with
 [PRODUCTION_DESKTOP_HANDOFF.md](PRODUCTION_DESKTOP_HANDOFF.md) (22 October 2026).
 It records the latest hosting, Android compatibility, Firebase deletion and Play

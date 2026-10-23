@@ -8,6 +8,8 @@ configuration="${2:-Debug}"
 case "$mode" in simulator|device) ;; *) echo 'Use simulator or device.' >&2; exit 2;; esac
 case "$configuration" in Debug|Release) ;; *) echo 'Use Debug or Release.' >&2; exit 2;; esac
 command -v xcodegen >/dev/null || { echo 'Install XcodeGen on the Mac (brew install xcodegen).' >&2; exit 2; }
+project_version="$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('../../RecipeApp/RecipeApp.csproj').findtext('./PropertyGroup/ApplicationDisplayVersion'))")"
+project_build="$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('../../RecipeApp/RecipeApp.csproj').findtext('./PropertyGroup/ApplicationVersion'))")"
 xcodegen generate --spec project.yml
 sdk=iphonesimulator
 destination='generic/platform=iOS Simulator'
@@ -15,7 +17,7 @@ if [[ "$mode" == device ]]; then sdk=iphoneos; destination='generic/platform=iOS
 for target in MealsyShare MealsyWidget; do
     args=(-project MealsyExtensions.xcodeproj -scheme "$target" -configuration "$configuration"
           -sdk "$sdk" -destination "$destination" -derivedDataPath build
-          "MARKETING_VERSION=${IOS_APP_VERSION:-1.0}" "CURRENT_PROJECT_VERSION=${IOS_BUILD_NUMBER:-1}")
+          "MARKETING_VERSION=${IOS_APP_VERSION:-$project_version}" "CURRENT_PROJECT_VERSION=${IOS_BUILD_NUMBER:-$project_build}")
     if [[ "$mode" == simulator ]]; then
         args+=(CODE_SIGNING_ALLOWED=NO)
     else

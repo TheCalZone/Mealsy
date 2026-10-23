@@ -23,7 +23,11 @@ print(targets.pop())
 PY
 )"
 args=("$project" -f "$ios_target" "-p:TargetFrameworks=$ios_target")
+project_version="$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('$project').findtext('./PropertyGroup/ApplicationDisplayVersion'))")"
+export IOS_APP_VERSION="${IOS_APP_VERSION:-$project_version}"
 if [[ "$mode" == simulator ]]; then
+    project_build="$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('$project').findtext('./PropertyGroup/ApplicationVersion'))")"
+    export IOS_BUILD_NUMBER="${IOS_BUILD_NUMBER:-$project_build}"
     runtime=iossimulator-x64
     if [[ "$(uname -m)" == arm64 ]]; then runtime=iossimulator-arm64; fi
     if [[ "${IOS_INCLUDE_EXTENSIONS:-1}" == 1 ]]; then

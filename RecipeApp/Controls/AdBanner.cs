@@ -20,13 +20,13 @@ public class AdBanner : ContentView
     }
     private void Appearing(object sender, EventArgs e)
     {
-#if ANDROID
+#if ANDROID && MEALSY_ADS
         (Handler as RecipeApp.Platforms.Android.AdBannerHandler)?.Resume();
 #endif
     }
     private void Disappearing(object sender, EventArgs e)
     {
-#if ANDROID
+#if ANDROID && MEALSY_ADS
         (Handler as RecipeApp.Platforms.Android.AdBannerHandler)?.Pause();
 #endif
     }

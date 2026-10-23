@@ -25,6 +25,15 @@ if info.get('CFBundleIdentifier') not in (None, bundle):
     errors.append('Info.plist overrides the bundle identifier incorrectly.')
 if not privacy.get('NSPrivacyAccessedAPITypes'):
     errors.append('App required-reason API declarations are missing.')
+scene = info.get('UIApplicationSceneManifest', {})
+entries = scene.get('UISceneConfigurations', {}).get('UIWindowSceneSessionRoleApplication', [])
+if scene.get('UIApplicationSupportsMultipleScenes') is not False or not any(
+    entry.get('UISceneConfigurationName') == '__MAUI_DEFAULT_SCENE_CONFIGURATION__'
+    and entry.get('UISceneDelegateClassName') == 'SceneDelegate' for entry in entries):
+    errors.append('The single-window MAUI scene configuration is missing.')
+delegate = root / 'RecipeApp/Platforms/iOS/SceneDelegate.cs'
+if not delegate.is_file() or 'MauiUISceneDelegate' not in delegate.read_text():
+    errors.append('The registered MAUI scene delegate is missing.')
 if errors:
     raise SystemExit('\n'.join(errors))
 print('iOS public configuration checks passed: bundle, project, invitation scheme and privacy metadata.')

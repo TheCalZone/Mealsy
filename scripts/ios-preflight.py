@@ -2,6 +2,7 @@
 """Read-only Mac/iOS readiness report. Does not install tools or access signing keys."""
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
@@ -36,8 +37,17 @@ def main():
     ready = True
     for args in (['xcode-select', '-p'], ['xcodebuild', '-version'],
                  ['xcrun', '--sdk', 'iphoneos', '--show-sdk-version'],
-                 ['dotnet', '--list-sdks'], ['dotnet', 'workload', 'list']):
+                 ['dotnet', '--version'], ['dotnet', '--list-sdks'], ['dotnet', 'workload', 'list']):
         if not shutil.which(args[0]) or not command(args):
+            ready = False
+    if shutil.which('dotnet'):
+        try:
+            workloads = subprocess.run(['dotnet', 'workload', 'list'], cwd=ROOT, text=True, capture_output=True, timeout=45)
+            installed = workloads.returncode == 0 and re.search(r'^\s*(ios|maui-ios|maui)\s', workloads.stdout, re.MULTILINE)
+        except (OSError, subprocess.TimeoutExpired):
+            installed = False
+        if not installed:
+            print('BLOCKED: Install the iOS/MAUI iOS workload for this repo\'s selected SDK.')
             ready = False
     print('Match Xcode to the chosen .NET iOS workload release; newest is not automatically compatible.')
     print('Apple requires Xcode 26+/iOS SDK 26+ for uploads. Xcode 27 also requires UIScene lifecycle support.')

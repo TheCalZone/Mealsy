@@ -37,7 +37,7 @@ public class PlanPage : ContentPage
             ShoppingUi.Button("Manage or cancel in the app store",async()=>await Launcher.Default.OpenAsync($"https://play.google.com/store/account/subscriptions?sku={MonetizationConfig.ProductId}&package=com.companyname.recipeapp"),true),
             ShoppingUi.Text("Subscriptions renew automatically each month or year, according to the option you choose. Cancel in the app store before renewal to avoid the next charge. Cancellation keeps access until the paid period ends. A 7-day free trial is shown only when Google Play returns an eligible offer. Payment details are handled by Google Play; Mealsy does not collect card details. Cancel before the trial ends to avoid the first charge. Existing subscribers can manage their subscription in the app store; this page does not sell a second subscription.",13),
             ShoppingUi.Button("Ad privacy choices",async()=>{
-#if ANDROID
+#if ANDROID && MEALSY_ADS
                 await RecipeApp.Platforms.Android.AdConsent.PrivacyChoices();
 #endif
             },true),
