@@ -26,6 +26,7 @@ internal class MealsyTabAppearance:ShellBottomNavViewAppearanceTracker
         bottomView.ItemActiveIndicatorEnabled=true;
         bottomView.ItemActiveIndicatorColor=ColorStateList.ValueOf(global::Android.Graphics.Color.Argb(64,255,255,255));
         var density=bottomView.Resources.DisplayMetrics.Density;
+        bottomView.ItemActiveIndicatorShapeAppearance=new Google.Android.Material.Shape.ShapeAppearanceModel.Builder().SetAllCornerSizes(16*density).Build();
         bottomView.ItemActiveIndicatorWidth=(int)(60*density);
         bottomView.ItemActiveIndicatorHeight=(int)(32*density);
     }
