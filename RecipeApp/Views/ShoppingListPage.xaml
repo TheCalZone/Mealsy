@@ -62,6 +62,7 @@
                 <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
                     <HorizontalStackLayout x:Name="ListTabs" Spacing="8" />
                 </ScrollView>
+                <Button x:Name="HouseholdRequestsButton" Text="Household requests" Clicked="HouseholdRequests_Clicked" IsVisible="False" Style="{StaticResource QuietButton}" />
                 <Label x:Name="ListVisibility" Text="Only you" FontSize="12" TextColor="#C3DAC8" />
                 <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="6" SemanticProperties.Description="Shopping progress" />
                 <views:MembershipPrompt x:Name="ShoppingMembership" />

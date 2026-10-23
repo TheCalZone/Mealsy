@@ -81,4 +81,4 @@ function requireOwner(household, uid) {
   requireMember(household, uid);
   if (household.owner !== uid) fail('permission-denied', 'Only the household owner can do this.');
 }
-module.exports = {DomainError, fail, applyChanges, requireMember, requireOwner};
+module.exports = {DomainError, fail, item, applyChanges, requireMember, requireOwner};

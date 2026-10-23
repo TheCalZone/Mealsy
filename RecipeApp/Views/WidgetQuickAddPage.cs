@@ -59,7 +59,7 @@ public class WidgetQuickAddPage : ContentPage
             var baseline=Preferences.Get(target.StorageKey+".synced","[]");var changes=ShoppingListSync.Changes(baseline,sent);
             var result=await HouseholdService.CallAsync<ShoppingSyncResult>(new{action="patch",scope=target.HouseholdId==null?"personal":"household",householdId=target.HouseholdId,changes});Check();
             var server=JsonSerializer.Serialize(result.Items);var merged=ShoppingListSync.Reapply(sent,Preferences.Get(target.StorageKey,sent),server);
-            Preferences.Set(target.StorageKey+".synced",server);if(target.HouseholdId==null)ShoppingListStore.Save(merged);else Preferences.Set(target.StorageKey,merged.Serialize());status.Text="Added and synced to "+target.Name;
+            Preferences.Set(target.StorageKey+".synced",server);if(target.HouseholdId==null)ShoppingListStore.Save(merged);else Preferences.Set(target.StorageKey,merged.Serialize());status.Text=result.RequestedCount>0?"Request sent · Waiting for approval":"Added and synced to "+target.Name;
         }
         catch(Exception){status.Text="Added on this device. Open the selected list to retry sync. Household conflicts may need resolving there.";}
         name.Focus();

@@ -1,5 +1,7 @@
 # Firebase handoff: friends, privacy, household meals and content sharing
 
+Latest household roles/request rollout: [HOUSEHOLD_ROLES_HANDOFF.md](HOUSEHOLD_ROLES_HANDOFF.md). Backend deployment and staging checks are required before relying on restricted access.
+
 For current release blockers and the staged account-deletion deployment sequence,
 start with [PRODUCTION_DESKTOP_HANDOFF.md](PRODUCTION_DESKTOP_HANDOFF.md) and
 [ACCOUNT_DELETION.md](ACCOUNT_DELETION.md). Social features remain paused.

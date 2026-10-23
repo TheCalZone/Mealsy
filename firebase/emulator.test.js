@@ -152,3 +152,25 @@ test('account deletion blocks personal writes and recursively cleans only the re
  await service.process(uid);assert(disabled);assert(!deleted);assert(!(await db.doc('households/delete-house/mealWeeks/week').get()).exists);assert((await db.doc(`users/${other}`).get()).exists);
  now+=120001;await service.process(uid);assert(deleted);assert.equal((await db.doc(`accountDeletions/${uid}`).get()).data().status,'completed');
 });
+
+test('restricted shopping requests and owner role changes use real transactions and deny direct SDK bypass',async()=>{
+ const householdId='roles-emulator',owner='roles-owner',child='roles-child';
+ await db.doc(`households/${householdId}`).set({owner,name:'Test family',members:{[owner]:'Owner',[child]:'Child'},roles:{[child]:'restricted'}});
+ for(const uid of [owner,child])await db.doc(`householdAccounts/${uid}`).set({householdId});
+ await db.doc(`familyGrants/${owner}`).set({active:true,expiresAt:Date.now()+86400000});
+ const invoke=(uid,data)=>call(uid,{householdId,...data});
+ const item={Id:'12345678-1234-1234-1234-123456789abc',Name:'Milk',Quantity:'1 L',Category:'Dairy',Note:'',InBasket:false};
+ const result=await invoke(child,{action:'patch',scope:'household',changes:[{before:null,after:item}]});
+ assert.equal(result.requestedCount,1);assert.equal(result.items.length,0);
+ const requests=await invoke(owner,{action:'requests'}),requestId=requests.requests[0].id;
+ await assert.rejects(invoke(child,{action:'resolveRequest',requestId,decision:'approve'}),{code:'permission-denied'});
+ const client=rules.authenticatedContext(child).firestore();
+ await assertFails(setDoc(doc(client,`households/${householdId}`),{roles:{[child]:'adult'}},{merge:true}));
+ await assertFails(setDoc(doc(client,`households/${householdId}/lists/shopping`),{items:{[item.Id]:item}}));
+ await invoke(owner,{action:'resolveRequest',requestId,decision:'approve'});
+ assert.equal((await invoke(child,{action:'read',scope:'household'})).items.length,1);
+ await assert.rejects(invoke(child,{action:'patch',scope:'household',changes:[{before:item,after:null}]}),{code:'permission-denied'});
+ await invoke(owner,{action:'setRole',member:child,role:'adult'});
+ await invoke(child,{action:'patch',scope:'household',changes:[{before:item,after:null}]});
+ assert.equal((await invoke(owner,{action:'read',scope:'household'})).items.length,0);
+});
