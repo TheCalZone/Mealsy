@@ -5,8 +5,12 @@ contributor's account first/last name from `users/{uid}`, including existing ite
 and approved requests. Missing names fall back to “Household member”; emails are
 not used as tag labels. Profile reads are limited to distinct current contributors
 and the caller, within the membership-checked transaction. All 146 backend tests pass.
-The Android “My household” process exit remains under investigation, awaiting a
-current-version diagnostic report; this attribution change does not fix that crash.
+**Household crash, 23 October:** Reproduced with a sample household in an Android
+API 34 x64 Release emulator build. `Page.IsBusy=true` in `HouseholdPage.Run`,
+called by `OnAppearing`, crashes in MAUI 10 `Page.OnPageBusyChanged` before the
+network request. Removed the page busy flag; the existing in-page loading control
+and duplicate-action guard remain. Unexpected load failures now enter diagnostics.
+Version code increased to 3 for the replacement Android build. Shared tests: 447 passed.
 
 **Android migration, 23 October:** Source now uses .NET/MAUI 10, minimum SDK 24,
 target SDK 36 and version code 2. A new upload-signed ARM64 AAB and phone APK pass

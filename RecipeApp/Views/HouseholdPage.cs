@@ -59,11 +59,14 @@ public class HouseholdPage : ContentPage
     private async Task Run(Func<Task> action)
     {
         if (busy) return;
-        busy = true;IsBusy=true;
+        // Page.IsBusy raises MAUI's window busy event while Shell is still
+        // attaching this page. Use our in-page loader instead (MAUI 10 can
+        // dereference a missing window here during OnAppearing).
+        busy = true;
         try { await action(); }
         catch (HouseholdException e) { await DisplayAlert(AppLocalization.Text("Household"), e.Message, AppLocalization.Text("OK")); }
-        catch (Exception) { await DisplayAlert("Connection unavailable", "Could not reach the household service. Check your connection and try again.", AppLocalization.Text("OK")); }
-        finally { foreach(var loader in content.Children.OfType<LoadingIndicator>().ToList())content.Remove(loader);busy = false;IsBusy=false; }
+        catch (Exception error) { AppDiagnostics.Report(error,"ui.action"); await DisplayAlert("Connection unavailable", "Could not reach the household service. Check your connection and try again.", AppLocalization.Text("OK")); }
+        finally { foreach(var loader in content.Children.OfType<LoadingIndicator>().ToList())content.Remove(loader);busy = false; }
     }
     private void CheckAccount()
     {

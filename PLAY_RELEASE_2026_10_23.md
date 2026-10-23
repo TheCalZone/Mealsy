@@ -1,3 +1,25 @@
+# Version 3 — household crash fix (23 October 2026)
+
+Reproduced the reported process exit in a Release API 34 x64 emulator with an
+isolated sample household: `HouseholdPage.Run` set `Page.IsBusy` during
+`OnAppearing`, triggering a `NullReferenceException` in MAUI's
+`Page.OnPageBusyChanged` before networking. Removed the page busy flag while
+retaining the in-page loader and duplicate-action guard. Unexpected load errors
+are now recorded through the existing opt-in diagnostic path.
+
+The same emulator setup renders the household after the fix, expands a member
+drawer and refreshes successfully; the app remains running. Sample data was used
+only in an ignored test copy, never the production build or backend.
+
+- 447 shared tests passed.
+- Version code 3, minimum SDK 24, target SDK 36, ARM64 phone build.
+- `artifacts/android/Mealsy-v3-household-fix-upload-signed.aab`
+  SHA-256: `636bfc0f0d27a94977283634f07ad79c107798151c483123f204a75f74c064e4`
+- `artifacts/android/Mealsy-v3-household-fix-phone-test.apk` generated from that AAB.
+- APK v2/v3 signatures and 16 KB ZIP alignment verified; all 171 native ELF
+  libraries pass the 16 KB alignment audit. Uses the same upload key as version 2.
+- Real-phone confirmation and Play-generated APK acceptance remain outstanding.
+
 # Android bundle review — 23 October 2026
 
 ## Rebuilt after the Android/.NET 10 migration
