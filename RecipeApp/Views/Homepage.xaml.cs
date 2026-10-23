@@ -11,7 +11,9 @@ public partial class Homepage : ContentPage
     private string sectionAccount;
     private View Foldout(string key, string title, View details, string summary = null)
     {
-        var panel = new ContentView { Content = details, IsVisible = expandedSections.Contains(key) };
+        var open=expandedSections.Contains(key);
+        var panel = new ContentView { Content = details, IsVisible = open, IsClippedToBounds=true,
+            Padding=new Thickness(0,10,0,0), InputTransparent=!open };
         var header = new Button { HorizontalOptions = LayoutOptions.Fill, MinimumHeightRequest = 52,
             FontSize = 18, FontAttributes = FontAttributes.Bold, CornerRadius = 12,
             Padding = new Thickness(12, 8), LineBreakMode = LineBreakMode.WordWrap };
@@ -19,21 +21,64 @@ public partial class Homepage : ContentPage
         header.SetDynamicResource(Button.TextColorProperty, "ThemeText");
         void UpdateHeader()
         {
-            header.Text = title + (panel.IsVisible ? "  ▴" : "  ▾");
-            SemanticProperties.SetDescription(header, title + (panel.IsVisible ? ", expanded" : ", collapsed"));
-            SemanticProperties.SetHint(header, panel.IsVisible ? "Tap to hide details" : "Tap to show details");
+            header.Text = title + (open ? "  ▴" : "  ▾");
+            SemanticProperties.SetDescription(header, title + (open ? ", expanded" : ", collapsed"));
+            SemanticProperties.SetHint(header, open ? "Tap to hide details" : "Tap to show details");
+        }
+        void Settle()
+        {
+            panel.IsVisible=open;panel.HeightRequest=-1;panel.Opacity=1;panel.InputTransparent=!open;
         }
         UpdateHeader();
-        header.Clicked += (_, _) => {
-            panel.IsVisible = !panel.IsVisible;
-            if (panel.IsVisible) expandedSections.Add(key); else expandedSections.Remove(key);
-            UpdateHeader();
+        var animating=false;
+        header.Clicked += async (_, _) => {
+            if(animating)return;
+            animating=true;
+            try
+            {
+                var from=open?panel.Height:0;
+                open=!open;
+                if(open)expandedSections.Add(key);else expandedSections.Remove(key);
+                UpdateHeader();
+                var width=panel.Width>0?panel.Width:header.Width;
+                if(!DisclosureMotionEnabled()||width<=0){Settle();return;}
+                var natural=details.Measure(width,double.PositiveInfinity,MeasureFlags.IncludeMargins).Request.Height+panel.Padding.VerticalThickness;
+                if(!double.IsFinite(natural)||natural<=0){Settle();return;}
+                var to=open?natural:0;
+                if(!double.IsFinite(from)||from<0)from=natural;
+                panel.HeightRequest=from;panel.IsVisible=true;panel.InputTransparent=true;
+                var completion=new TaskCompletionSource<bool>();
+                new Animation(height=>panel.HeightRequest=height,from,to)
+                    .Commit(panel,"HomeDisclosure",16,180,Easing.CubicOut,(_,cancelled)=>completion.TrySetResult(!cancelled));
+                await completion.Task;
+                Settle();
+            }
+            catch{Settle();}
+            finally{Settle();animating=false;}
         };
-        var section = new VerticalStackLayout { Spacing = 10 };
+        panel.Unloaded+=(_,_)=>panel.AbortAnimation("HomeDisclosure");
+        var section = new VerticalStackLayout { Spacing = 0 };
         section.Add(header);
-        if (!string.IsNullOrWhiteSpace(summary)) section.Add(ShoppingUi.Text(summary, 14));
+        if (!string.IsNullOrWhiteSpace(summary))
+        {
+            var preview=ShoppingUi.Text(summary,14);preview.Margin=new Thickness(0,10,0,0);section.Add(preview);
+        }
         section.Add(panel);
         return ShoppingUi.Card(section);
+    }
+    private static bool DisclosureMotionEnabled()
+    {
+        try
+        {
+#if ANDROID
+            return global::Android.Provider.Settings.Global.GetFloat(global::Android.App.Application.Context.ContentResolver,"animator_duration_scale",1f)>0;
+#elif IOS
+            return !UIKit.UIAccessibility.IsReduceMotionEnabled;
+#else
+            return true;
+#endif
+        }
+        catch{return false;}
     }
     public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Import recipe link"),null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
     protected override async void OnAppearing()

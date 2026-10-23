@@ -7,6 +7,9 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,23), "Smoother home sections", new[] {
+            "Home drawers now slide open and closed quickly, moving the content below them instead of jumping. System reduced-motion settings are respected."
+        }),
         new(new(2026,10,23), "Clearer navigation and reviewer setup", new[] {
             "The selected Android bottom tab now has a visible highlight, bright icon and bold label. Other tabs stay labelled without shifting.",
             "Finishing setup removes the guide from its original tab, so returning to Account opens your account. Completed setup shortcuts disappear from Home and Account; the guide remains available in Settings.",
