@@ -1,5 +1,41 @@
 # Mealsy Android Play policy readiness audit — 22 October 2026
 
+## Rechecked locally — 23 October 2026
+
+**A Release AAB was built, signed and validated, but remains blocked for Play submission.**
+See [current bundle and signing record](PLAY_RELEASE_2026_10_23.md). This section
+supersedes the historical source-only/undeployed findings below.
+
+- Current Play phone/tablet submissions require **API 36** from 31 August 2026;
+  the actual bundle targets **34**. [Official target requirements](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en).
+- MAUI 8 is unsupported. Migrate the runtime, SDK and dependencies together to a
+  supported release, then build/test for the required target.
+  [Microsoft support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/maui).
+- The Release bundle contains 332 inspected 64-bit native libraries; **173 fail
+  16 KB ELF alignment**, including runtime/SQLite/AOT libraries. Google's current
+  page states a 1 February 2027 update-enforcement date; this remains a device
+  compatibility defect to fix before release, independently of the API blocker.
+  [Official page-size guidance](https://developer.android.com/guide/practices/page-sizes).
+- Direct NuGet advisory-feed comparison of 228 resolved packages identifies
+  **Newtonsoft.Json 9.0.1** and **SQLitePCLRaw.lib.e_sqlite3.android 2.1.8** as
+  affected by published high-severity advisories. Update their dependency chains
+  and recheck; ordinary `dotnet list package --vulnerable` could not evaluate
+  this legacy project, so it did not produce a clean scan.
+- Policy/deletion URLs are live with current text. Firebase handoffs are deployed,
+  indexes READY, TTL ACTIVE and recovery enabled; end-to-end disposable-account
+  deletion and two-phone tests remain outstanding.
+- Bundle manifest is non-debuggable with backup disabled and no legacy AD_ID,
+  but includes ACCESS_ADSERVICES_AD_ID/ATTRIBUTION/TOPICS from bundled SDKs.
+  Review or remove unused ads dependencies during migration and verify actual
+  traffic/consent/Data safety; disabled ads alone does not prove no collection.
+- Play Console setup has not been inspected: products/trial, licence testing,
+  reviewer credentials, Data safety, audience/content rating and pre-launch checks
+  remain acceptance items. Applicable new personal accounts need 12 continuously
+  opted-in closed testers for 14 days before applying for production access.
+  [Official testing requirements](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en).
+
+No bundle was uploaded and no store release was created.
+
 **Decision: suitable for private testing, blocked for Play production submission.**
 This is a repository/artifact audit, not Google approval or a legal certification.
 Current Google policy pages could not be retrieved: outbound requests to
