@@ -89,4 +89,17 @@ public class ShoppingListSyncTests
         Assert.True(copy.HasContributor);Assert.Equal("Requested by Sam",copy.ContributorLabel);Assert.Equal(item.ContributorColor,copy.ContributorColor);
         Assert.False(new ShoppingListItem{Name="Legacy"}.HasContributor);
     }
+
+    [Fact]
+    public void ClearCheckedSyncsOnlyDeletionsAndUndoRestoresContributorDetails()
+    {
+        var uncheckedItem=new ShoppingListItem{Name="Milk"};
+        var checkedItem=new ShoppingListItem{Name="Bread",InBasket=true,AddedBy="alex",AddedByName="Alex",AdditionKind="added"};
+        var list=List(uncheckedItem,checkedItem);var baseline=list.Serialize();
+        list.ClearCollected();var change=Assert.Single(ShoppingListSync.Changes(baseline,list.Serialize()));
+        Assert.Equal(checkedItem.Id,change.before.Id);Assert.Null(change.after);
+        Assert.Equal(uncheckedItem.Id,Assert.Single(list.Items).Id);
+        list.Undo();Assert.Empty(ShoppingListSync.Changes(baseline,list.Serialize()));
+        Assert.Equal("Alex",list.Items.Single(i=>i.Id==checkedItem.Id).AddedByName);
+    }
 }

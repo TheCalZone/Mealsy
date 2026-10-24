@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,24), "Simpler shopping options", new[] {
+            "List tabs stay visible. The quick options drawer now focuses on search, hiding checked items, Clear checked and shopping mode.",
+            "Secondary actions are grouped on a List tools screen instead of duplicated in the toolbar and a crowded drawer. Returning keeps the selected list.",
+            "Clear checked removes only checked items, keeps Undo available and uses existing sync. Restricted household members still cannot delete shared items. No backend deployment is needed."
+        }),
         new(new(2026,10,23), "Choose your list and ask before you buy", new[] {
             "Recipe ingredients, meal-plan shops, Home quick-add, saved shopping trips and device-list copies ask which list to use. Household lists appear alongside named personal lists; cancelling changes nothing. Replacing a list names the chosen personal list before confirmation.",
             "Swipe a household item and choose Ask to clarify details with its adder. Conversations are visible within the household; questions and replies have an inbox, with optional Android phone alerts. This requires the new Firebase questions, notifications, cleanup and index deployment.",
