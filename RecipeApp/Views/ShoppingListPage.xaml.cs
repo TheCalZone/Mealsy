@@ -36,7 +36,7 @@ public partial class ShoppingListPage : ContentPage
         if(active==shoppingMode)return;
         if(active){previousNav=Shell.GetNavBarIsVisible(this);previousTabs=Shell.GetTabBarIsVisible(this);}
         _=OptionsDrawer.SetOpenAsync(false,false);_=AddItemDrawer.SetOpenAsync(false,false);
-        shoppingMode=active;ShoppingHeader.IsVisible=!active;ShoppingTools.IsVisible=!active;ShoppingFooterActions.IsVisible=!active;ShoppingModeBar.IsVisible=active;
+        shoppingMode=active;ShoppingHeader.IsVisible=!active;ShoppingTools.IsVisible=!active;ShoppingModeBar.IsVisible=active;
         AppNavigation.DismissKeyboard();
         Shell.SetNavBarIsVisible(this,active?false:previousNav);Shell.SetTabBarIsVisible(this,active?false:previousTabs);
         Unfocus();QuickAddEntry.Unfocus();
@@ -77,7 +77,8 @@ public partial class ShoppingListPage : ContentPage
         OptionsDrawer.MaximumDrawerHeight=AddItemDrawer.MaximumDrawerHeight=Math.Clamp(height*.28,72,220);
     }
     private string CacheKey => householdId == null ? PersonalShoppingLists.StorageKey(personalId) : $"ShoppingList.household.{listAccount}.{householdId}";
-    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);OptionsDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();AddItemDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});ToolbarItems.Add(new ToolbarItem("Household requests",null,async()=>await AppNavigation.Open(new HouseholdRequestsPage())){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Checked item settings",null,async()=>await CheckedItemSettings()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Reorder sections"),null,async()=>await OpenSectionOrder()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem("Saved shopping trips · Premium",null,async()=>await PremiumAccess.OpenShopping()){Order=ToolbarItemOrder.Secondary});}
+    public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);OptionsDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();AddItemDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});}
+
 
     private void SectionHeader_Loaded(object sender,EventArgs e)
     {
@@ -97,6 +98,40 @@ public partial class ShoppingListPage : ContentPage
         if(sender is not View row||itemDragViews.TryGetValue(row,out _))return;
         itemDragViews.Add(row,new object());ItemDrag.AttachRow(row);
     }
+    private async void ListTools_Clicked(object sender,EventArgs e)
+    {
+        try{await OpenListTools();}
+        catch(Exception error){await DisplayAlert("List tools",error is InvalidOperationException?error.Message:"Couldn't open list tools. Try again.","OK");}
+    }
+    private async Task OpenListTools()
+    {
+        if(Model.IsEditing){await DisplayAlert("Finish editing","Save or cancel your item edit first.","OK");return;}
+        AppNavigation.DismissKeyboard();await OptionsDrawer.SetOpenAsync(false);
+        var account=AccountSession.UserId;var key=CacheKey;
+        ContentPage page=null;
+        Func<Task> Action(Func<Task> action)=>async()=>{
+            AccountSession.Check(account);
+            if(CacheKey!=key)throw new InvalidOperationException("The selected list changed. Reopen list tools.");
+            await page.Navigation.PopAsync(false);
+            AccountSession.Check(account);
+            if(CacheKey!=key)throw new InvalidOperationException("The selected list changed. Reopen list tools.");
+            await action();
+        };
+        ShoppingListTool Tool(string title,Func<Task> action)=>new(title,Action(action));
+        ShoppingListTool Command(string title,Command command)=>new(title,Action(()=>{if(command.CanExecute(null))command.Execute(null);return Task.CompletedTask;}),command.CanExecute(null));
+        var sections=new List<ShoppingListToolSection>{
+            new("This list",null,new(){Tool("Manage lists",ManageLists),Command("Share list",Model.ShareCommand),Command("Paste items",Model.PasteCommand)}),
+            new("Checked items",Model.RestrictedHousehold?"Restricted members can check items, but an adult removes them.":"Clear checked keeps the remaining items. Undo stays on the shopping screen.",new(){Command("Clear checked items",Model.ClearCollectedCommand),Tool("Checked item behaviour",CheckedItemSettings)}),
+            new("Organise & reuse","Drag handles reorder sections and items directly on the list.",new(){Tool("Section order",OpenSectionOrder),Tool("Plan from recipes & checklists",()=>AppNavigation.Open(new ShoppingListMakerPage())),Tool("Saved shopping trips · Premium",PremiumAccess.OpenShopping),Tool("Home-screen quick add",()=>AppNavigation.Open(new WidgetHelpPage()))}),
+            new("Undo & redo",null,new(){Command("Undo last change",Model.UndoCommand),Command("Redo last change",Model.RedoCommand)})
+        };
+        if(householdId!=null)sections.Add(new("Household",null,new(){Tool("Questions & replies",()=>AppNavigation.Open(new HouseholdShoppingInboxPage())),Tool($"Requests · {availableHousehold?.PendingRequests??0} pending",()=>AppNavigation.Open(new HouseholdRequestsPage())),Tool("Manage household",()=>AppNavigation.Open(new HouseholdPage()))}));
+        if(account!=null&&(householdId!=null||personalId=="main"))sections.Add(new("Cloud & recovery",null,new(){Tool("Sync now",()=>SyncAsync(true)),Tool(conflict?"Resolve sync conflict":"Recovery options",ResolveSync)}));
+        sections.Add(new("Start fresh","Clears this list only. Other lists stay unchanged.",new(){Command("Clear entire list…",Model.ClearListCommand)}));
+        page=new ShoppingListToolsPage(ListSelector.Text,ListVisibility.Text,sections);
+        await AppNavigation.Open(page);
+    }
+
     private async void CheckedItemSettings_Clicked(object sender,EventArgs e)
     {
         try{await CheckedItemSettings();}
@@ -129,7 +164,7 @@ public partial class ShoppingListPage : ContentPage
 
     protected override async void OnAppearing()
     {
-        base.OnAppearing(); visible = true; ShoppingMembership.Refresh();
+        base.OnAppearing(); visible = true;
         WidgetShoppingStore.Changed -= WidgetChanged;
         WidgetShoppingStore.Changed += WidgetChanged;
         try
@@ -304,8 +339,6 @@ public partial class ShoppingListPage : ContentPage
         foreach(var list in personalLists)Tab(list.Name,householdId==null&&personalId==list.Id,()=>SwitchPersonal(list.Id));
         Tab("＋ New list",false,CreatePersonalList);
         var current=householdId!=null?sharedName:personalLists.First(l=>l.Id==personalId).Name;
-        HouseholdRequestsButton.IsVisible=householdId!=null;
-        HouseholdRequestsButton.Text=$"Household requests · {availableHousehold?.PendingRequests??0} pending";
         ShoppingModeListName.Text=current;
         ListSelector.Text=current;
         UpdateDrawerTitles();
@@ -334,7 +367,7 @@ public partial class ShoppingListPage : ContentPage
         if(!info.FamilyEnabled){await AppNavigation.Open(new UpgradeFeaturesPage());return;}
         availableHousehold=info;Model.Persist();SelectHousehold(info);Model.Load(true,null);RenderListTabs();await SyncAsync();
     }
-    private async void ListSelector_Clicked(object sender, EventArgs e)
+    private async Task ManageLists()
     {
         try
         {
@@ -368,7 +401,7 @@ public partial class ShoppingListPage : ContentPage
     private async void HouseholdRequests_Clicked(object sender,EventArgs e)=>await AppNavigation.Open(new HouseholdRequestsPage());
     private async void Household_Clicked(object sender, EventArgs e) => await Navigation.PushAsync(new HouseholdPage());
     private async void Sync_Clicked(object sender, EventArgs e) => await SyncAsync(true);
-    private async void Resolve_Clicked(object sender, EventArgs e)
+    private async Task ResolveSync()
     {
         if(personalId!="main"&&householdId==null){await DisplayAlert("Device list","This personal list is stored on this device and has no cloud conflict to resolve.","OK");return;}
         if (!conflict)
@@ -401,7 +434,9 @@ public partial class ShoppingListPage : ContentPage
     });
     protected override void OnDisappearing()
     {
-        openingDefault=true;
+        // Returning from list tools or another screen keeps the user-selected list.
+        // The household default is applied on first opening and account changes.
+        openingDefault=false;
         WidgetShoppingStore.Changed -= WidgetChanged;
         SetShoppingMode(false);
         _ = SyncAsync(); // Flush pending online edits when leaving; failures remain saved for retry.

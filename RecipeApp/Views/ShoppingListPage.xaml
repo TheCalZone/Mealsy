@@ -29,15 +29,6 @@
             <Setter Property="FontSize" Value="{DynamicResource ThemeFont16}" />
         </Style>
     </ContentPage.Resources>
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="{loc:Translate 'Household'}" Clicked="Household_Clicked" Order="Secondary" />
-        <ToolbarItem Text="{loc:Translate 'Plan from recipes &amp; checklists'}" Clicked="Creator_Clicked" Order="Secondary" />
-        <ToolbarItem Text="{loc:Translate 'Home-screen quick add'}" Clicked="Widget_Clicked" Order="Secondary" />
-        <ToolbarItem Text="{loc:Translate 'Sync now'}" Clicked="Sync_Clicked" Order="Secondary" />
-        <ToolbarItem Text="{loc:Translate 'Resolve sync conflict'}" Clicked="Resolve_Clicked" Order="Secondary" />
-        <ToolbarItem Text="{loc:Translate 'Paste list'}" Command="{Binding PasteCommand}" Order="Secondary" />
-        <ToolbarItem Text="{loc:Translate 'Clear list'}" Command="{Binding ClearListCommand}" Order="Secondary" />
-    </ContentPage.ToolbarItems>
 
     <Grid Padding="16,8,16,8" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
         <Grid x:Name="ShoppingModeBar" IsVisible="False" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
@@ -56,31 +47,21 @@
                     <Button x:Name="OptionsToggle" Grid.Column="2" Text="Options ▾" Clicked="OptionsToggle_Clicked" BackgroundColor="#3AFFFFFF" TextColor="White" HeightRequest="48" Padding="8,0" Margin="0" FontSize="12" SemanticProperties.Description="Shopping options, collapsed" />
                 </Grid>
                 <Label x:Name="ListVisibility" Text="Only you" FontSize="12" TextColor="#C3DAC8" MaxLines="1" LineBreakMode="TailTruncation" />
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="0,6,0,0">
+                    <HorizontalStackLayout x:Name="ListTabs" Spacing="8" />
+                </ScrollView>
                 <views:AnimatedDrawer x:Name="OptionsDrawer">
-                    <VerticalStackLayout Spacing="8">
-                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
-                            <HorizontalStackLayout x:Name="ListTabs" Spacing="8" />
-                        </ScrollView>
-                        <Button Text="Manage lists" Clicked="ListSelector_Clicked" Style="{StaticResource QuietButton}" />
-                        <Button Text="{loc:Translate 'Go shopping'}" Clicked="GoShopping_Clicked" BackgroundColor="White" TextColor="{DynamicResource ThemePrimary}" HeightRequest="48" />
+                    <VerticalStackLayout Spacing="6">
                         <SearchBar Text="{Binding SearchText}" Placeholder="{loc:Translate 'Find an item'}" BackgroundColor="{DynamicResource ThemeSurface}" TextColor="{DynamicResource ThemeText}" CancelButtonColor="{DynamicResource ThemeAccent}" />
-                        <HorizontalStackLayout Spacing="8">
-                            <Label Text="{loc:Translate 'Hide collected'}" FontSize="{DynamicResource ThemeFont12}" VerticalOptions="Center" TextColor="White" />
-                            <Switch IsToggled="{Binding HideCollected}" OnColor="{DynamicResource ThemeAccent}" ThumbColor="{DynamicResource ThemeOnAccent}" />
-                        </HorizontalStackLayout>
-                        <Button Text="Shopping questions &amp; replies" Clicked="ShoppingQuestions_Clicked" IsVisible="{Binding HouseholdList}" Style="{StaticResource QuietButton}" />
-                        <Button x:Name="HouseholdRequestsButton" Text="Household requests" Clicked="HouseholdRequests_Clicked" IsVisible="False" Style="{StaticResource QuietButton}" />
-                        <Button Text="Checked item settings" Clicked="CheckedItemSettings_Clicked" Style="{StaticResource QuietButton}" />
-                        <Button Text="{loc:Translate 'Reorder sections'}" Clicked="ReorderSections_Clicked" Style="{StaticResource QuietButton}" />
-                        <Label Text="{Binding ProgressText}" FontSize="{DynamicResource ThemeFont12}" TextColor="White" />
-                        <ProgressBar Progress="{Binding Progress}" ProgressColor="White" BackgroundColor="{DynamicResource ThemeAccent}" HeightRequest="4" />
-                        <Grid x:Name="ShoppingFooterActions" ColumnDefinitions="*,*,*,*" ColumnSpacing="5">
-                            <Button Text="{loc:Translate 'Undo'}" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" Padding="4,0" />
-                            <Button Grid.Column="1" Text="{loc:Translate 'Redo'}" Command="{Binding RedoCommand}" Style="{StaticResource QuietButton}" Padding="4,0" />
-                            <Button Grid.Column="2" Text="Clear done" Command="{Binding ClearCollectedCommand}" Style="{StaticResource QuietButton}" Padding="4,0" FontSize="12" />
-                            <Button Grid.Column="3" Text="Share" Command="{Binding ShareCommand}" Style="{StaticResource QuietButton}" Padding="4,0" />
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <Label Text="{loc:Translate 'Hide collected'}" FontSize="{DynamicResource ThemeFont13}" VerticalOptions="Center" TextColor="White" />
+                            <Switch Grid.Column="1" IsToggled="{Binding HideCollected}" OnColor="{DynamicResource ThemeAccent}" ThumbColor="White" />
+                            <Button Grid.Column="2" Text="Clear checked" Command="{Binding ClearCollectedCommand}" Style="{StaticResource QuietButton}" SemanticProperties.Description="Remove checked items from this list. Undo is available." />
                         </Grid>
-                        <views:MembershipPrompt x:Name="ShoppingMembership" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Text="{loc:Translate 'Go shopping'}" Clicked="GoShopping_Clicked" BackgroundColor="White" TextColor="{DynamicResource ThemePrimary}" HeightRequest="48" />
+                            <Button Grid.Column="1" Text="List tools…" Clicked="ListTools_Clicked" Style="{StaticResource QuietButton}" />
+                        </Grid>
                     </VerticalStackLayout>
                 </views:AnimatedDrawer>
             </VerticalStackLayout>

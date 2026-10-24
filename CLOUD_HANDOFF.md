@@ -1,5 +1,7 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Shared shopping UI, 24 October:** The iOS branch now includes Android changes through `5889c23`: simpler shopping options, visible list tabs and Clear checked, grouped list tools and selected-list retention. It also brings in the latest email-verification, household crash and account-name attribution fixes. Version code 5 is reserved for the next build. Shared tests: 448 passed; Android builds. Native iOS verification is still required.
+
 **iOS branch preparation, 23 October:** `codex/ios-client-support` now merges the
 Android source through `cb837b4`, retaining Swift widget/share source. Added a MAUI
 scene delegate with warm/cold invitation/widget routing and a Mac simulator
@@ -7,6 +9,26 @@ build/install/launch helper. Extension versions follow the host build. See
 [current Mac instructions](IOS_SETUP.md). Metadata/helper tests pass on Windows;
 native iOS/Swift compilation, simulator launch, signing and device acceptance
 remain unverified. The first app-only simulator run omits extensions by default.
+
+**Email confirmation, 23 October:** Version code 4 fixes the Account screen's
+unconditional confirmation prompt while social is paused. Account loading reloads
+the signed-in Auth user and token, uses the current verification flag, and offers
+resending only for accounts known to be unverified. Unknown/offline status has retry
+copy rather than being treated as unverified. Sending also checks live status first
+and skips delivery for already-confirmed users. No verification flags are set locally
+or changed by the app; existing server enforcement remains authoritative.
+
+**Shopping attribution, 23 October:** Household shopping tags now resolve the
+contributor's account first/last name from `users/{uid}`, including existing items
+and approved requests. Missing names fall back to “Household member”; emails are
+not used as tag labels. Profile reads are limited to distinct current contributors
+and the caller, within the membership-checked transaction. All 146 backend tests pass.
+**Household crash, 23 October:** Reproduced with a sample household in an Android
+API 34 x64 Release emulator build. `Page.IsBusy=true` in `HouseholdPage.Run`,
+called by `OnAppearing`, crashes in MAUI 10 `Page.OnPageBusyChanged` before the
+network request. Removed the page busy flag; the existing in-page loading control
+and duplicate-action guard remain. Unexpected load failures now enter diagnostics.
+Version code increased to 3 for the replacement Android build. Shared tests: 447 passed.
 
 **Android migration, 23 October:** Source now uses .NET/MAUI 10, minimum SDK 24,
 target SDK 36 and version code 2. A new upload-signed ARM64 AAB and phone APK pass

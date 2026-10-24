@@ -61,7 +61,23 @@ public static class AccountSession
         await RecipeApp.Platforms.Android.ActivityNotifications.Disable();
 #endif
         await CrossFirebaseAuth.Current.SignOutAsync();HouseholdWarmup.ResetSession();ClearOldPassword();}
-    public static Task SendVerification() => CrossFirebaseAuth.Current.CurrentUser.SendEmailVerificationAsync();
+    public static bool? EmailVerified { get { try{return CrossFirebaseAuth.Current.CurrentUser?.IsEmailVerified;}catch{return null;} } }
+    public static async Task<bool> RefreshEmailVerification()
+    {
+        var uid=UserId;if(uid==null)throw new InvalidOperationException("Sign in to check your email confirmation.");
+        await CrossFirebaseAuth.Current.ReloadCurrentUserAsync().WaitAsync(TimeSpan.FromSeconds(20));Check(uid);
+        var user=CrossFirebaseAuth.Current.CurrentUser;
+        // A confirmation link can be opened outside the app. Refresh the token
+        // too so callable services see the same confirmed status as this screen.
+        await user.GetIdTokenResultAsync(true).WaitAsync(TimeSpan.FromSeconds(20));Check(uid);
+        return user.IsEmailVerified;
+    }
+    public static async Task<bool> SendVerification()
+    {
+        var uid=UserId;
+        if(await RefreshEmailVerification())return false;
+        Check(uid);await CrossFirebaseAuth.Current.CurrentUser.SendEmailVerificationAsync();Check(uid);return true;
+    }
     public static void ClearOldPassword(){try{SecureStorage.Remove("email");SecureStorage.Remove("password");}catch(Exception){}}
     public static async Task<string> SyncSafely()
     {
