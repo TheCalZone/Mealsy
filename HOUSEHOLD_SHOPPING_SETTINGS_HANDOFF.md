@@ -6,6 +6,13 @@ An owner's member drawer includes Change shopping name colour. Eight named, dark
 
 ## Backend rollout — not deployed here
 
+**27 October desktop rollout:** `household`, `householdQuestions` and
+`processAccountDeletion` were deployed together to `mealsy-b732b`. The deployment
+metadata check passed: required functions ACTIVE, indexes READY, TTL ACTIVE and
+deletion recovery enabled. All 148 backend tests passed. Phone acceptance below
+remains outstanding; no real account was removed or household setting changed
+as part of this rollout. See `PLAY_RELEASE_2026_10_27.md` for the Android build.
+
 Deploy together from the repository root using your existing authenticated local Firebase workflow:
 
 ```
