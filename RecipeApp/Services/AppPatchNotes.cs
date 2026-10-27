@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,10,27), "Household shopping your way", new[] {
+            "Owners can turn approval for restricted members’ shopping additions on or off in My household → Shopping permissions. Existing pending requests stay pending; shared editing/deletion and meal-request rules stay unchanged.",
+            "Choose a shopping-name colour from each member’s drawer, or reset to Automatic. Colours update existing shared item badges, request cards and question authors after refreshing.",
+            "Both settings need the updated Firebase household backend. Existing households keep approval enabled until the owner changes it."
+        }),
         new(new(2026,10,24), "Simpler shopping options", new[] {
             "List tabs stay visible. The quick options drawer now focuses on search, hiding checked items, Clear checked and shopping mode.",
             "Secondary actions are grouped on a List tools screen instead of duplicated in the toolbar and a crowded drawer. Returning keeps the selected list.",

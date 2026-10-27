@@ -20,7 +20,7 @@ function queue(household,uid,kind,id,payload,now=Date.now()){
  if(Buffer.byteLength(JSON.stringify(requests))>600000)fail('resource-exhausted','Requests are full. Review them or use smaller recipe attachments.');
  household.requestRates=rates;return requests;
 }
-function restrictedShopping(household,uid,current,changes){
+function restrictedShopping(household,uid,current,changes,approvalRequired=true,contributor=null){
  // Validate the entire mutation using the same schema/conflict checks as adults.
  applyChanges(current,changes);
  let requests={...household.requests},requestedCount=0;const checks=[];
@@ -28,18 +28,20 @@ function restrictedShopping(household,uid,current,changes){
   const before=change.before==null?null:item(change.before),after=change.after==null?null:item(change.after);
   if(!before&&after){
    if(after.InBasket)fail('permission-denied','Request an uncollected item first.');
+   if(!approvalRequired){checks.push(change);continue;}
    household.requests=requests;requests=queue(household,uid,'shopping',after.Id,{item:after});requestedCount++;continue;
   }
   if(!before||!after||['Id','Name','Category','Quantity','Note'].some(key=>before[key]!==after[key]))
    fail('permission-denied','Restricted members can check items or request additions, but cannot edit or delete shared items.');
   checks.push(change);
  }
- return{items:applyChanges(current,checks),requests,requestedCount};
+ return{items:applyChanges(current,checks,contributor),requests,requestedCount};
 }
 function forget(household,uid){
  const roles={...household.roles};delete roles[uid];
+ const memberColors={...household.memberColors};delete memberColors[uid];
  const requestRates={...household.requestRates};delete requestRates[uid];
  const requests=Object.fromEntries(Object.entries(household.requests||{}).filter(([,r])=>r.authorId!==uid).map(([id,r])=>[id,r.resolvedBy===uid?{...r,resolvedBy:'former-member'}:r]));
- return{roles,requestRates,requests};
+ return{roles,memberColors,requestRates,requests};
 }
 module.exports={role,canManage,queue,restrictedShopping,forget};

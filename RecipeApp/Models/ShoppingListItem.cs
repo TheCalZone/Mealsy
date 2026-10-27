@@ -19,16 +19,11 @@ public class ShoppingListItem : ObservableObject
     public string AddedBy { get; set; }
     public string AddedByName { get; set; }
     public string AdditionKind { get; set; }
+    public string AddedByColor { get; set; }
     [JsonIgnore] public bool HasContributor => !string.IsNullOrWhiteSpace(AddedBy) && !string.IsNullOrWhiteSpace(AddedByName);
     [JsonIgnore] public string ContributorLabel => (AdditionKind=="requested"?"Requested by ":"Added by ")+AddedByName;
     // A white badge keeps these dark member colours readable in either appearance.
-    [JsonIgnore] public string ContributorColor {
-        get {
-            uint hash=2166136261;foreach(var ch in AddedBy??"")hash=unchecked((hash^ch)*16777619);
-            string[] colors={"#165D91","#7A325F","#426320","#915015","#51449A","#176865","#8B3544","#4F5965"};
-            return colors[hash%(uint)colors.Length];
-        }
-    }
+    [JsonIgnore] public string ContributorColor => RecipeApp.Services.HouseholdMemberColors.Resolve(AddedBy,AddedByColor);
     [JsonIgnore] public bool HasQuantity => !string.IsNullOrWhiteSpace(Quantity);
     [JsonIgnore] public bool HasNote => !string.IsNullOrWhiteSpace(Note);
 }

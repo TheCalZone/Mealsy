@@ -15,7 +15,7 @@ public static class ShoppingListDestinations
                 var household=await HouseholdService.StatusAsync();AccountSession.Check(account);
                 if(household is {FamilyEnabled:true,HouseholdId:not null}){
                     choices.Insert(0,new(account,household.HouseholdId,household.Name));
-                    labels.Insert(0,household.Name+(household.Restricted?" · Household, request additions":" · Household"));
+                    labels.Insert(0,household.Name+(household.Restricted&&household.ShoppingApprovalRequired?" · Household, request additions":" · Household"));
                 }
             }
             catch(HouseholdException){

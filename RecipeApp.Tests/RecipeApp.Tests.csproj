@@ -39,6 +39,7 @@
     <Compile Include="../RecipeApp/Services/PlanStatus.cs" Link="PlanStatus.cs" />
     <Compile Include="../RecipeApp/Services/PremiumLibrary.cs" Link="PremiumLibrary.cs" />
     <Compile Include="../RecipeApp/Services/SubscriptionPricing.cs" Link="SubscriptionPricing.cs" />
+    <Compile Include="../RecipeApp/Services/HouseholdMemberColors.cs" Link="HouseholdMemberColors.cs" />
     <Compile Include="../RecipeApp/Services/ThemeColors.cs" Link="ThemeColors.cs" />
     <Compile Include="../RecipeApp/Services/SettingsOptions.cs" Link="SettingsOptions.cs" />
     <Compile Include="../RecipeApp/Services/ReviewerAccountSignup.cs" Link="ReviewerAccountSignup.cs" />

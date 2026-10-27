@@ -148,3 +148,27 @@ test('leaving and removal anonymize contributions without removing shopping item
   assert.equal(stored.Name,'Milk');assert.equal(stored.AddedBy,'deleted-user');assert.equal(stored.AddedByName,'Former member');
  }
 });
+test('owner can make restricted shopping additions direct without allowing edits or deleting pending requests',async()=>{
+ const f=fixture();assert.equal((await f.call('child',{action:'status'})).shoppingApprovalRequired,true);
+ await f.patch('child',[{after:item('Pending')}]);
+ for(const uid of ['adult','child'])await assert.rejects(f.call(uid,{action:'setShoppingApproval',required:false}),{code:'permission-denied'});
+ await assert.rejects(f.call('owner',{action:'setShoppingApproval',required:'false'}),{code:'invalid-argument'});
+ await f.call('owner',{action:'setShoppingApproval',required:false});
+ assert.equal((await f.call('child',{action:'status'})).shoppingApprovalRequired,false);
+ const milk=item();const result=await f.patch('child',[{after:milk}]);assert.equal(result.requestedCount,0);assert.equal(result.shoppingApprovalRequired,false);
+ assert.equal(result.items[0].AddedBy,'child');assert.equal(result.items[0].AdditionKind,'added');assert.equal((await f.requestList('owner')).requests.length,1);
+ await assert.rejects(f.patch('child',[{before:milk,after:{...milk,Name:'Changed'}}]),{code:'permission-denied'});
+ await assert.rejects(f.patch('child',[{before:milk,after:null}]),{code:'permission-denied'});
+ await f.call('owner',{action:'setShoppingApproval',required:true});await f.patch('child',[{after:item('Request again')}]);assert.equal((await f.requestList('owner')).requests.length,2);
+});
+test('member colours are owner-controlled, bounded and applied to existing item responses',async()=>{
+ const f=fixture();await f.patch('adult',[{after:item()}]);
+ await assert.rejects(f.call('adult',{action:'setMemberColor',member:'adult',color:'#165D91'}),{code:'permission-denied'});
+ await assert.rejects(f.call('owner',{action:'setMemberColor',member:'outsider',color:'#165D91'}),{code:'invalid-argument'});
+ await assert.rejects(f.call('owner',{action:'setMemberColor',member:'adult',color:'javascript:bad'}),{code:'invalid-argument'});
+ await f.call('owner',{action:'setMemberColor',member:'adult',color:'#165D91'});
+ assert.equal((await f.call('child',{action:'read',scope:'household'})).items[0].AddedByColor,'#165D91');
+ assert.equal((await f.call('owner',{action:'status'})).members.find(m=>m.id==='adult').color,'#165D91');
+ await f.call('owner',{action:'setMemberColor',member:'adult',color:null});assert.equal((await f.call('child',{action:'read',scope:'household'})).items[0].AddedByColor,null);
+ await f.call('owner',{action:'setMemberColor',member:'adult',color:'#165D91'});await f.call('owner',{action:'remove',member:'adult'});assert.equal(f.db.docs.get('households/home').memberColors.adult,undefined);
+});

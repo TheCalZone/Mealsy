@@ -44,6 +44,8 @@ public class ShoppingListViewModel : CustomViewModelBase
         EditItemCommand?.ChangeCanExecute();RemoveItemCommand?.ChangeCanExecute();
         NotifySummary();
     }}
+    public bool ShoppingApprovalRequired {get;set;}=true;
+    public bool RequiresShoppingApproval=>RestrictedHousehold&&ShoppingApprovalRequired;
     public bool IsShared => sharedKey != null;
     public void SelectList(string key)
     {
@@ -203,7 +205,7 @@ public class ShoppingListViewModel : CustomViewModelBase
         document.Add(new() { Name = QuickName, Quantity = QuickQuantity?.Trim() ?? "", Category = SelectedCategory, Note = QuickNote?.Trim() ?? "" });
         QuickName = QuickQuantity = QuickNote = "";
         SearchText = "";
-        Changed(RestrictedHousehold?"Request waiting to sync · Not added to shared list yet":"Item added");
+        Changed(RequiresShoppingApproval?"Request waiting to sync · Not added to shared list yet":"Item added");
         IngredientSuggestionStore.Remember(HouseholdService.UserId,addedName);
     }
 

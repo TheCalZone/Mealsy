@@ -400,3 +400,7 @@ See [SHOPPING_ATTRIBUTION_HANDOFF.md](SHOPPING_ATTRIBUTION_HANDOFF.md) for trust
 ## Household shopping questions and notifications
 
 See [HOUSEHOLD_SHOPPING_QUESTIONS_HANDOFF.md](HOUSEHOLD_SHOPPING_QUESTIONS_HANDOFF.md) for the new callable, household-only notification path, index, cleanup, opt-in Android push and bounded/manual loading. Deploy the listed backend functions together; no live Firebase changes were made here.
+
+## Owner shopping approval switch and member colours
+
+See [HOUSEHOLD_SHOPPING_SETTINGS_HANDOFF.md](HOUSEHOLD_SHOPPING_SETTINGS_HANDOFF.md). This controls restricted-member shopping approvals, not item-question conversations. Existing households remain approval-on until the owner opts out. Deploy household, householdQuestions and processAccountDeletion together; source changes are not deployed by this cloud session.

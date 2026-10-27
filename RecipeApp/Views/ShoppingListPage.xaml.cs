@@ -65,7 +65,7 @@ public partial class ShoppingListPage : ContentPage
     private void UpdateDrawerTitles()
     {
         OptionsToggle.Text="Options "+(OptionsDrawer.IsOpen?"▴":"▾");
-        var title=Model.RestrictedHousehold?"Request an item":"Add an item";
+        var title=Model.RequiresShoppingApproval?"Request an item":"Add an item";
         AddItemToggle.Text="＋ "+title+" "+(AddItemDrawer.IsOpen?"▴":"▾");
         SemanticProperties.SetDescription(OptionsToggle,"Shopping options, "+(OptionsDrawer.IsOpen?"expanded":"collapsed"));
         SemanticProperties.SetDescription(AddItemToggle,title+", "+(AddItemDrawer.IsOpen?"expanded":"collapsed"));
@@ -188,7 +188,7 @@ public partial class ShoppingListPage : ContentPage
             {
                 var info=await HouseholdService.StatusAsync();
                 if(info.HouseholdId!=requestedHousehold||!info.FamilyEnabled)throw new InvalidOperationException("Household access ended.");
-                generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
+                generation++;householdId=info.HouseholdId;sharedName=info.Name;conflict=false;listAccount=uid;Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.ShoppingApprovalRequired=info.ShoppingApprovalRequired;Model.SelectList(CacheKey);ListSelector.Text=sharedName+" ▾";
             }
             if (householdId == null) ListSelector.Text = uid == null ? AppLocalization.Text("Device list ▾") : AppLocalization.Text("Personal list ▾");
             if(!string.IsNullOrEmpty(requestedPersonal))
@@ -209,7 +209,7 @@ public partial class ShoppingListPage : ContentPage
             if (householdId != null && string.IsNullOrEmpty(requestedHousehold))
             {
                 var info = await HouseholdService.StatusAsync();
-                if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();else {Model.RestrictedHousehold=info.Restricted;sharedName=info.Name;availableHousehold=info;}
+                if (info.HouseholdId != householdId || !info.FamilyEnabled) SelectPersonal();else {Model.RestrictedHousehold=info.Restricted;Model.ShoppingApprovalRequired=info.ShoppingApprovalRequired;sharedName=info.Name;availableHousehold=info;}
             }
             if (!visible) return;
             if(!string.IsNullOrWhiteSpace(incoming)&&householdId!=null)
@@ -260,6 +260,7 @@ public partial class ShoppingListPage : ContentPage
                 action = changes.Count > 0 ? "patch" : "read", scope = householdId == null ? "personal" : "household", householdId, changes
             },bypassReadCache:manual);
             if (generation != currentGeneration || HouseholdService.UserId != uid || Model.IsEditing) return;
+            if(householdId!=null&&response.ShoppingApprovalRequired.HasValue){Model.ShoppingApprovalRequired=response.ShoppingApprovalRequired.Value;RenderListTabs();}
             var server = JsonSerializer.Serialize(response.Items);
             var latest=Preferences.Get(key,Model.CurrentJson);
             var merged = ShoppingListSync.Reapply(sent, latest, server);
@@ -286,7 +287,7 @@ public partial class ShoppingListPage : ContentPage
                 if(generation!=currentGeneration||HouseholdService.UserId!=uid)return;
                 if(info?.HouseholdId==householdId&&info.FamilyEnabled)
                 {
-                    availableHousehold=info;Model.RestrictedHousehold=info.Restricted;conflict=true;RenderListTabs();
+                    availableHousehold=info;Model.RestrictedHousehold=info.Restricted;Model.ShoppingApprovalRequired=info.ShoppingApprovalRequired;conflict=true;RenderListTabs();
                     Model.StatusText="Your household permissions changed. Device edits were kept. Use Resolve sync conflict to copy them or reload the shared list.";
                 }
                 else {availableHousehold=null;SelectPersonal();Model.Load(true,null);Model.StatusText="Household access ended or could not be confirmed. Your personal list is open.";}
@@ -317,7 +318,7 @@ public partial class ShoppingListPage : ContentPage
     {
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++;conflict=false;householdId=info.HouseholdId;sharedName=info.Name;listAccount=HouseholdService.UserId;
-        Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.SelectList(CacheKey);
+        Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.ShoppingApprovalRequired=info.ShoppingApprovalRequired;Model.SelectList(CacheKey);
     }
     private void RenderListTabs()
     {
@@ -342,8 +343,8 @@ public partial class ShoppingListPage : ContentPage
         ShoppingModeListName.Text=current;
         ListSelector.Text=current;
         UpdateDrawerTitles();
-        ListVisibility.Text=householdId!=null?(Model.RestrictedHousehold?"Shared · Additions need approval":"Shared with your household"):personalId=="main"?"Only you · Personal list":"Only you · Saved on this device";
-        QuickAddEntry.Placeholder=(Model.RestrictedHousehold?"Request for ":"Add to ")+current;
+        ListVisibility.Text=householdId!=null?(Model.RequiresShoppingApproval?"Shared · Additions need approval":"Shared with your household"):personalId=="main"?"Only you · Personal list":"Only you · Saved on this device";
+        QuickAddEntry.Placeholder=(Model.RequiresShoppingApproval?"Request for ":"Add to ")+current;
     }
     private async Task CreatePersonalList()
     {

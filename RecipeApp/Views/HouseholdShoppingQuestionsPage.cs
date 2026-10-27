@@ -44,7 +44,7 @@ public class HouseholdShoppingQuestionsPage:ContentPage
         if(thread.Messages.Count==0)messages.Add(ShoppingUi.Text("Need a little more detail? Ask before you buy."));
         foreach(var message in thread.Messages)
         {
-            var author=ShoppingUi.Text(message.AuthorName,12,true);author.TextColor=Color.FromArgb(new ShoppingListItem{AddedBy=message.AuthorId}.ContributorColor);
+            var author=ShoppingUi.Text(message.AuthorName,12,true);author.TextColor=Color.FromArgb(new ShoppingListItem{AddedBy=message.AuthorId,AddedByColor=thread.Members.FirstOrDefault(m=>m.Id==message.AuthorId)?.Color}.ContributorColor);
             var badge=new Border{Content=author,BackgroundColor=Colors.White,Padding=new Thickness(6,2),StrokeThickness=0,HorizontalOptions=LayoutOptions.Start};
             messages.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=6,Children={badge,ShoppingUi.Text(message.Text),ShoppingUi.Text(DateTimeOffset.FromUnixTimeMilliseconds(message.CreatedAt).ToLocalTime().ToString("g"),11)}}));
         }

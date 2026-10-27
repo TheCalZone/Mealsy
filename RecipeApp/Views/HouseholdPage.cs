@@ -36,7 +36,7 @@ public class HouseholdPage : ContentPage
         var role="adult";
         if(household.PermissionsVersion>=1)
         {
-            var roleChoice=await DisplayActionSheet("Invitation access","Cancel",null,"Restricted · Request additions","Adult · Edit and approve");
+            var roleChoice=await DisplayActionSheet("Invitation access","Cancel",null,"Restricted · Limited editing","Adult · Edit and approve");
             if(roleChoice==null||roleChoice=="Cancel")return;
             role=roleChoice.StartsWith("Restricted")?"restricted":"adult";CheckAccount();
         }
@@ -121,20 +121,44 @@ public class HouseholdPage : ContentPage
             }
             if(household.PermissionsVersion>=1)content.Add(Action($"Requests · {household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage())));
             else content.Add(ShoppingUi.Text("Roles and approval requests need the updated Firebase household backend before they can be enabled.",13));
+            var shoppingSettings=new VerticalStackLayout{Spacing=10};
+            shoppingSettings.Add(ShoppingUi.Text("Require approval for shopping additions",17,true));
+            shoppingSettings.Add(ShoppingUi.Text("On: restricted members send shopping additions for adult approval. Off: they add directly, with coloured names. They still cannot edit or delete shared items. Meal requests keep their existing rules. Pending requests are not automatically approved.",13));
+            var approval=new Switch{IsToggled=household.ShoppingApprovalRequired,IsEnabled=isOwner&&household.ShoppingSettingsVersion>=1};
+            approval.SetDynamicResource(Switch.OnColorProperty,"ThemeAccent");
+            approval.Toggled+=async(_,e)=>await Run(async()=>{
+                approval.IsEnabled=false;CheckAccount();
+                try{await HouseholdService.CallAsync<object>(new{action="setShoppingApproval",householdId=household.HouseholdId,required=e.Value});}
+                finally{await Refresh();}
+            });
+            shoppingSettings.Add(approval);
+            if(!isOwner)shoppingSettings.Add(ShoppingUi.Text("Only the household owner changes this setting.",12));
+            else if(household.ShoppingSettingsVersion<1)shoppingSettings.Add(ShoppingUi.Text("Update the Firebase household function to enable this setting and member colours.",12));
+            content.Add(Drawer("shopping-settings","Shopping permissions",household.ShoppingApprovalRequired?"Approval required":"Direct additions",shoppingSettings));
             content.Add(ShoppingUi.Text("Family members",21,true));
             content.Add(ShoppingUi.Text("Tap a person to see their role and available options.",13));
             foreach(var member in household.Members.OrderByDescending(m=>m.Id==household.Owner).ThenBy(m=>m.Label))
             {
                 var owner=member.Id==household.Owner;var self=member.Id==account;
                 var options=new VerticalStackLayout {Spacing=9};
-                options.Add(ShoppingUi.Text(owner?"Manages invitations, roles and membership. Their Premium plan covers the household.":member.Role=="restricted"?"Can view shared lists and meals, check off shopping, and request additions. An adult approves requests. Personal lists stay unrestricted.":"Can edit shared shopping and meals, and approve or decline requests.",14));
+                options.Add(ShoppingUi.Text(owner?"Manages invitations, roles and membership. Their Premium plan covers the household.":member.Role=="restricted"?(household.ShoppingApprovalRequired?"Can check shopping and request additions for approval. Cannot edit or delete shared items. Personal lists stay unrestricted.":"Can add shopping directly and check items, but cannot edit or delete shared items. Meal additions still need approval. Personal lists stay unrestricted."):"Can edit shared shopping and meals, and approve or decline requests.",14));
                 if(self)options.Add(Action("Open my account",()=>AppNavigation.Root("AccountPage")));
                 if(isOwner&&!owner&&household.PermissionsVersion>=1)options.Add(Action("Change household role",async()=>{
-                    var choice=await DisplayActionSheet("Access for "+member.Label,"Cancel",null,"Adult · Edit and approve","Restricted · Request additions");
+                    var choice=await DisplayActionSheet("Access for "+member.Label,"Cancel",null,"Adult · Edit and approve","Restricted · Limited editing");
                     if(choice==null||choice=="Cancel")return;
                     var role=choice.StartsWith("Restricted")?"restricted":"adult";
-                    if(!await DisplayAlert("Change access?",role=="restricted"?"Shared additions will become requests. They can still check off items and use their personal lists freely.":"They will be able to edit shared shopping and meals and approve requests.","Change role","Keep current"))return;
+                    if(!await DisplayAlert("Change access?",role=="restricted"?(household.ShoppingApprovalRequired?"Shopping additions and new meals need adult approval. They can check shopping items and use personal lists freely.":"They can add shopping directly and check items. Editing and deleting shared items stay blocked; new meals still need approval."):"They will be able to edit shared shopping and meals and approve requests.","Change role","Keep current"))return;
                     CheckAccount();await HouseholdService.CallAsync<object>(new {action="setRole",householdId=household.HouseholdId,member=member.Id,role});await Refresh();
+                }));
+                var colourLabel=ShoppingUi.Text("Shopping name colour",14,true);
+                colourLabel.TextColor=Color.FromArgb(HouseholdMemberColors.Resolve(member.Id,member.Color));
+                options.Add(new Border{Content=colourLabel,BackgroundColor=Colors.White,Padding=new Thickness(8,4),StrokeThickness=0,HorizontalOptions=LayoutOptions.Start});
+                if(isOwner)options.Add(Action("Change shopping name colour",async()=>{
+                    if(household.ShoppingSettingsVersion<1){await DisplayAlert("Household update needed","Deploy the household settings backend before changing colours.","OK");return;}
+                    var choices=new[]{"Automatic"}.Concat(HouseholdMemberColors.Names).ToArray();
+                    var choice=await DisplayActionSheet("Colour for "+member.Label,AppLocalization.Text("Cancel"),null,choices);
+                    var index=Array.IndexOf(choices,choice);if(index<0)return;
+                    CheckAccount();await HouseholdService.CallAsync<object>(new{action="setMemberColor",householdId=household.HouseholdId,member=member.Id,color=index==0?null:HouseholdMemberColors.Values[index-1]});await Refresh();
                 }));
                 if(isOwner&&!owner)options.Add(Action("Remove from household",async()=>{
                     if(!await DisplayAlert("Remove "+member.Label+"?","They will lose access to shared shopping and meal plans. Their personal lists, recipes and account are kept.",AppLocalization.Text("Remove"),AppLocalization.Text("Cancel")))return;
