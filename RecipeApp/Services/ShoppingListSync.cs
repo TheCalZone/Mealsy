@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace RecipeApp.Services;
 
 public record ShoppingItemChange(ShoppingListItem before, ShoppingListItem after);
-public record ShoppingSyncResult(List<ShoppingListItem> Items,int RequestedCount=0);
+public record ShoppingSyncResult(List<ShoppingListItem> Items,int RequestedCount=0,bool? ShoppingApprovalRequired=null);
 public class ShoppingSyncConflictException : Exception { }
 
 /// <summary>Computes changes against the last acknowledged server state, including deletions.</summary>

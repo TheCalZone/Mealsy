@@ -1,3 +1,4 @@
+const {memberColors}=require('./household-settings');
 const {forgetQuestions}=require('./shopping-questions');
 const {randomBytes, createHash} = require('node:crypto');
 const {fail, applyChanges, requireMember, requireOwner,contributor,anonymizeContributor} = require('./domain');
@@ -21,7 +22,7 @@ function createHandler(db) {
 return async function handle(request) {
   if (!request.auth) fail('unauthenticated', 'Sign in to use household lists.');
   const uid = request.auth.uid;
-  const data = requestData(request, ['create', 'join', 'read', 'patch', 'status', 'leave', 'remove', 'delete', 'invite', 'revoke','setRole','requests','resolveRequest','cancelRequest','rename']);
+  const data = requestData(request, ['create', 'join', 'read', 'patch', 'status', 'leave', 'remove', 'delete', 'invite', 'revoke','setRole','requests','resolveRequest','cancelRequest','rename','setMemberColor','setShoppingApproval']);
   if (['read', 'patch'].includes(data.action) && !['personal', 'household'].includes(data.scope))
     fail('invalid-argument', 'Choose a list.');
   const accountRef = db.doc(`householdAccounts/${uid}`);
@@ -87,7 +88,7 @@ return async function handle(request) {
       const grant = (await tx.get(db.doc(`familyGrants/${household.owner}`))).data();
       const seats=(await tx.get(db.doc(`seatEntitlements/${household.owner}`))).data();
       return {householdId: ref.id, name: household.name, owner: household.owner, familyEnabled: active(plan) || active(grant),
-        canRenameHousehold:true,permissionsVersion:1,memberLimit:memberLimit(seats),role:role(household,uid),pendingRequests:Object.values(household.requests||{}).filter(r=>r.status==='pending').length,members: Object.entries(household.members).map(([id, label]) => ({id, label,role:role(household,id)}))};
+        shoppingApprovalRequired:household.shoppingApprovalRequired!==false,shoppingSettingsVersion:1,canRenameHousehold:true,permissionsVersion:1,memberLimit:memberLimit(seats),role:role(household,uid),pendingRequests:Object.values(household.requests||{}).filter(r=>r.status==='pending').length,members: Object.entries(household.members).map(([id, label]) => ({id, label,role:role(household,id),color:household.memberColors?.[id]||null}))};
     }
     if (['read', 'patch'].includes(data.action)) {
       if (data.scope !== 'household' || data.householdId !== ref.id) fail('invalid-argument', 'Choose a list.');
@@ -95,16 +96,16 @@ return async function handle(request) {
       const listRef = ref.collection('lists').doc('shopping');
       const current = (await tx.get(listRef)).data()?.items || {};
       household=await namedMembers(tx,db,household,[uid,...Object.values(current).map(item=>item.AddedBy)]);
-      const displayItems=items=>Object.values(items).map(item=>item.AddedBy?{...item,AddedByName:Object.hasOwn(household.members,item.AddedBy)?household.members[item.AddedBy]:memberName(null,item.AddedByName)}:item);
+      const displayItems=items=>Object.values(items).map(item=>item.AddedBy?{...item,AddedByColor:household.memberColors?.[item.AddedBy]||null,AddedByName:Object.hasOwn(household.members,item.AddedBy)?household.members[item.AddedBy]:memberName(null,item.AddedByName)}:item);
       if(data.action==='patch'&&!canManage(household,uid)){
-        const result=restrictedShopping(household,uid,current,data.changes);
+        const result=restrictedShopping(household,uid,current,data.changes,household.shoppingApprovalRequired!==false,contributor(household,uid));
         tx.set(listRef,{items:result.items});
         tx.update(ref,{requests:result.requests,requestRates:household.requestRates||{}});
-        return{items:displayItems(result.items),requestedCount:result.requestedCount};
+        return{items:displayItems(result.items),requestedCount:result.requestedCount,shoppingApprovalRequired:household.shoppingApprovalRequired!==false};
       }
       const items = data.action === 'patch' ? applyChanges(current, data.changes,contributor(household,uid)) : current;
       if (data.action === 'patch') tx.set(listRef, {items});
-      return {items: displayItems(items)};
+      return {items: displayItems(items),shoppingApprovalRequired:household.shoppingApprovalRequired!==false};
     }
     if(['requests','resolveRequest','cancelRequest'].includes(data.action)){
       await requireFamily(tx,db,household.owner);
@@ -148,6 +149,16 @@ return async function handle(request) {
       tx.update(ref, {members,...forget(household,uid)}); tx.delete(accountRef); return {};
     }
     requireOwner(household, uid);
+    if(data.action==='setShoppingApproval'){
+      if(typeof data.required!=='boolean')fail('invalid-argument','Choose whether shopping approval is required.');
+      tx.update(ref,{shoppingApprovalRequired:data.required});return{};
+    }
+    if(data.action==='setMemberColor'){
+      if(typeof data.member!=='string'||!Object.hasOwn(household.members,data.member))fail('invalid-argument','Choose a current member.');
+      if(data.color!==null&&!memberColors.includes(data.color))fail('invalid-argument','Choose one of the household colours.');
+      const colors={...household.memberColors};if(data.color===null)delete colors[data.member];else colors[data.member]=data.color;
+      tx.update(ref,{memberColors:colors});return{};
+    }
     if (data.action === 'rename') {
       if(typeof data.name!=='string'||!data.name.trim()||data.name.trim().length>80) fail('invalid-argument','Enter a household name of 1–80 characters.');
       const name=data.name.trim();tx.update(ref,{name});return {name};

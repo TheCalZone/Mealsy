@@ -20,7 +20,7 @@ function createShoppingQuestions(db){return async request=>{
   const item=(await tx.get(homeRef.collection('lists').doc('shopping'))).data()?.items?.[data.itemId];
   const threads={...value.threads},thread=threads[data.itemId];
   if(!thread&&!item)fail('not-found','This shopping item is no longer available.');
-  const members=Object.entries(home.members).map(([id,name])=>({id,name}));
+  const members=Object.entries(home.members).map(([id,name])=>({id,name,color:home.memberColors?.[id]||null}));
   const targetId=thread?.targetId||(Object.hasOwn(home.members,item?.AddedBy)?item.AddedBy:null);
   if(data.action==='read')return{title:item?.Name||thread.title,targetId,members,canClear:canManage(home,uid),messages:(thread?.messages||[]).map(m=>({...m,authorName:home.members[m.authorId]||'Former member'}))};
   if(data.action==='clear'){
