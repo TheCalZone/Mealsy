@@ -12,16 +12,22 @@ public sealed record SettingsOptions
     public bool HideCollected { get; init; }
     public bool DeleteCollectedOnCheck { get; init; }
     public bool ShoppingDetails { get; init; }
+    public string ShoppingItemSize { get; init; } = "Compact";
+    public string ShoppingAddButtonSide { get; init; } = "Right";
     public string RecipeSort { get; init; } = "Recent";
     public bool KeepAwake { get; init; }
     public bool IsDark(bool systemDark) => Appearance switch { "Light"=>false,"Dark"=>true,_=>systemDark };
     public static readonly string[] Palettes = { "Forest", "Ocean", "Berry", "Terracotta", "Slate" };
     public static readonly string[] Appearances = { "System", "Light", "Dark" };
+    public static readonly string[] ShoppingItemSizes = { "Compact", "Comfortable" };
+    public static readonly string[] ShoppingButtonSides = { "Right", "Left" };
     public static readonly string[] Sorts = { "Recent", "Name", "Quickest", "Top rated" };
     public SettingsOptions Normalize() => this with {
         Language = AppLocalization.Normalize(Language),
         Palette = Palettes.Contains(Palette) ? Palette : "Forest",
         Appearance = Appearances.Contains(Appearance) ? Appearance : "System",
+        ShoppingItemSize = ShoppingItemSizes.Contains(ShoppingItemSize) ? ShoppingItemSize : "Compact",
+        ShoppingAddButtonSide = ShoppingButtonSides.Contains(ShoppingAddButtonSide) ? ShoppingAddButtonSide : "Right",
         RecipeSort = Sorts.Contains(RecipeSort) ? RecipeSort : "Recent"
     };
     public static SettingsOptions Read(string json)

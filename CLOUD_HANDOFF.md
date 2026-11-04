@@ -1,5 +1,7 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Shopping display, 4 November:** Based on the current Android source through `3a9bb50` (including the desktop v5/household rollout record), with no pre-existing uncommitted changes. Compact/Comfortable shopping item sizes and a left/right floating + button are device settings. The adder is a bottom panel using existing quantity/suggestions/category/note controls; the top adder row is removed. Options → Item size & + button position, List tools and Settings → Shopping all reach the preferences. Touch targets remain at least 48 px in MAUI layout units, and the list footer leaves room to scroll the last row clear of the 56-unit button. Version code 6 is reserved for the next build; no Play submission or Firebase deployment was performed. See MULTIPLE_SHOPPING_LISTS.md for phone checks.
+
 **Email confirmation, 23 October:** Version code 4 fixes the Account screen's
 unconditional confirmation prompt while social is paused. Account loading reloads
 the signed-in Auth user and token, uses the current verification flag, and offers
