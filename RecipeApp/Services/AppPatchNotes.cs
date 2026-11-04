@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,11,4), "A clearer quick-add panel", new[] {
+            "The floating item adder has a theme-coloured heading, matching stronger outline and drop shadow. White heading/close text stays clear in light and dark modes.",
+            "The circular + button has a contrasting ring and shadow to separate it from the list."
+        }),
         new(new(2026,11,4), "More room for shopping", new[] {
             "Shopping items default to Compact, with a Comfortable option under shopping options → Item size & + button position. Checkboxes and drag handles retain their full touch area.",
             "The item adder now opens from a circular + at the bottom of the list. Choose a left- or right-hand position. Quantity, ingredient suggestions, category, notes and restricted-member requests still use the same list and sync.",
