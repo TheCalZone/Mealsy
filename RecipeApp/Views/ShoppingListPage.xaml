@@ -144,11 +144,12 @@
             <Button Grid.Column="1" Text="{loc:Translate 'Undo'}" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
         </Grid>
 
-        <Border x:Name="ShoppingTools" Grid.RowSpan="2" ZIndex="5" VerticalOptions="End" Margin="0,0,0,80" IsVisible="False" Padding="0" Stroke="{DynamicResource ThemeOutline}" StrokeThickness="1" StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource ThemeSurface}">
+        <Border x:Name="ShoppingTools" Grid.RowSpan="2" ZIndex="5" VerticalOptions="End" Margin="0,0,0,80" IsVisible="False" Padding="0" Stroke="{DynamicResource ThemeAccent}" StrokeThickness="3" StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource ThemeSurface}">
+            <Border.Shadow><Shadow Brush="Black" Offset="0,5" Radius="16" Opacity="0.35" /></Border.Shadow>
             <VerticalStackLayout Spacing="0">
-                <Grid ColumnDefinitions="*,Auto" Padding="12,0,4,0">
-                    <Label x:Name="QuickAddTitle" Text="Add an item" FontSize="{DynamicResource ThemeFont17}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" VerticalOptions="Center" />
-                    <Button Grid.Column="1" Text="×" Clicked="CloseAddItem_Clicked" Style="{StaticResource QuietButton}" SemanticProperties.Description="Close item entry. Your unfinished text is kept." />
+                <Grid ColumnDefinitions="*,Auto" Padding="14,4,6,4" BackgroundColor="{DynamicResource ThemeAccent}">
+                    <Label x:Name="QuickAddTitle" Text="Add an item" FontSize="{DynamicResource ThemeFont17}" FontAttributes="Bold" TextColor="{DynamicResource ThemeOnAccent}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="×" Clicked="CloseAddItem_Clicked" Style="{StaticResource QuietButton}" BackgroundColor="#30FFFFFF" TextColor="{DynamicResource ThemeOnAccent}" SemanticProperties.Description="Close item entry. Your unfinished text is kept." />
                 </Grid>
                 <views:AnimatedDrawer x:Name="AddItemDrawer" Padding="8">
                     <VerticalStackLayout Spacing="6">
@@ -170,8 +171,9 @@
 
         <Button x:Name="FloatingAddButton" Grid.Row="1" ZIndex="6" Text="+" Clicked="AddItemToggle_Clicked"
                 HorizontalOptions="End" VerticalOptions="End" Margin="12" WidthRequest="56" HeightRequest="56" MinimumWidthRequest="56"
-                CornerRadius="28" Padding="0" FontSize="28" BackgroundColor="{DynamicResource ThemeAccent}" TextColor="White"
+                CornerRadius="28" Padding="0" FontSize="28" BackgroundColor="{DynamicResource ThemeAccent}" TextColor="{DynamicResource ThemeOnAccent}" BorderColor="{DynamicResource ThemeOnAccent}" BorderWidth="2"
                 SemanticProperties.Description="Add an item to the selected shopping list">
+            <Button.Shadow><Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.4" /></Button.Shadow>
             <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding IsEditing}" Value="True"><Setter Property="IsVisible" Value="False" /></DataTrigger></Button.Triggers>
         </Button>
 
