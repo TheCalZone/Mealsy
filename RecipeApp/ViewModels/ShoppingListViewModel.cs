@@ -77,6 +77,18 @@ public class ShoppingListViewModel : CustomViewModelBase
     public ObservableRangeCollection<ShoppingListGroup> Groups { get; } = new();
     private bool showSectionIngredients=true;
     public bool ShowSectionIngredients=>showSectionIngredients;
+    private bool CompactItems=>AppSettings.Current.ShoppingItemSize=="Compact";
+    private double ReadingScale=>AppSettings.Current.LargerText?1.18:1;
+    public Thickness ItemCardPadding=>CompactItems?new Thickness(4,3,6,3):new Thickness(8,10,10,10);
+    public Thickness ItemCardMargin=>new Thickness(0,0,0,CompactItems?3:7);
+    public double ItemNameFontSize=>(CompactItems?15:17)*ReadingScale;
+    public double ItemQuantityFontSize=>(CompactItems?12:14)*ReadingScale;
+    public double ItemNoteFontSize=>(CompactItems?11:12)*ReadingScale;
+    public double ItemTextSpacing=>CompactItems?1:3;
+    public void RefreshDisplayPreferences()
+    {
+        foreach(var name in new[]{nameof(ItemCardPadding),nameof(ItemCardMargin),nameof(ItemNameFontSize),nameof(ItemQuantityFontSize),nameof(ItemNoteFontSize),nameof(ItemTextSpacing)})OnPropertyChanged(name);
+    }
     public double IngredientRowHeight=>showSectionIngredients?-1:0;
     public void SetSectionDragPreview(bool active)
     {

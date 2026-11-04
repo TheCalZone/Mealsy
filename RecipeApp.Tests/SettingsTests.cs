@@ -38,4 +38,19 @@ public class SettingsTests
         Assert.True(older.ShowPhotos);
         Assert.Equal("System",older.Appearance);
     }
+
+    [Fact]
+    public void ShoppingDisplayDefaultsAndInvalidValuesAreSafe()
+    {
+        var old=SettingsOptions.Read("{}");
+        Assert.Equal("Compact",old.ShoppingItemSize);Assert.Equal("Right",old.ShoppingAddButtonSide);
+        var invalid=SettingsOptions.Read("{\"ShoppingItemSize\":null,\"ShoppingAddButtonSide\":\"Middle\",\"HideCollected\":true}");
+        Assert.Equal("Compact",invalid.ShoppingItemSize);Assert.Equal("Right",invalid.ShoppingAddButtonSide);Assert.True(invalid.HideCollected);
+    }
+    [Fact]
+    public void ShoppingDisplayChoicesSurviveSavingAlongsideOtherPreferences()
+    {
+        var selected=new SettingsOptions{ShoppingItemSize="Comfortable",ShoppingAddButtonSide="Left",LargerText=true,Palette="Ocean"};
+        Assert.Equal(selected,SettingsOptions.Read(JsonSerializer.Serialize(selected)));
+    }
 }

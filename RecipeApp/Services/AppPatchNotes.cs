@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,11,4), "More room for shopping", new[] {
+            "Shopping items default to Compact, with a Comfortable option under shopping options → Item size & + button position. Checkboxes and drag handles retain their full touch area.",
+            "The item adder now opens from a circular + at the bottom of the list. Choose a left- or right-hand position. Quantity, ingredient suggestions, category, notes and restricted-member requests still use the same list and sync.",
+            "The keyboard resizes the app above it, and the list has extra bottom space so the button does not cover the last item. Preferences stay on this device; no Firebase deployment is needed."
+        }),
         new(new(2026,10,27), "Household shopping your way", new[] {
             "Owners can turn approval for restricted members’ shopping additions on or off in My household → Shopping permissions. Existing pending requests stay pending; shared editing/deletion and meal-request rules stay unchanged.",
             "Choose a shopping-name colour from each member’s drawer, or reset to Automatic. Colours update existing shared item badges, request cards and question authors after refreshing.",

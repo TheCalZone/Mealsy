@@ -1,5 +1,7 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**Shopping display, 4 November:** Based on the current Android source through `3a9bb50` (including the desktop v5/household rollout record), with no pre-existing uncommitted changes. Compact/Comfortable shopping item sizes and a left/right floating + button are device settings. The adder is a bottom panel using existing quantity/suggestions/category/note controls; the top adder row is removed. Options → Item size & + button position, List tools and Settings → Shopping all reach the preferences. Touch targets remain at least 48 MAUI layout units, and the list footer leaves room to scroll the last row clear of the 56-unit button. Version code 6 is reserved for the next build; no Play submission or Firebase deployment was performed. 451 shared tests passed and the Android ARM64 Debug build passed in the refreshed cloud environment. Native iOS compilation and physical-phone UI checks remain unverified. See MULTIPLE_SHOPPING_LISTS.md for phone checks.
+
 **Shared shopping UI, 24 October:** The iOS branch now includes Android changes through `5889c23`: simpler shopping options, visible list tabs and Clear checked, grouped list tools and selected-list retention. It also brings in the latest email-verification, household crash and account-name attribution fixes. Version code 5 is reserved for the next build. Shared tests: 448 passed; Android builds. Native iOS verification is still required.
 
 **iOS branch preparation, 23 October:** `codex/ios-client-support` now merges the

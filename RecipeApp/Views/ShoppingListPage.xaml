@@ -30,7 +30,7 @@
         </Style>
     </ContentPage.Resources>
 
-    <Grid Padding="16,8,16,8" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+    <Grid Padding="16,8,16,8" RowDefinitions="Auto,*,Auto" RowSpacing="8">
         <Grid x:Name="ShoppingModeBar" IsVisible="False" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
             <Button Text="{loc:Translate 'Exit shopping'}" Clicked="ExitShopping_Clicked" HeightRequest="48" />
             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
@@ -62,33 +62,14 @@
                             <Button Text="{loc:Translate 'Go shopping'}" Clicked="GoShopping_Clicked" BackgroundColor="White" TextColor="{DynamicResource ThemePrimary}" HeightRequest="48" />
                             <Button Grid.Column="1" Text="List tools…" Clicked="ListTools_Clicked" Style="{StaticResource QuietButton}" />
                         </Grid>
+                        <Button Text="Item size &amp; + button position" Clicked="ShoppingDisplay_Clicked" Style="{StaticResource QuietButton}" />
                     </VerticalStackLayout>
                 </views:AnimatedDrawer>
             </VerticalStackLayout>
         </Border>
 
-        <Border x:Name="ShoppingTools" Grid.Row="1" Padding="0" StrokeThickness="0" StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource ThemeSurface}">
-            <VerticalStackLayout Spacing="0">
-                <Button x:Name="AddItemToggle" Text="＋ Add an item ▾" Clicked="AddItemToggle_Clicked" Style="{StaticResource QuietButton}" SemanticProperties.Description="Add an item, collapsed" />
-                <views:AnimatedDrawer x:Name="AddItemDrawer" Padding="8">
-                    <VerticalStackLayout Spacing="6">
-                        <Grid ColumnDefinitions="*,68,64" ColumnSpacing="7">
-                            <Entry x:Name="QuickAddEntry" Style="{StaticResource Field}" Text="{Binding QuickName}" Placeholder="{loc:Translate 'What do you need?'}" ReturnType="Done" ReturnCommand="{Binding AddItemCommand}" ClearButtonVisibility="WhileEditing" SemanticProperties.Description="New shopping item" />
-                            <Entry x:Name="QuickQuantityEntry" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding QuickQuantity}" Placeholder="{loc:Translate 'Qty'}" SemanticProperties.Description="Optional quantity or unit" />
-                            <Button Grid.Column="2" Text="{loc:Translate 'Add'}" Command="{Binding AddItemCommand}" BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White" HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" />
-                        </Grid>
-                        <views:IngredientSuggestionsView x:Name="QuickSuggestions" />
-                        <Button Text="{loc:Translate 'Category &amp; note'}" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" />
-                        <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">
-                            <Picker Title="{loc:Translate 'Category'}" ItemDisplayBinding="{Binding ., Converter={StaticResource UiToken}}" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" TextColor="{DynamicResource ThemeText}" />
-                            <Entry Grid.Row="1" Style="{StaticResource Field}" Text="{Binding QuickNote}" Placeholder="{loc:Translate 'Optional note, e.g. ripe or gluten-free'}" />
-                        </Grid>
-                    </VerticalStackLayout>
-                </views:AnimatedDrawer>
-            </VerticalStackLayout>
-        </Border>
 
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Groups}" IsGrouped="True" SelectionMode="None">
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Groups}" IsGrouped="True" SelectionMode="None">
             <CollectionView.EmptyView>
                 <VerticalStackLayout Padding="28,36" Spacing="10" VerticalOptions="Center" HorizontalOptions="Center">
                     <Label Text="{Binding EmptyTitle}" FontSize="{DynamicResource ThemeFont22}" FontAttributes="Bold" HorizontalTextAlignment="Center"
@@ -120,16 +101,16 @@
                                 <SwipeItem Text="{loc:Translate 'Remove'}" BackgroundColor="#9A4840" Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.RemoveItemCommand}" CommandParameter="{Binding .}" />
                             </SwipeItems>
                         </SwipeView.RightItems>
-                        <Border Loaded="ItemRow_Loaded" Margin="0,0,0,7" Padding="8,10,10,10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                        <Border Loaded="ItemRow_Loaded" Margin="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ItemCardMargin}" Padding="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ItemCardPadding}" StrokeThickness="0" StrokeShape="RoundRectangle 14"
                                 BackgroundColor="{DynamicResource ThemeSurface}">
                             <Grid ColumnDefinitions="48,*,48" ColumnSpacing="5" MinimumHeightRequest="48">
                                 <CheckBox IsChecked="{Binding InBasket, Mode=TwoWay}" Color="{DynamicResource ThemeAccent}" VerticalOptions="Center"
                                           SemanticProperties.Description="{Binding Name, StringFormat='Collected: {0}'}" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                <VerticalStackLayout Grid.Column="1" Spacing="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ItemTextSpacing}" VerticalOptions="Center">
                                     <VerticalStackLayout.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ToggleItemCommand}" CommandParameter="{Binding .}" />
                                     </VerticalStackLayout.GestureRecognizers>
-                                    <Label Text="{Binding Name}" FontSize="{DynamicResource ThemeFont17}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap">
+                                    <Label Text="{Binding Name}" FontSize="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ItemNameFontSize}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding InBasket}" Value="True">
                                                 <Setter Property="TextDecorations" Value="Strikethrough" />
@@ -137,12 +118,12 @@
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
-                                    <Label Text="{Binding Quantity}" IsVisible="{Binding HasQuantity}" FontSize="{DynamicResource ThemeFont14}" FontAttributes="Bold"
+                                    <Label Text="{Binding Quantity}" IsVisible="{Binding HasQuantity}" FontSize="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ItemQuantityFontSize}" FontAttributes="Bold"
                                            TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                     <Border IsVisible="{Binding HasContributor}" HorizontalOptions="Start" Padding="6,2" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 6">
                                         <Label Text="{Binding ContributorLabel}" TextColor="{Binding ContributorColor}" FontSize="11" MaxLines="1" LineBreakMode="TailTruncation" />
                                     </Border>
-                                    <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="{DynamicResource ThemeFont12}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
+                                    <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="{Binding Source={x:Reference ShoppingPage}, Path=BindingContext.ItemNoteFontSize}" TextColor="{DynamicResource ThemeText}" LineBreakMode="WordWrap" />
                                 </VerticalStackLayout>
                                 <Label Grid.Column="2" Text="☰" FontSize="20" TextColor="{DynamicResource ThemeText}"
                                        HeightRequest="48" WidthRequest="48" VerticalTextAlignment="Center" HorizontalTextAlignment="Center"
@@ -153,16 +134,48 @@
                     </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <CollectionView.Footer><Grid HeightRequest="80" InputTransparent="True" /></CollectionView.Footer>
         </CollectionView>
 
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
             <Label Text="{Binding StatusText}" FontSize="{DynamicResource ThemeFont11}" VerticalOptions="Center" MaxLines="2" LineBreakMode="TailTruncation" TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="{Binding StatusText}" SemanticProperties.Hint="Tap for full save or sync details">
                 <Label.GestureRecognizers><TapGestureRecognizer Tapped="SaveStatus_Tapped" /></Label.GestureRecognizers>
             </Label>
             <Button Grid.Column="1" Text="{loc:Translate 'Undo'}" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
         </Grid>
 
-        <Grid Grid.RowSpan="4" IsVisible="{Binding IsEditing}" BackgroundColor="#99000000" Padding="4" ZIndex="10">
+        <Border x:Name="ShoppingTools" Grid.RowSpan="2" ZIndex="5" VerticalOptions="End" Margin="0,0,0,80" IsVisible="False" Padding="0" Stroke="{DynamicResource ThemeOutline}" StrokeThickness="1" StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource ThemeSurface}">
+            <VerticalStackLayout Spacing="0">
+                <Grid ColumnDefinitions="*,Auto" Padding="12,0,4,0">
+                    <Label x:Name="QuickAddTitle" Text="Add an item" FontSize="{DynamicResource ThemeFont17}" FontAttributes="Bold" TextColor="{DynamicResource ThemeText}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="×" Clicked="CloseAddItem_Clicked" Style="{StaticResource QuietButton}" SemanticProperties.Description="Close item entry. Your unfinished text is kept." />
+                </Grid>
+                <views:AnimatedDrawer x:Name="AddItemDrawer" Padding="8">
+                    <VerticalStackLayout Spacing="6">
+                        <Grid ColumnDefinitions="*,68,64" ColumnSpacing="7">
+                            <Entry x:Name="QuickAddEntry" Style="{StaticResource Field}" Text="{Binding QuickName}" Placeholder="{loc:Translate 'What do you need?'}" ReturnType="Done" ReturnCommand="{Binding AddItemCommand}" ClearButtonVisibility="WhileEditing" SemanticProperties.Description="New shopping item" />
+                            <Entry x:Name="QuickQuantityEntry" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding QuickQuantity}" Placeholder="{loc:Translate 'Qty'}" SemanticProperties.Description="Optional quantity or unit" />
+                            <Button Grid.Column="2" Text="{loc:Translate 'Add'}" Command="{Binding AddItemCommand}" BackgroundColor="{DynamicResource ThemePrimary}" TextColor="White" HeightRequest="48" CornerRadius="12" Padding="8,0" Margin="0" />
+                        </Grid>
+                        <views:IngredientSuggestionsView x:Name="QuickSuggestions" />
+                        <Button Text="{loc:Translate 'Category &amp; note'}" Command="{Binding ToggleDetailsCommand}" Style="{StaticResource QuietButton}" />
+                        <Grid IsVisible="{Binding ShowDetails}" RowDefinitions="Auto,Auto" RowSpacing="4">
+                            <Picker Title="{loc:Translate 'Category'}" ItemDisplayBinding="{Binding ., Converter={StaticResource UiToken}}" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" TextColor="{DynamicResource ThemeText}" />
+                            <Entry Grid.Row="1" Style="{StaticResource Field}" Text="{Binding QuickNote}" Placeholder="{loc:Translate 'Optional note, e.g. ripe or gluten-free'}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </views:AnimatedDrawer>
+            </VerticalStackLayout>
+        </Border>
+
+        <Button x:Name="FloatingAddButton" Grid.Row="1" ZIndex="6" Text="+" Clicked="AddItemToggle_Clicked"
+                HorizontalOptions="End" VerticalOptions="End" Margin="12" WidthRequest="56" HeightRequest="56" MinimumWidthRequest="56"
+                CornerRadius="28" Padding="0" FontSize="28" BackgroundColor="{DynamicResource ThemeAccent}" TextColor="White"
+                SemanticProperties.Description="Add an item to the selected shopping list">
+            <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding IsEditing}" Value="True"><Setter Property="IsVisible" Value="False" /></DataTrigger></Button.Triggers>
+        </Button>
+
+        <Grid Grid.RowSpan="3" IsVisible="{Binding IsEditing}" BackgroundColor="#99000000" Padding="4" ZIndex="10">
             <Border Padding="20" StrokeThickness="0" StrokeShape="RoundRectangle 22" VerticalOptions="Center"
                     BackgroundColor="{DynamicResource ThemeSurface}">
                 <ScrollView MaximumHeightRequest="500">

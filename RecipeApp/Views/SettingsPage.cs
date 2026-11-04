@@ -34,6 +34,7 @@ public class SettingsPage : ContentPage
         appearance.Add(ShoppingUi.Card(new VerticalStackLayout { Spacing = 8, Children = { ShoppingUi.Text("A little taste of your theme", 20, true), ShoppingUi.Text("Colours and text update here as you choose."), ShoppingUi.Button("Theme preview", () => Task.CompletedTask) } }));
         body.Add(ShoppingUi.Card(appearance));
         var shopping = Section("Shopping", "Defaults apply when you next open a shopping list. You can still change them while shopping.");
+        shopping.Add(ShoppingUi.Button("Shopping item size & add button",()=>AppNavigation.Open(new ShoppingDisplaySettingsPage()),true));
         shopping.Add(ShoppingUi.Button("Cupboard ingredients",()=>AppNavigation.Open(new CupboardIngredientsPage()),true));
         shopping.Add(Toggle("Hide collected by default", "Keep the remaining items in view.", AppSettings.Current.HideCollected, value => AppSettings.Current with { HideCollected = value }));
         shopping.Add(Toggle("Delete items as you check them", "Removes items you check on this device, including from a shared household list. Undo is available while the list stays open. Existing checked items are kept.", AppSettings.Current.DeleteCollectedOnCheck, value => AppSettings.Current with { DeleteCollectedOnCheck = value }));

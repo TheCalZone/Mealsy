@@ -35,19 +35,29 @@ public partial class ShoppingListPage : ContentPage
     private void SetShoppingMode(bool active){
         if(active==shoppingMode)return;
         if(active){previousNav=Shell.GetNavBarIsVisible(this);previousTabs=Shell.GetTabBarIsVisible(this);}
-        _=OptionsDrawer.SetOpenAsync(false,false);_=AddItemDrawer.SetOpenAsync(false,false);
-        shoppingMode=active;ShoppingHeader.IsVisible=!active;ShoppingTools.IsVisible=!active;ShoppingModeBar.IsVisible=active;
+        _=OptionsDrawer.SetOpenAsync(false,false);_=SetAddItemOpen(false,false);
+        shoppingMode=active;ShoppingHeader.IsVisible=!active;ShoppingModeBar.IsVisible=active;
         AppNavigation.DismissKeyboard();
         Shell.SetNavBarIsVisible(this,active?false:previousNav);Shell.SetTabBarIsVisible(this,active?false:previousTabs);
         Unfocus();QuickAddEntry.Unfocus();
     }
     private void GoShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(true);
     private void ExitShopping_Clicked(object sender,EventArgs e)=>SetShoppingMode(false);
-    private async void ShoppingTools_Clicked(object sender,EventArgs e)
+    private async void ShoppingTools_Clicked(object sender,EventArgs e)=>await OpenListTools();
+    private async Task SetAddItemOpen(bool open,bool animate=true,bool focus=false)
     {
-        ShoppingTools.IsVisible=!ShoppingTools.IsVisible;
-        await AddItemDrawer.SetOpenAsync(ShoppingTools.IsVisible);
+        if(open&&Model.IsEditing)return;
+        if(open)ShoppingTools.IsVisible=true;
+        await AddItemDrawer.SetOpenAsync(open,animate);
+        ShoppingTools.IsVisible=AddItemDrawer.IsOpen;
+        UpdateDrawerTitles();
+        if(focus&&AddItemDrawer.IsOpen&&visible)QuickAddEntry.Focus();
     }
+    private async void CloseAddItem_Clicked(object sender,EventArgs e)
+    {
+        AppNavigation.DismissKeyboard();await SetAddItemOpen(false);
+    }
+    private async void ShoppingDisplay_Clicked(object sender,EventArgs e)=>await AppNavigation.Open(new ShoppingDisplaySettingsPage());
     private async void SaveStatus_Tapped(object sender,TappedEventArgs e)
     {
         if(!string.IsNullOrWhiteSpace(Model.StatusText))await DisplayAlert("Shopping list status",Model.StatusText,AppLocalization.Text("OK"));
@@ -55,26 +65,28 @@ public partial class ShoppingListPage : ContentPage
     private async void OptionsToggle_Clicked(object sender,EventArgs e)
     {
         AppNavigation.DismissKeyboard();
-        await Task.WhenAll(AddItemDrawer.SetOpenAsync(false),OptionsDrawer.SetOpenAsync(!OptionsDrawer.IsOpen));
+        await Task.WhenAll(SetAddItemOpen(false),OptionsDrawer.SetOpenAsync(!OptionsDrawer.IsOpen));
     }
     private async void AddItemToggle_Clicked(object sender,EventArgs e)
     {
         AppNavigation.DismissKeyboard();
-        await Task.WhenAll(OptionsDrawer.SetOpenAsync(false),AddItemDrawer.SetOpenAsync(!AddItemDrawer.IsOpen));
+        await Task.WhenAll(OptionsDrawer.SetOpenAsync(false),SetAddItemOpen(!AddItemDrawer.IsOpen,focus:true));
     }
     private void UpdateDrawerTitles()
     {
         OptionsToggle.Text="Options "+(OptionsDrawer.IsOpen?"▴":"▾");
         var title=Model.RequiresShoppingApproval?"Request an item":"Add an item";
-        AddItemToggle.Text="＋ "+title+" "+(AddItemDrawer.IsOpen?"▴":"▾");
+        QuickAddTitle.Text=title;
+        FloatingAddButton.Text=AddItemDrawer.IsOpen?"×":"+";
         SemanticProperties.SetDescription(OptionsToggle,"Shopping options, "+(OptionsDrawer.IsOpen?"expanded":"collapsed"));
-        SemanticProperties.SetDescription(AddItemToggle,title+", "+(AddItemDrawer.IsOpen?"expanded":"collapsed"));
+        SemanticProperties.SetDescription(FloatingAddButton,AddItemDrawer.IsOpen?"Close item entry":title+" to "+ListSelector.Text);
     }
     protected override void OnSizeAllocated(double width,double height)
     {
         base.OnSizeAllocated(width,height);
         if(OptionsDrawer==null||AddItemDrawer==null||height<=0)return;
-        OptionsDrawer.MaximumDrawerHeight=AddItemDrawer.MaximumDrawerHeight=Math.Clamp(height*.28,72,220);
+        OptionsDrawer.MaximumDrawerHeight=Math.Clamp(height*.34,72,260);
+        AddItemDrawer.MaximumDrawerHeight=Math.Clamp(height*.45,90,340);
     }
     private string CacheKey => householdId == null ? PersonalShoppingLists.StorageKey(personalId) : $"ShoppingList.household.{listAccount}.{householdId}";
     public ShoppingListPage(){InitializeComponent();ShoppingUi.Theme(this);OptionsDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();AddItemDrawer.OpenChanged+=(_,_)=>UpdateDrawerTitles();QuickSuggestions.Configure(QuickAddEntry,QuickQuantityEntry,()=>Model.Groups.SelectMany(group=>group).Select(item=>item.Name),()=>Model.SelectedCategory,value=>{if(!Model.Categories.Contains(value))Model.Categories.Add(value);Model.SelectedCategory=value;});}
@@ -120,7 +132,7 @@ public partial class ShoppingListPage : ContentPage
         ShoppingListTool Tool(string title,Func<Task> action)=>new(title,Action(action));
         ShoppingListTool Command(string title,Command command)=>new(title,Action(()=>{if(command.CanExecute(null))command.Execute(null);return Task.CompletedTask;}),command.CanExecute(null));
         var sections=new List<ShoppingListToolSection>{
-            new("This list",null,new(){Tool("Manage lists",ManageLists),Command("Share list",Model.ShareCommand),Command("Paste items",Model.PasteCommand)}),
+            new("This list",null,new(){Tool("Item size & + button position",()=>AppNavigation.Open(new ShoppingDisplaySettingsPage())),Tool("Manage lists",ManageLists),Command("Share list",Model.ShareCommand),Command("Paste items",Model.PasteCommand)}),
             new("Checked items",Model.RestrictedHousehold?"Restricted members can check items, but an adult removes them.":"Clear checked keeps the remaining items. Undo stays on the shopping screen.",new(){Command("Clear checked items",Model.ClearCollectedCommand),Tool("Checked item behaviour",CheckedItemSettings)}),
             new("Organise & reuse","Drag handles reorder sections and items directly on the list.",new(){Tool("Section order",OpenSectionOrder),Tool("Plan from recipes & checklists",()=>AppNavigation.Open(new ShoppingListMakerPage())),Tool("Saved shopping trips · Premium",PremiumAccess.OpenShopping),Tool("Home-screen quick add",()=>AppNavigation.Open(new WidgetHelpPage()))}),
             new("Undo & redo",null,new(){Command("Undo last change",Model.UndoCommand),Command("Redo last change",Model.RedoCommand)})
@@ -165,6 +177,8 @@ public partial class ShoppingListPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing(); visible = true;
+        Model.RefreshDisplayPreferences();
+        FloatingAddButton.HorizontalOptions=AppSettings.Current.ShoppingAddButtonSide=="Left"?LayoutOptions.Start:LayoutOptions.End;
         WidgetShoppingStore.Changed -= WidgetChanged;
         WidgetShoppingStore.Changed += WidgetChanged;
         try
@@ -224,6 +238,7 @@ public partial class ShoppingListPage : ContentPage
     }
     private void SelectPersonal()
     {
+        _=SetAddItemOpen(false,false);
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++; householdId = sharedName = null; conflict = false;
         if(listAccount!=HouseholdService.UserId)availableHousehold=null;
@@ -316,6 +331,7 @@ public partial class ShoppingListPage : ContentPage
     }
     private void SelectHousehold(HouseholdInfo info)
     {
+        _=SetAddItemOpen(false,false);
         sectionDrag?.Cancel();itemDrag?.Cancel();
         generation++;conflict=false;householdId=info.HouseholdId;sharedName=info.Name;listAccount=HouseholdService.UserId;
         Model.HouseholdList=true;Model.RestrictedHousehold=info.Restricted;Model.ShoppingApprovalRequired=info.ShoppingApprovalRequired;Model.SelectList(CacheKey);
@@ -439,6 +455,7 @@ public partial class ShoppingListPage : ContentPage
         // The household default is applied on first opening and account changes.
         openingDefault=false;
         WidgetShoppingStore.Changed -= WidgetChanged;
+        _=SetAddItemOpen(false,false);
         SetShoppingMode(false);
         _ = SyncAsync(); // Flush pending online edits when leaving; failures remain saved for retry.
         visible = false; timer?.Stop();
@@ -450,6 +467,7 @@ public partial class ShoppingListPage : ContentPage
     protected override bool OnBackButtonPressed()
     {
         if (Model.IsEditing) { Model.CancelEditCommand.Execute(null); return true; }
+        if(AddItemDrawer.IsOpen){AppNavigation.DismissKeyboard();_=SetAddItemOpen(false);return true;}
         if (shoppingMode) { SetShoppingMode(false); return true; }
         return base.OnBackButtonPressed();
     }
