@@ -1,5 +1,7 @@
 # Mealsy cloud handoff — 17 October 2026
 
+**UI flow review, 12 November:** Version code 8 consolidates secondary controls into shared animated disclosures, reduces duplicate actions and keeps primary form/planner actions in footers. Shared Android/iOS UI source only; no Firebase deployment or billing change. Android x64 Release build passed (existing warnings); all 451 shared tests passed. Software-emulator installation failed because its package service became unavailable, so no new visual/runtime acceptance is claimed. iOS requires macOS/Xcode validation. See [UI_FLOW_REVIEW.md](UI_FLOW_REVIEW.md) for coverage and phone acceptance checks.
+
 **Shopping display, 4 November:** Based on the current Android source through `3a9bb50` (including the desktop v5/household rollout record), with no pre-existing uncommitted changes. Compact/Comfortable shopping item sizes and a left/right floating + button are device settings. The adder is a bottom panel using existing quantity/suggestions/category/note controls; the top adder row is removed. Options → Item size & + button position, List tools and Settings → Shopping all reach the preferences. Touch targets remain at least 48 px in MAUI layout units, and the list footer leaves room to scroll the last row clear of the 56-unit button. Version code 6 is reserved for the next build; no Play submission or Firebase deployment was performed. See MULTIPLE_SHOPPING_LISTS.md for phone checks.
 
 **Email confirmation, 23 October:** Version code 4 fixes the Account screen's

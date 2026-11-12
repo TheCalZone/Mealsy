@@ -33,10 +33,10 @@ public class RecipeEditorView : ContentView
         numbers.Add(Field("Draft.CookMinutes", "Cook · min", "Optional", 5, numeric: true), 2); basics.Add(numbers);
         body.Add(Card(basics));
         var pictures = new VerticalStackLayout { Spacing = 10 };
-        pictures.Add(Text(AppLocalization.Text("A PHOTO TO MAKE IT YOURS"), 12, true)); pictures.Add(photo);
+        pictures.Add(photo);
         pictures.Add(Button(AppLocalization.Text("Choose or replace photo"), model.ChoosePhoto));
         pictures.Add(Button(AppLocalization.Text("Remove photo"), () => { model.Draft.Recipe.RecipeImage = ""; UpdatePhoto(); model.Changed(); return Task.CompletedTask; }, true));
-        pictures.Add(Text("Photos are resized for quick saving; location metadata is removed.", 12)); body.Add(Card(pictures));
+        pictures.Add(Text("Photos are resized for quick saving; location metadata is removed.", 12)); body.Add(new DisclosureSection("Recipe photo","Optional · Add, replace or remove a photo",pictures));
         var ingredients = new VerticalStackLayout { Spacing = 10 };
         ingredients.Add(Text(AppLocalization.Text("02  INGREDIENTS"), 12, true)); ingredients.Add(Text("Herbs, spices and saved essentials are recognised as cupboard checks. Choose Buy each time for anything you always need, or Check cupboard for your own staples. Recipe quantities stay unchanged.", 14));
         ingredients.Add(Button("Manage cupboard ingredients",()=>Shell.Current.Navigation.PushAsync(new CupboardIngredientsPage(()=>model.Refresh())),true));
@@ -45,11 +45,12 @@ public class RecipeEditorView : ContentView
             var name = await Shell.Current.DisplayPromptAsync("New ingredient section", "What is this section called?", placeholder: "Sauce", maxLength: 100);
             if (string.IsNullOrWhiteSpace(name)) return; model.Draft.Sections.Add(new() { Name = name.Trim() }); model.Refresh();
         }, true));
-        ingredients.Add(Field("Draft.PendingPaste", "Paste ingredients · optional", "[Sauce]\n2 tbsp olive oil\n1½ cups tomatoes, chopped\nSalt to taste", 20000, true));
-        ingredients.Add(Button(AppLocalization.Text("Add pasted ingredients"), async () => await model.Run(() => { model.PasteIngredients(model.Draft.PendingPaste); return Task.CompletedTask; })));
-        ingredients.Add(Button(AppLocalization.Text("Paste from clipboard"), async () => {
+        var paste=new VerticalStackLayout{Spacing=8};
+        paste.Add(Field("Draft.PendingPaste", "Paste ingredients · optional", "[Sauce]\n2 tbsp olive oil\n1½ cups tomatoes, chopped\nSalt to taste", 20000, true));
+        paste.Add(Button(AppLocalization.Text("Add pasted ingredients"), async () => await model.Run(() => { model.PasteIngredients(model.Draft.PendingPaste); return Task.CompletedTask; })));
+        paste.Add(Button(AppLocalization.Text("Paste from clipboard"), async () => {
             await model.Run(async () => { var text = await Clipboard.Default.GetTextAsync(); if (string.IsNullOrWhiteSpace(text)) throw new InvalidOperationException("Copy an ingredient list first."); model.PasteIngredients(text); });
-        }, true)); body.Add(Card(ingredients));
+        }, true)); ingredients.Add(new DisclosureSection("Paste an ingredient list","Type ingredients above, or paste several at once",paste)); body.Add(Card(ingredients));
         var method = new VerticalStackLayout { Spacing = 10 }; method.Add(Text(AppLocalization.Text("03  THE METHOD"), 12, true));
         method.Add(Text("One action per step. Use the arrows to put them in order.", 14)); method.Add(steps);
         method.Add(Button(AppLocalization.Text("+ Add method step"), () => { if (model.Draft.Steps.Count >= 100) throw new InvalidOperationException("Use no more than 100 method steps."); model.Draft.Steps.Add(new()); model.Refresh(); return Task.CompletedTask; }, true));
@@ -70,7 +71,7 @@ public class RecipeEditorView : ContentView
         extra.Add(Field("Draft.Rating", "Your rating · optional, 0–5", "0–5", 1, numeric: true));
         extra.Add(Field("Draft.Recipe.SourceUrl", "Source link · private, optional", "https://…", 2000));
         extra.Add(Field("Draft.Recipe.Notes", "Cooking notes · private, optional", "Substitutions, storage tips, or what you would change next time…", 5000, true));
-        extra.Add(Text("Your source link and private cooking notes aren't included in community posts.", 12)); body.Add(Card(extra));
+        extra.Add(Text("Your source link and private cooking notes stay in your recipe book.", 12)); body.Add(new DisclosureSection("Tags, rating & private notes","Optional · Organise your recipe and keep cooking notes",extra));
         var errors = Text("", 14); errors.TextColor = Color.FromArgb("#BA3C32"); errors.SetBinding(Label.TextProperty, nameof(model.Error)); body.Add(errors);
         var actions=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};
         actions.Add(Button(AppLocalization.Text("Preview recipe"),model.Preview,true),0);actions.Add(Button(AppLocalization.Text("Save recipe"),model.Save),1);
@@ -129,13 +130,15 @@ public class RecipeEditorView : ContentView
         {
             var block = new VerticalStackLayout { Spacing = 10 };
             block.Add(Field(nameof(section.Name), "Section name", "Ingredients", 100, context: section));
-            var tools = new HorizontalStackLayout { Spacing = 6 };
-            tools.Add(Button("↑", () => { Move(model.Draft.Sections, section, -1); return Task.CompletedTask; }, true));
-            tools.Add(Button("↓", () => { Move(model.Draft.Sections, section, 1); return Task.CompletedTask; }, true));
-            tools.Add(Button(AppLocalization.Text("Remove section"), async () => {
-                if (section.Items.Count > 0 && !await Shell.Current.DisplayAlert("Remove this section?", "Its ingredients will be removed from this draft. Your saved recipe is kept until Save.", AppLocalization.Text("Remove"), AppLocalization.Text("Keep"))) return;
-                model.Draft.Sections.Remove(section); if (model.Draft.Sections.Count == 0) model.Draft.Sections.Add(new()); model.Refresh();
-            }, true)); block.Add(tools);
+            block.Add(Button("Section options…",async()=>{
+                var choice=await Shell.Current.DisplayActionSheet(section.Name??"Ingredient section",AppLocalization.Text("Cancel"),"Remove section","Move section up","Move section down");
+                if(choice=="Move section up")Move(model.Draft.Sections,section,-1);
+                else if(choice=="Move section down")Move(model.Draft.Sections,section,1);
+                else if(choice=="Remove section"){
+                    if(section.Items.Count>0&&!await Shell.Current.DisplayAlert("Remove this section?","Its ingredients will be removed from this draft. Your saved recipe is kept until Save.",AppLocalization.Text("Remove"),AppLocalization.Text("Keep")))return;
+                    model.Draft.Sections.Remove(section);if(model.Draft.Sections.Count==0)model.Draft.Sections.Add(new());model.Refresh();
+                }
+            },true));
             foreach (var item in section.Items)
             {
                 var row = new VerticalStackLayout { Spacing = 7 };
@@ -149,8 +152,8 @@ public class RecipeEditorView : ContentView
                 var shopping=new Picker{Title="When shopping",ItemsSource=new[]{"Automatic","Buy each time","Check cupboard"},SelectedIndex=item.ShoppingPreference is >=0 and <=2?item.ShoppingPreference:0,HeightRequest=48};
                 shopping.SetDynamicResource(Picker.TextColorProperty,"ThemeText");
                 shopping.SelectedIndexChanged+=(_,_)=>{item.ShoppingPreference=shopping.SelectedIndex;UpdateShoppingHint();model.Changed();};
-                row.Add(shopping);row.Add(shoppingHint);UpdateShoppingHint();
-                var advanced = new VerticalStackLayout { Spacing = 7, IsVisible = false };
+                row.Add(shoppingHint);UpdateShoppingHint();
+                var advanced = new VerticalStackLayout { Spacing = 7, IsVisible = false };advanced.Add(shopping);
                 var category = new Picker { Title = "Shopping category", ItemsSource = new[] { "Produce", "Dairy", "Meat", "Pantry", "Bakery", "Frozen", "Drinks", "Other" }, HeightRequest = 48 };
                 category.SetDynamicResource(Picker.TextColorProperty, "ThemeText");
                 category.SelectedItem = ShoppingListDocument.CategoryName(item.Tag);
@@ -158,12 +161,13 @@ public class RecipeEditorView : ContentView
                 category.SelectedIndexChanged += (_, _) => { item.Tag = category.SelectedItem?.ToString() ?? "Other"; model.Changed(); }; advanced.Add(category);
                 advanced.Add(Field(nameof(item.Note), "Ingredient note · optional", "finely chopped, room temperature…", 500, context: item));
                 row.Add(advanced);
-                var controls = new HorizontalStackLayout { Spacing = 6 };
-                controls.Add(Button("↑", () => { Move(section.Items, item, -1); return Task.CompletedTask; }, true));
-                controls.Add(Button("↓", () => { Move(section.Items, item, 1); return Task.CompletedTask; }, true));
-                controls.Add(Button(AppLocalization.Text("Remove"), () => { section.Items.Remove(item); model.Refresh(); return Task.CompletedTask; }, true));
-                controls.Add(Button(AppLocalization.Text("Details"), () => { advanced.IsVisible = !advanced.IsVisible; return Task.CompletedTask; }, true));
-                row.Add(controls); block.Add(Card(row));
+                row.Add(Button("Ingredient options…",async()=>{
+                    var choice=await Shell.Current.DisplayActionSheet(item.Name??"Ingredient",AppLocalization.Text("Cancel"),AppLocalization.Text("Remove"),advanced.IsVisible?"Hide details":"Category, note & shopping checks","Move up","Move down");
+                    if(choice=="Move up")Move(section.Items,item,-1);
+                    else if(choice=="Move down")Move(section.Items,item,1);
+                    else if(choice==AppLocalization.Text("Remove")){section.Items.Remove(item);model.Refresh();}
+                    else if(choice is "Hide details" or "Category, note & shopping checks")advanced.IsVisible=!advanced.IsVisible;
+                },true));block.Add(Card(row));
             }
             block.Add(Button("+ Add ingredient", () => { model.AddIngredient(section); return Task.CompletedTask; }, true)); sections.Add(block);
         }
@@ -172,11 +176,12 @@ public class RecipeEditorView : ContentView
         {
             var block = new VerticalStackLayout { Spacing = 6 };
             block.Add(Field(nameof(step.Text), $"Step {++number}", "Describe one stage of the recipe…", 15000, true, context: step));
-            var actions = new HorizontalStackLayout { Spacing = 6 };
-            actions.Add(Button("↑", () => { Move(model.Draft.Steps, step, -1); return Task.CompletedTask; }, true));
-            actions.Add(Button("↓", () => { Move(model.Draft.Steps, step, 1); return Task.CompletedTask; }, true));
-            actions.Add(Button("Remove step", () => { model.Draft.Steps.Remove(step); if (model.Draft.Steps.Count == 0) model.Draft.Steps.Add(new()); model.Refresh(); return Task.CompletedTask; }, true));
-            block.Add(actions); steps.Add(block);
+            block.Add(Button("Step options…",async()=>{
+                var choice=await Shell.Current.DisplayActionSheet("Method step",AppLocalization.Text("Cancel"),"Remove step","Move up","Move down");
+                if(choice=="Move up")Move(model.Draft.Steps,step,-1);
+                else if(choice=="Move down")Move(model.Draft.Steps,step,1);
+                else if(choice=="Remove step"){model.Draft.Steps.Remove(step);if(model.Draft.Steps.Count==0)model.Draft.Steps.Add(new());model.Refresh();}
+            },true));steps.Add(block);
         }
     }
     private void Move<T>(System.Collections.ObjectModel.ObservableCollection<T> list, T item, int direction)

@@ -7,7 +7,8 @@ public partial class AccountPage : ContentPage
     private RecipeApp.Models.CommunityProfile community;
     private bool administrator;
     private bool? emailVerified;
-    public AccountPage(){InitializeComponent();Title=AppLocalization.Text("Your account");ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));}
+    private readonly HashSet<string> expanded=new();
+    public AccountPage(){InitializeComponent();Title=AppLocalization.Text("Your account");ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary,AutomationId="OnboardingSetup"};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));}
     private readonly LoadGeneration requests=new();
     private bool visible,loading;
     private string loadWarning;
@@ -26,7 +27,7 @@ public partial class AccountPage : ContentPage
     {
         if(!visible)return;
         var uid=AccountSession.UserId;var ticket=requests.Begin(uid);
-        if(account!=uid)community=null;
+        if(account!=uid){community=null;expanded.Clear();}
         account=uid;emailVerified=AccountSession.EmailVerified==true?true:null;administrator=false;loadWarning=null;loading=uid!=null;Render();
         if(uid==null)return;
         var unavailable=false;
@@ -51,46 +52,55 @@ public partial class AccountPage : ContentPage
         if(ProductFeatures.SocialEnabled&&ContentSharing.HasPending)body.Add(ShoppingUi.Button("Open saved shared post or plan",ContentSharing.Resume));
         if(loading)body.Add(new LoadingIndicator("Updating profile and account permissions…"));
         if(loadWarning!=null){body.Add(ShoppingUi.Text(loadWarning,13));body.Add(ShoppingUi.Button("Retry account details",RefreshAccountAsync,true));}
+        var profileDetails=new VerticalStackLayout{Spacing=10};
         if(ProductFeatures.SocialEnabled)
         {
-            body.Add(ShoppingUi.Text("Your community username",22,true));
-            var username=ShoppingUi.Entry(community?.Username??"","Choose your public name",_=>{},40);username.IsEnabled=!loading;body.Add(username);
-            body.Add(ShoppingUi.Text("Only your chosen name appears on posts. A hidden identifier keeps accounts distinct when names match.",13));
-            body.Add(ShoppingUi.Button("Save username",async()=>{
+            profileDetails.Add(ShoppingUi.Text("Your community username",22,true));
+            var username=ShoppingUi.Entry(community?.Username??"","Choose your public name",_=>{},40);username.IsEnabled=!loading;profileDetails.Add(username);
+            profileDetails.Add(ShoppingUi.Text("Only your chosen name appears on posts. A hidden identifier keeps accounts distinct when names match.",13));
+            profileDetails.Add(ShoppingUi.Button("Save username",async()=>{
                 if(loading)throw new InvalidOperationException("Wait for your account details to finish loading.");AccountSession.Check(account);await FoodFeedService.Call<object>(new{action="setUsername",username=username.Text??""});
                 var saved=await FoodFeedService.Profile();AccountSession.Check(account);community=saved;Render();
             }));
         }
         else
         {
-            body.Add(ShoppingUi.Text(AppLocalization.Text("Email confirmation"),22,true));
+            profileDetails.Add(ShoppingUi.Text(AppLocalization.Text("Email confirmation"),22,true));
         }
-        body.Add(ShoppingUi.Text(emailVerified==true?"✓ Email confirmed":loading?"Checking email confirmation…":emailVerified==false?"Your email address has not been confirmed yet.":"Email confirmation status is unavailable. Retry when connected.",14,true));
-        if(!loading&&emailVerified==false)body.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{
+        profileDetails.Add(ShoppingUi.Text(emailVerified==true?"✓ Email confirmed":loading?"Checking email confirmation…":emailVerified==false?"Your email address has not been confirmed yet.":"Email confirmation status is unavailable. Retry when connected.",14,true));
+        if(!loading&&emailVerified==false)profileDetails.Add(ShoppingUi.Button(AppLocalization.Text("Send confirmation email"),async()=>{
             AccountSession.Check(account);var sent=await AccountSession.SendVerification();AccountSession.Check(account);
             if(!sent){emailVerified=true;Render();await DisplayAlert("Email confirmed","Your email address is already confirmed. No further confirmation is needed.",AppLocalization.Text("OK"));return;}
             await DisplayAlert("Check your inbox","Open the confirmation link, then return and tap Check email confirmation.",AppLocalization.Text("OK"));
         },true));
-        if(!loading&&emailVerified!=true)body.Add(ShoppingUi.Button("Check email confirmation",RefreshAccountAsync,true));
-        body.Add(status);body.Add(ShoppingUi.Button(AppLocalization.Text("Sync my account"),async()=>{AccountSession.Check(account);status.Text="Syncing your recipes and checklists…";status.Text=await AccountSession.SyncSafely();},true));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("Edit my profile"),()=>AppNavigation.Open(new EditdetailsPage())));
-        body.Add(ShoppingUi.Button("Copy device recipes into this account…",async()=>{
+        if(!loading&&emailVerified!=true)profileDetails.Add(ShoppingUi.Button("Check email confirmation",RefreshAccountAsync,true));
+        profileDetails.Add(status);profileDetails.Add(ShoppingUi.Button(AppLocalization.Text("Sync my account"),async()=>{AccountSession.Check(account);status.Text="Syncing your recipes and checklists…";status.Text=await AccountSession.SyncSafely();},true));
+        profileDetails.Add(ShoppingUi.Button(AppLocalization.Text("Edit my profile"),()=>AppNavigation.Open(new EditdetailsPage())));
+        profileDetails.Add(ShoppingUi.Button("Copy device recipes into this account…",async()=>{
             var uid=account;AccountSession.Check(uid);if(!await DisplayAlert("Copy your device recipes?","Copy recipes created in device mode into this private account? The device originals are kept. Existing imports won't be duplicated.","Copy recipes",AppLocalization.Text("Cancel")))return;AccountSession.Check(uid);var count=await RecipeService.CopyDeviceRecipes(uid);AccountSession.Check(uid);_=AccountSession.SyncSafely();await DisplayAlert("Recipes copied",$"{count} recipes copied. Device originals are unchanged.",AppLocalization.Text("OK"));
         },true));
-        if(ProductFeatures.SocialEnabled)body.Add(ShoppingUi.Button("Friends & public profile",()=>AppNavigation.Open(new FriendsPage()),true));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("Household meal plan"),()=>AppNavigation.Open(new HouseholdMealsPage()),true));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("My recipes"),()=>AppNavigation.Root("RecipePage"),true));
-        body.Add(ShoppingUi.Button("Shopping questions & replies",()=>AppNavigation.Open(new HouseholdShoppingInboxPage()),true));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("My household"),()=>AppNavigation.Open(new HouseholdPage()),true));
-        if(ProductFeatures.SocialEnabled)body.Add(FoodFeedPage.Button("Mealsy Business & creators",()=>AppNavigation.Open(new BusinessHubPage())));
-        if(administrator){body.Add(FoodFeedPage.Button("Administrator",()=>AppNavigation.Open(new AdminPage())));body.Add(FoodFeedPage.Button("Give complimentary Premium",()=>AppNavigation.Open(new AdminPage(true))));}
-        body.Add(ShoppingUi.Button("Weekly templates · Premium",PremiumAccess.OpenWeeks,true));
-        body.Add(ShoppingUi.Button("Saved shopping trips · Premium",PremiumAccess.OpenShopping,true));
-        body.Add(new PremiumBenefitsCard());
-        body.Add(ShoppingUi.Button("Privacy, data & account deletion",()=>AppNavigation.Open(new PrivacyAndDataPage()),true));
-        body.Add(ShoppingUi.Button("Mealsy Premium · Plans & benefits",()=>AppNavigation.Open(new PlanPage())));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("Premium features"),()=>AppNavigation.Open(new UpgradeFeaturesPage()),true));
-        body.Add(ShoppingUi.Text("Your recipes and shopping lists sync when connected. Your personal meal plan, saved weeks, saved shopping trips and editor drafts stay on this device. Household shopping and household meal plans are shared online. Signing in does not automatically copy recipes created in device mode.",13));
+        var householdTools=new VerticalStackLayout{Spacing=8,Children={
+            ShoppingUi.Button("Manage household",()=>AppNavigation.Open(new HouseholdPage())),
+            ShoppingUi.Button("Shared meal plan",()=>AppNavigation.Open(new HouseholdMealsPage()),true),
+            ShoppingUi.Button("Shopping questions & replies",()=>AppNavigation.Open(new HouseholdShoppingInboxPage()),true)
+        }};
+        var premiumTools=new VerticalStackLayout{Spacing=8,Children={
+            ShoppingUi.Text("Household sharing, recipe-link imports, saved weeks and reusable shopping trips.",14),
+            ShoppingUi.Button("Plans & benefits",()=>AppNavigation.Open(new PlanPage())),
+            ShoppingUi.Button("Saved weekly templates",PremiumAccess.OpenWeeks,true),
+            ShoppingUi.Button("Saved shopping trips",PremiumAccess.OpenShopping,true)
+        }};
+        View Section(string key,string title,string detail,View content,bool initial=false)=>new DisclosureSection(title,detail,content,expanded.Contains(key)||initial,open=>{if(open)expanded.Add(key);else expanded.Remove(key);});
+        body.Add(Section("profile","Profile, sign-in & sync",emailVerified==true?"Email confirmed":"Profile details and email confirmation",profileDetails,initial:emailVerified==false));
+        body.Add(Section("household","My household","Members, shared meals and shopping conversations",householdTools));
+        body.Add(Section("premium","Premium & saved tools","Membership options and reusable weeks/trips",premiumTools));
+        var privacy=new VerticalStackLayout{Spacing=8,Children={
+            ShoppingUi.Text("Recipes and your main personal shopping list sync when connected. Extra lists, personal meal plans, saved weeks, shopping trips and drafts stay on this device. Household lists and meals are shared online.",13),
+            ShoppingUi.Button("Privacy, data & account deletion",()=>AppNavigation.Open(new PrivacyAndDataPage()),true)
+        }};
+        body.Add(Section("privacy","Privacy & account deletion","Data controls and deletion requests",privacy));
+        if(administrator)body.Add(Section("admin","Administrator","Support accounts, access and patch notes",new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Button("Open administrator tools",()=>AppNavigation.Open(new AdminPage()))}}));
+        if(ProductFeatures.SocialEnabled)body.Add(Section("community","Community",null,new VerticalStackLayout{Spacing=8,Children={ShoppingUi.Button("Friends & public profile",()=>AppNavigation.Open(new FriendsPage()),true),ShoppingUi.Button("Business & creators",()=>AppNavigation.Open(new BusinessHubPage()),true)}}));
         body.Add(ShoppingUi.Button(AppLocalization.Text("Sign out"),async()=>{if(!await DisplayAlert("Sign out?","Your private local data is kept for this account. The app will return to device mode.",AppLocalization.Text("Sign out"),"Stay"))return;AccountSession.Check(account);await AccountSession.SignOut();requests.Invalidate();loading=false;loadWarning=null;account=null;community=null;administrator=false;Render();},true));
         Content=new ScrollView{Content=body};
     }

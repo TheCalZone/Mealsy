@@ -11,8 +11,6 @@ public partial class EditRecipePage : ContentPage
     public EditRecipePage()
     {
         InitializeComponent(); BindingContext = model; Content = new RecipeEditorView(model);
-        ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Preview"), null, async () => await model.Preview()));
-        ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Save"), null, async () => await model.Save()));
     }
     protected override async void OnAppearing()
     {

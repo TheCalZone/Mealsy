@@ -7,6 +7,12 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,11,12), "Calmer screens and clearer actions", new[] {
+            "Account, Settings, household controls and shopping tools group secondary options into animated drawers that respect reduced motion.",
+            "Recipe filters and optional editor details stay out of the way until needed. Ingredient, step and meal actions use compact options menus.",
+            "Meal planning keeps shopping review and day saving within reach. Sign-in and account creation keep their main button below the scrolling form.",
+            "Completed setup shortcuts disappear from options menus; privacy, account deletion, membership and administrator tools remain available."
+        }),
         new(new(2026,11,4), "A clearer quick-add panel", new[] {
             "The floating item adder has a theme-coloured heading, matching stronger outline and drop shadow. White heading/close text stays clear in light and dark modes.",
             "The circular + button has a contrasting ring and shadow to separate it from the list."

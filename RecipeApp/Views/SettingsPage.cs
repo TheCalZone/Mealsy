@@ -3,14 +3,12 @@ namespace RecipeApp.Views;
 
 public class SettingsPage : ContentPage
 {
+    private readonly HashSet<string> expanded=new(){"Appearance"};
     public SettingsPage() { Title = AppLocalization.Text("Settings"); ShoppingUi.Theme(this); Render(); }
     private void Render()
     {
         var body = new VerticalStackLayout { Padding = 16, Spacing = 18 };
         body.Add(ShoppingUi.Text("Make Mealsy yours", 28, true));
-        body.Add(ShoppingUi.Button("Privacy, data & account deletion",()=>AppNavigation.Open(new PrivacyAndDataPage()),true));
-        body.Add(ShoppingUi.Button("Get started guide",()=>AppNavigation.Open(new OnboardingPage()),true));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("Share Mealsy"),OnboardingState.ShareApp,true));
         body.Add(ShoppingUi.Text("Saved automatically on this device, for signed-in and device mode alike.", 14));
         var languageCodes=AppLocalization.Languages;
         var languageNames=new[]{AppLocalization.Text("Follow device language"),"English","Español","Français","Deutsch","Português"};
@@ -31,22 +29,27 @@ public class SettingsPage : ContentPage
         appearance.Add(Choice("Display mode", SettingsOptions.Appearances, AppSettings.Current.Appearance, value => AppSettings.Current with { Appearance = value }));
         appearance.Add(Toggle("Larger reading text", "Increase headings and reading text alongside your phone's font settings.", AppSettings.Current.LargerText, value => AppSettings.Current with { LargerText = value }));
         appearance.Add(Toggle("Show recipe photos", "Show photos on recipe cards and reading screens. Editor photos stay available.", AppSettings.Current.ShowPhotos, value => AppSettings.Current with { ShowPhotos = value }));
-        appearance.Add(ShoppingUi.Card(new VerticalStackLayout { Spacing = 8, Children = { ShoppingUi.Text("A little taste of your theme", 20, true), ShoppingUi.Text("Colours and text update here as you choose."), ShoppingUi.Button("Theme preview", () => Task.CompletedTask) } }));
-        body.Add(ShoppingUi.Card(appearance));
+
+        body.Add(Group("Appearance","Colours, display mode, text and photos",appearance));
         var shopping = Section("Shopping", "Defaults apply when you next open a shopping list. You can still change them while shopping.");
         shopping.Add(ShoppingUi.Button("Shopping item size & add button",()=>AppNavigation.Open(new ShoppingDisplaySettingsPage()),true));
         shopping.Add(ShoppingUi.Button("Cupboard ingredients",()=>AppNavigation.Open(new CupboardIngredientsPage()),true));
         shopping.Add(Toggle("Hide collected by default", "Keep the remaining items in view.", AppSettings.Current.HideCollected, value => AppSettings.Current with { HideCollected = value }));
         shopping.Add(Toggle("Delete items as you check them", "Removes items you check on this device, including from a shared household list. Undo is available while the list stays open. Existing checked items are kept.", AppSettings.Current.DeleteCollectedOnCheck, value => AppSettings.Current with { DeleteCollectedOnCheck = value }));
         shopping.Add(Toggle("Show quick-add details", "Open quantity, category and note fields by default.", AppSettings.Current.ShoppingDetails, value => AppSettings.Current with { ShoppingDetails = value }));
-        body.Add(ShoppingUi.Card(shopping));
+        body.Add(Group("Shopping","Item size, + button, checked items and cupboard checks",shopping));
         var recipes = Section("Recipes & cooking", "Choose how your recipe book opens and how you cook.");
         recipes.Add(Choice("Default recipe order", SettingsOptions.Sorts, AppSettings.Current.RecipeSort, value => AppSettings.Current with { RecipeSort = value }));
         recipes.Add(Toggle("Keep screen awake while cooking", "Starts enabled when you open a recipe. Stops when you leave it; you can switch it off inside the recipe.", AppSettings.Current.KeepAwake, value => AppSettings.Current with { KeepAwake = value }));
-        body.Add(ShoppingUi.Card(recipes));
-        if(ClientPlatform.HomeScreenWidgetAvailable)body.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
-        body.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
-        body.Add(ShoppingUi.Button("Premium plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
+        body.Add(Group("Recipes & cooking","Recipe order and keeping the screen awake",recipes));
+        var help=new VerticalStackLayout{Spacing=10};
+        if(ClientPlatform.HomeScreenWidgetAvailable)help.Add(ShoppingUi.Button("Home-screen shopping widget", () => AppNavigation.Open(new WidgetHelpPage()), true));
+        help.Add(ShoppingUi.Button("Diagnostics & error reports",()=>AppNavigation.Open(new DiagnosticsPage()),true));
+        help.Add(ShoppingUi.Button("Premium plans & features", () => AppNavigation.Open(new UpgradeFeaturesPage()), true));
+        help.Add(ShoppingUi.Button("Get started guide",()=>AppNavigation.Open(new OnboardingPage()),true));
+        help.Add(ShoppingUi.Button(AppLocalization.Text("Share Mealsy"),OnboardingState.ShareApp,true));
+        help.Add(ShoppingUi.Button("Privacy, data & account deletion",()=>AppNavigation.Open(new PrivacyAndDataPage()),true));
+        body.Add(Group("Help & account","Guide, privacy, diagnostics and membership",help));
         body.Add(ShoppingUi.Text("These settings stay on this device. They don't change family members' preferences or your account data. Manage your profile and sync from Account.", 13));
         body.Add(ShoppingUi.Button(AppLocalization.Text("Reset preferences…"), async () => {
             if (!await DisplayAlert("Reset preferences?", "Restore Forest, system display mode and the original preferences? Recipes, shopping lists, drafts, accounts and meal plans are kept.", "Reset preferences", AppLocalization.Text("Cancel"))) return;
@@ -55,6 +58,7 @@ public class SettingsPage : ContentPage
         body.Add(ShoppingUi.Text("Mealsy · " + AppInfo.Current.VersionString, 12));
         Content = new ScrollView { Content = body };
     }
+    private View Group(string title,string detail,View content)=>new DisclosureSection(title,detail,content,expanded.Contains(title),open=>{if(open)expanded.Add(title);else expanded.Remove(title);});
     private static VerticalStackLayout Section(string title, string description) => new() { Spacing = 12, Children = { ShoppingUi.Text(title, 22, true), ShoppingUi.Text(description, 13) } };
     private View Choice(string title, string[] options, string selected, Func<string, SettingsOptions> update)
     {

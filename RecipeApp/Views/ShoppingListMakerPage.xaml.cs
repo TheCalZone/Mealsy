@@ -30,6 +30,7 @@ public partial class ShoppingListMakerPage : ContentPage
         model.Changed += UpdateSummary;
         ToolbarItems.Add(new ToolbarItem("Choose a shopping list…",null,async()=>{var target=await ShoppingListDestinations.ChooseAsync("Open which shopping list?");if(target!=null)await AppNavigation.ShoppingList(target.OpenRoute(AccountSession.UserId));}));
         ToolbarItems.Add(new ToolbarItem("Cupboard ingredients",null,async()=>await Navigation.PushAsync(new CupboardIngredientsPage())));
+        ToolbarItems.Add(new ToolbarItem("Replace a personal list…",null,async()=>{if(stage!=2){await DisplayAlert("Review first","Continue to Review my shopping list before replacing a saved list.","OK");return;}await model.WriteList(true);}){Order=ToolbarItemOrder.Secondary});
         ToolbarItems.Add(new ToolbarItem("Start over",null,async () => {
             if (!await DisplayAlert("Start a fresh plan?","Your saved shopping list and reusable checklists will be kept.","Start over","Keep planning")) return;
             model.Reset(); typedMeals.Clear(); scrollPositions.Clear(); renderedStage=-1; stage=0; Render();
@@ -63,7 +64,7 @@ public partial class ShoppingListMakerPage : ContentPage
         else
         {
             footer.Add(ShoppingUi.Button("Add to a shopping list…",async () => await model.WriteList(false)));
-            footer.Add(ShoppingUi.Button("Replace a personal list…",async()=>await model.WriteList(true),true));
+
         }
     }
     private void RenderRecipes()

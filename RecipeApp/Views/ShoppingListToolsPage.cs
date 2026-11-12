@@ -12,12 +12,13 @@ public class ShoppingListToolsPage:ContentPage
         Title="List tools";ShoppingUi.Theme(this);
         var body=new VerticalStackLayout{Padding=16,Spacing=16};
         body.Add(ShoppingUi.Text(name,25,true));body.Add(ShoppingUi.Text(scope,13));
+        var first=true;
         foreach(var section in sections)
         {
-            var group=new VerticalStackLayout{Spacing=8};group.Add(ShoppingUi.Text(section.Title,19,true));
-            if(!string.IsNullOrWhiteSpace(section.Detail))group.Add(ShoppingUi.Text(section.Detail,13));
+            var group=new VerticalStackLayout{Spacing=8};
+
             foreach(var tool in section.Tools){var button=ShoppingUi.Button(tool.Title,tool.Action,true);button.IsEnabled=tool.Enabled;group.Add(button);}
-            body.Add(ShoppingUi.Card(group));
+            body.Add(new DisclosureSection(section.Title,section.Detail,group,expanded:first));first=false;
         }
         var premium=new MembershipPrompt();premium.Refresh();body.Add(premium);
         Content=new ScrollView{Content=body};

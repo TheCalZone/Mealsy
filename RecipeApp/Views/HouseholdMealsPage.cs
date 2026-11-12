@@ -5,7 +5,7 @@ namespace RecipeApp.Views;
 public class HouseholdMealsPage:SocialPage
 {
     private DateTime weekStart=DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek+6)%7));
-    private HouseholdWeek week;private HouseholdInfo household;
+    private HouseholdWeek week;private HouseholdInfo household;private bool optionsOpen;
     public HouseholdMealsPage():base("Household meal plan"){Body.Add(ShoppingUi.Text("What’s for dinner?",28,true));Body.Add(ShoppingUi.Text("Share meals, portions, recipe snapshots and notes with your household. Your personal plan stays separate."));Body.Add(new MembershipPrompt(true));Body.Add(ShoppingUi.Button("Sign in or manage my household",()=>Account==null?AppNavigation.Root("AccountPage"):AppNavigation.Open(new HouseholdPage()),true));Body.Add(ShoppingUi.Button("Use my personal meal planner",()=>AppNavigation.Root("MealPlanOverviewPage"),true));ToolbarItems.Add(new ToolbarItem("Refresh",null,async()=>await Run(()=>Load(true))));}
     protected override async void OnAppearing(){base.OnAppearing();await Run(()=>Load());}
     private async Task Load(bool force=false)
@@ -22,13 +22,14 @@ public class HouseholdMealsPage:SocialPage
     }
     private void Render(string freshness)
     {
-        Body.Clear();Body.Add(ShoppingUi.Text("What's for dinner? Sorted.",28,true));
-        Body.Add(ShoppingUi.Button($"Requests · {household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage()),true));
+        Body.Clear();Body.Add(ShoppingUi.Text(household.Name+" · Shared meals",25,true));
+        if(household.PendingRequests>0)Body.Add(ShoppingUi.Button($"Requests · {household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage()),true));
         if(household.Restricted)Body.Add(ShoppingUi.Text("You can view meals and send suggestions. An adult approves changes to the shared plan.",14));
-        Body.Add(ShoppingUi.Text(freshness,12));Body.Add(ShoppingUi.Text(household.Name+" · Shared by everyone in your household",14));
-        Body.Add(ShoppingUi.Text("Meals here are separate from your personal planner. Changes are saved to the household; refresh to see another person's latest edits.",13));
-        var picker=new DatePicker{Date=weekStart,Format="ddd d MMM yyyy"};picker.DateSelected+=async(_,e)=>{weekStart=(e.NewDate??weekStart).Date;await Run(()=>Load());};Body.Add(ShoppingUi.Text("Week starts",12,true));Body.Add(picker);
-        var jump=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};jump.Add(ShoppingUi.Button("Previous week",()=>Run(async()=>{weekStart=weekStart.AddDays(-7);await Load();}),true),0);jump.Add(ShoppingUi.Button("Next week",()=>Run(async()=>{weekStart=weekStart.AddDays(7);await Load();}),true),1);Body.Add(jump);
+        Body.Add(ShoppingUi.Text("Shared with your household",14));
+        var options=new VerticalStackLayout{Spacing=8};options.Add(ShoppingUi.Text(freshness,12));
+        options.Add(ShoppingUi.Text("Meals here are separate from your personal planner. Changes are saved to the household; refresh to see another person's latest edits.",13));
+        var picker=new DatePicker{Date=weekStart,Format="ddd d MMM yyyy"};picker.DateSelected+=async(_,e)=>{weekStart=(e.NewDate??weekStart).Date;await Run(()=>Load());};options.Add(ShoppingUi.Text("Week starts",12,true));options.Add(picker);
+        var jump=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};jump.Add(ShoppingUi.Button("Previous week",()=>Run(async()=>{weekStart=weekStart.AddDays(-7);await Load();}),true),0);jump.Add(ShoppingUi.Button("Next week",()=>Run(async()=>{weekStart=weekStart.AddDays(7);await Load();}),true),1);options.Add(jump);options.Add(ShoppingUi.Button("Household requests",()=>AppNavigation.Open(new HouseholdRequestsPage()),true));options.Add(ShoppingUi.Button("Manage household",()=>AppNavigation.Open(new HouseholdPage()),true));options.Add(ShoppingUi.Button("Open personal planner",()=>AppNavigation.Root("MealPlanOverviewPage"),true));Body.Add(new DisclosureSection("Plan options",weekStart.ToString("d MMM")+" – "+weekStart.AddDays(6).ToString("d MMM"),options,optionsOpen,open=>optionsOpen=open));
         for(var day=0;day<7;day++)
         {
             var date=weekStart.AddDays(day);var key=SocialPolicy.DateKey(date);var card=new VerticalStackLayout{Spacing=9};card.Add(ShoppingUi.Text((date.Date==DateTime.Today?"Today · ":"")+date.ToString("dddd d MMM"),22,true));
@@ -38,8 +39,14 @@ public class HouseholdMealsPage:SocialPage
                 if(entries.Count==0)card.Add(ShoppingUi.Text("No meal planned yet",14));
                 foreach(var meal in entries){card.Add(ShoppingUi.Text($"{meal.Title} · {meal.Servings} portions",18,true));if(!string.IsNullOrWhiteSpace(meal.Note))card.Add(ShoppingUi.Text(meal.Note,13));
                     if(meal.Recipe!=null)card.Add(ShoppingUi.Button("Cook this meal",()=>{var recipe=RecipeBrowser.ForServings(meal.Recipe.ToRecipe(""),meal.Servings);return AppNavigation.Open(new RecipePreviewPage(RecipeDraft.FromRecipe(recipe)));},true));
-                    if(!household.Restricted)card.Add(ShoppingUi.Button("Edit meal",()=>AppNavigation.Open(new HouseholdMealEditorPage(household.HouseholdId,weekStart,meal)),true));
-                    if(!household.Restricted)card.Add(ShoppingUi.Button("Remove meal…",()=>Run(async()=>{if(!await DisplayAlert("Remove shared meal?","This removes it from everyone's household plan. Your original recipe is kept.",AppLocalization.Text("Remove"),AppLocalization.Text("Keep")))return;Check();await HouseholdMealsService.Call<object>(new{action="deleteMeal",householdId=household.HouseholdId,weekStart=SocialPolicy.DateKey(weekStart),mealId=meal.Id,expectedVersion=meal.Version});await Load();}),true));
+                    if(!household.Restricted)card.Add(ShoppingUi.Button("Meal options…",()=>Run(async()=>{
+                        var choice=await DisplayActionSheet(meal.Title,AppLocalization.Text("Cancel"),"Remove meal","Edit meal");Check();
+                        if(choice=="Edit meal")await AppNavigation.Open(new HouseholdMealEditorPage(household.HouseholdId,weekStart,meal));
+                        else if(choice=="Remove meal"){
+                            if(!await DisplayAlert("Remove shared meal?","This removes it from everyone's household plan. Your original recipe is kept.",AppLocalization.Text("Remove"),AppLocalization.Text("Keep")))return;Check();
+                            await HouseholdMealsService.Call<object>(new{action="deleteMeal",householdId=household.HouseholdId,weekStart=SocialPolicy.DateKey(weekStart),mealId=meal.Id,expectedVersion=meal.Version});await Load();
+                        }
+                    }),true));
                 }
             }
             card.Add(ShoppingUi.Button(household.Restricted?"Request a meal":"+ Plan a meal",()=>AppNavigation.Open(new HouseholdMealEditorPage(household.HouseholdId,weekStart,date:date,requestOnly:household.Restricted))));Body.Add(ShoppingUi.Card(card));

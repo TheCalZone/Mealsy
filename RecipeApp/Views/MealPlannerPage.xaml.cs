@@ -8,7 +8,6 @@ public partial class MealPlannerPage : ContentPage
     public long SelectedDayIndex{get;set;}
     private string account;private bool loaded,busy,completed,leaving;private MealPlan plan;private MealPlanDay day;private string initial;private List<Recipe> recipes;
     public MealPlannerPage(){InitializeComponent();ShoppingUi.Theme(this);account=HouseholdService.UserId;
-        ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Save"),null,async()=>await Run(SaveDay)));
         Shell.SetBackButtonBehavior(this,new BackButtonBehavior {Command=new Command(async()=>await Cancel())});
     }
     public MealPlannerPage(long index,string owner):this(){SelectedDayIndex=index;account=owner;}
@@ -52,8 +51,10 @@ public partial class MealPlannerPage : ContentPage
             },true));
             card.Add(ShoppingUi.Button(AppLocalization.Text("+ Add a note"),async()=>{Check();var text=await DisplayPromptAsync("Meal note","e.g. Use yesterday's leftovers or pack lunch early",maxLength:500);if(!string.IsNullOrWhiteSpace(text)){Check();MealPlanning.Notes(day,current).Add(text.Trim());Render();}},true));body.Add(ShoppingUi.Card(card));
         }
-        body.Add(ShoppingUi.Button(AppLocalization.Text("Save day"),()=>Run(SaveDay)));
-        body.Add(ShoppingUi.Button(AppLocalization.Text("Cancel changes"),Cancel,true));Content=new ScrollView {Content=body};
+        var footer=new Grid{Padding=new Thickness(16,8),ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8};
+        footer.SetDynamicResource(VisualElement.BackgroundColorProperty,"ThemeSurface");
+        footer.Add(ShoppingUi.Button(AppLocalization.Text("Cancel changes"),Cancel,true),0);footer.Add(ShoppingUi.Button(AppLocalization.Text("Save day"),()=>Run(SaveDay)),1);
+        var layout=new Grid{RowDefinitions=new(){new(GridLength.Star),new(GridLength.Auto)}};layout.Add(new ScrollView{Content=body},0,0);layout.Add(footer,0,1);Content=layout;
     }
     private async Task SaveDay()
     {
