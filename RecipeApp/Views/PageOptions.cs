@@ -35,22 +35,24 @@ internal static class PageOptions
 #endif
             };
         }
+        private static bool Available(ToolbarItem item)=>item.AutomationId!="OnboardingSetup"||!OnboardingState.Completed||OnboardingState.PendingCode.Length>0;
         private static bool Enabled(ToolbarItem item)=>((IMenuItemController)item).IsEnabled&&(item.Command?.CanExecute(item.CommandParameter)??true);
-        private static void Activate(ToolbarItem item){if(Enabled(item))((IMenuItemController)item).Activate();}
+        private static void Activate(ToolbarItem item){if(Available(item)&&Enabled(item))((IMenuItemController)item).Activate();}
         private async Task Show()
         {
             if(showing)return;showing=true;
             try{
 #if ANDROID
+                var current=actions.Where(Available).Where(Enabled).ToList();if(current.Count==0)return;
                 var activity=Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;var anchor=FindAnchor(activity?.Window?.DecorView);
                 if(activity!=null&&anchor!=null){
                     popup=new AndroidX.AppCompat.Widget.PopupMenu(activity,anchor);
-                    for(var index=0;index<actions.Count;index++){using var title=new Java.Lang.String(actions[index].Text??"Action");popup.Menu.Add(0,index,index,title).SetEnabled(Enabled(actions[index]));}
-                    popup.MenuItemClick+=(_,e)=>{e.Handled=true;var index=e.Item.ItemId;if(index>=0&&index<actions.Count)Activate(actions[index]);};
+                    for(var index=0;index<current.Count;index++){using var title=new Java.Lang.String(current[index].Text??"Action");popup.Menu.Add(0,index,index,title).SetEnabled(true);}
+                    popup.MenuItemClick+=(_,e)=>{e.Handled=true;var index=e.Item.ItemId;if(index>=0&&index<current.Count)Activate(current[index]);};
                     popup.DismissEvent+=(_,_)=>{showing=false;popup=null;};popup.Show();return;
                 }
 #endif
-                var available=actions.Where(Enabled).ToList();if(available.Count==0)return;
+                var available=actions.Where(Available).Where(Enabled).ToList();if(available.Count==0)return;
                 var labels=available.Select(item=>item.Text??"Action").ToArray();
                 var choice=await page.DisplayActionSheet("Options","Cancel",null,labels);var selected=Array.IndexOf(labels,choice);
                 if(selected>=0)Activate(available[selected]);

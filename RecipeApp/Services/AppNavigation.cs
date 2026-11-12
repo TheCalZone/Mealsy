@@ -29,7 +29,7 @@ public static class AppNavigation
     public static Task Recipe(long id)=>Open(new RecipeDetailsPage{RecipeId=id.ToString()});
     public static async Task ShoppingList(string route="//ShoppingListPage"){
         if(route!="//ShoppingListPage"&&!route.StartsWith("//ShoppingListPage?",StringComparison.Ordinal))throw new InvalidOperationException("Invalid shopping destination.");
-        DismissKeyboard();await Shell.Current.GoToAsync(route);await Shell.Current.Navigation.PopToRootAsync(false);
+        DismissKeyboard();if(!await navigation.WaitAsync(0))return;try{await Shell.Current.GoToAsync(route);await Shell.Current.Navigation.PopToRootAsync(false);}finally{navigation.Release();}
     }
     public static Task Back()=>Shell.Current.Navigation.NavigationStack.Count>1?Shell.Current.Navigation.PopAsync():Root("Homepage");
 }

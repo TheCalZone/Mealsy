@@ -9,78 +9,8 @@ public partial class Homepage : ContentPage
     private bool showing;
     private readonly HashSet<string> expandedSections = new();
     private string sectionAccount;
-    private View Foldout(string key, string title, View details, string summary = null)
-    {
-        var open=expandedSections.Contains(key);
-        var panel = new ContentView { Content = details, IsVisible = open, IsClippedToBounds=true,
-            Padding=new Thickness(0,10,0,0), InputTransparent=!open };
-        var header = new Button { HorizontalOptions = LayoutOptions.Fill, MinimumHeightRequest = 52,
-            FontSize = 18, FontAttributes = FontAttributes.Bold, CornerRadius = 12,
-            Padding = new Thickness(12, 8), LineBreakMode = LineBreakMode.WordWrap };
-        header.SetDynamicResource(Button.BackgroundColorProperty, "ThemeSubtle");
-        header.SetDynamicResource(Button.TextColorProperty, "ThemeText");
-        void UpdateHeader()
-        {
-            header.Text = title + (open ? "  ▴" : "  ▾");
-            SemanticProperties.SetDescription(header, title + (open ? ", expanded" : ", collapsed"));
-            SemanticProperties.SetHint(header, open ? "Tap to hide details" : "Tap to show details");
-        }
-        void Settle()
-        {
-            panel.IsVisible=open;panel.HeightRequest=-1;panel.Opacity=1;panel.InputTransparent=!open;
-        }
-        UpdateHeader();
-        var animating=false;
-        header.Clicked += async (_, _) => {
-            if(animating)return;
-            animating=true;
-            try
-            {
-                var from=open?panel.Height:0;
-                open=!open;
-                if(open)expandedSections.Add(key);else expandedSections.Remove(key);
-                UpdateHeader();
-                var width=panel.Width>0?panel.Width:header.Width;
-                if(!DisclosureMotionEnabled()||width<=0){Settle();return;}
-                var natural=details.Measure(width,double.PositiveInfinity,MeasureFlags.IncludeMargins).Request.Height+panel.Padding.VerticalThickness;
-                if(!double.IsFinite(natural)||natural<=0){Settle();return;}
-                var to=open?natural:0;
-                if(!double.IsFinite(from)||from<0)from=natural;
-                panel.HeightRequest=from;panel.IsVisible=true;panel.InputTransparent=true;
-                var completion=new TaskCompletionSource<bool>();
-                new Animation(height=>panel.HeightRequest=height,from,to)
-                    .Commit(panel,"HomeDisclosure",16,180,Easing.CubicOut,(_,cancelled)=>completion.TrySetResult(!cancelled));
-                await completion.Task;
-                Settle();
-            }
-            catch{Settle();}
-            finally{Settle();animating=false;}
-        };
-        panel.Unloaded+=(_,_)=>panel.AbortAnimation("HomeDisclosure");
-        var section = new VerticalStackLayout { Spacing = 0 };
-        section.Add(header);
-        if (!string.IsNullOrWhiteSpace(summary))
-        {
-            var preview=ShoppingUi.Text(summary,14);preview.Margin=new Thickness(0,10,0,0);section.Add(preview);
-        }
-        section.Add(panel);
-        return ShoppingUi.Card(section);
-    }
-    private static bool DisclosureMotionEnabled()
-    {
-        try
-        {
-#if ANDROID
-            return global::Android.Provider.Settings.Global.GetFloat(global::Android.App.Application.Context.ContentResolver,"animator_duration_scale",1f)>0;
-#elif IOS
-            return !UIKit.UIAccessibility.IsReduceMotionEnabled;
-#else
-            return true;
-#endif
-        }
-        catch{return false;}
-    }
-    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Import recipe link"),null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
+    private View Foldout(string key,string title,View details,string summary=null)=>new DisclosureSection(title,summary,details,expandedSections.Contains(key),open=>{if(open)expandedSections.Add(key);else expandedSections.Remove(key);});
+    public Homepage(){InitializeComponent();Title="Mealsy";ShoppingUi.Theme(this);setupItem=new ToolbarItem(AppLocalization.Text("Get started"),null,async()=>await AppNavigation.Open(new OnboardingPage())){Order=ToolbarItemOrder.Secondary,AutomationId="OnboardingSetup"};if(!OnboardingState.Completed)ToolbarItems.Add(setupItem);ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Share Mealsy"),null,async()=>await OnboardingState.ShareApp()){Order=ToolbarItemOrder.Secondary});ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Settings"),null,async()=>await AppNavigation.Open(new SettingsPage())));ToolbarItems.Add(new ToolbarItem(AppLocalization.Text("Import recipe link"),null,async()=>await AppNavigation.Open(new RecipeWebsitePage())));}
     protected override async void OnAppearing()
     {
         if(OnboardingState.Completed)ToolbarItems.Remove(setupItem);
@@ -111,7 +41,7 @@ public partial class Homepage : ContentPage
         else body.Add(ShoppingUi.Text("Checking your household shopping list…",14));
         body.Add(ShoppingUi.Button("Open household shopping list",()=>OpenHouseholdFeature(false,quickAccount)));
         body.Add(ShoppingUi.Button("Open household meal plan",()=>OpenHouseholdFeature(true,quickAccount),true));
-        if(view.Household.PermissionsVersion>=1)body.Add(ShoppingUi.Button($"Household requests · {view.Household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage()),true));
+        if(view.Household.PermissionsVersion>=1&&view.Household.PendingRequests>0)body.Add(ShoppingUi.Button($"Household requests · {view.Household.PendingRequests} pending",()=>AppNavigation.Open(new HouseholdRequestsPage()),true));
         body.Add(ShoppingUi.Button("Refresh household",async()=>await HouseholdWarmup.Start(true),true));
         var dinner=meals?.FirstOrDefault(meal=>meal.Slot=="dinner");
         householdQuick.Content=Foldout("household",view.Household.Name+" · Household",body,
@@ -202,8 +132,8 @@ public partial class Homepage : ContentPage
         body.Add(Foldout("shopping",AppLocalization.Text("Your next shopping trip"),new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Button("Choose a shopping list…",async()=>{var target=await ShoppingListDestinations.ChooseAsync("Open which shopping list?");AccountSession.Check(account);if(target!=null)await AppNavigation.ShoppingList(target.OpenRoute(account));}),ShoppingUi.Button(AppLocalization.Text("Quick add an item"),async()=>{
             var target=await ShoppingListDestinations.ChooseAsync("Add to which shopping list?");AccountSession.Check(account);if(target==null)return;var name=await DisplayPromptAsync("Add to "+target.Name,"What do you need?",maxLength:200);if(string.IsNullOrWhiteSpace(name))return;AccountSession.Check(account);await ShoppingListDestinations.AddAsync(target,new[]{new Ingredient{Name=name.Trim()}});
         },true),ShoppingUi.Button("Show household shopping list",()=>OpenHouseholdFeature(false,account),true)}},summary));
-        var shortcuts=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},RowDefinitions=new(){new(GridLength.Auto),new(GridLength.Auto)},ColumnSpacing=8,RowSpacing=8};
-        shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("+ New recipe"),()=>AppNavigation.Open(new AddRecipePage())),0,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Plan a shop"),()=>AppNavigation.Open(new ShoppingListMakerPage()),true),1,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Recipe book"),()=>AppNavigation.Root("RecipePage"),true),0,1);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Weekly meals"),()=>AppNavigation.Root("MealPlanOverviewPage"),true),1,1);body.Insert(1,shortcuts);
+        var shortcuts=new Grid{ColumnDefinitions=new(){new(GridLength.Star),new(GridLength.Star)},ColumnSpacing=8,RowSpacing=8};
+        shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("+ New recipe"),()=>AppNavigation.Open(new AddRecipePage())),0,0);shortcuts.Add(ShoppingUi.Button(AppLocalization.Text("Plan a shop"),()=>AppNavigation.Open(new ShoppingListMakerPage()),true),1,0);body.Insert(1,shortcuts);
 
         var plan=await RecipeService.GetMealPlan(account);AccountSession.Check(account);var today=plan?.Days.FirstOrDefault(d=>plan.WeekStart.AddDays(d.MealDayIndex).Date==DateTime.Today);
         var meals=new VerticalStackLayout{Spacing=9};var planned=false;
@@ -218,9 +148,8 @@ public partial class Homepage : ContentPage
         if(ProductFeatures.SocialEnabled)body.Add(ShoppingUi.Card(new VerticalStackLayout{Spacing=10,Children={ShoppingUi.Text("Pull up a chair",23,true),ShoppingUi.Text("Discover what other Mealsy cooks are making, save a recipe, or share your own kitchen win.",14),ShoppingUi.Button("Visit the food community",()=>AppNavigation.Open(new FoodFeedPage()))}}));
         var tools=new VerticalStackLayout{Spacing=8};tools.Add(ShoppingUi.Button("Use what you have · Find a recipe",()=>AppNavigation.Open(new LeftoverRecipesPage()),true));if(ClientPlatform.HomeScreenWidgetAvailable)tools.Add(ShoppingUi.Button("Home-screen shopping widget",()=>AppNavigation.Open(new WidgetHelpPage()),true));
         body.Add(Foldout("tools","Kitchen tools",tools));
-        body.Add(Foldout("premium","Explore Premium",new VerticalStackLayout{Spacing=8,Children={
-            ShoppingUi.Text("More personal shopping lists, recipe-link imports, reusable meal plans and household sharing.",14),
-            ShoppingUi.Button("Plans & benefits",()=>AppNavigation.Open(new UpgradeFeaturesPage()),true)}}));
+        body.Add(ShoppingUi.Button("Premium · Shared shopping & meal plans",()=>AppNavigation.Open(new PlanPage()),true));
+
         if(account==null)body.Add(ShoppingUi.Button(AppLocalization.Text("Sign in or create an account"),()=>AppNavigation.Root("AccountPage"),true));body.Add(new RecipeApp.Controls.AdBanner());Content=new ScrollView{Content=body};
     }
 }

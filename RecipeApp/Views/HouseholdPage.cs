@@ -10,26 +10,7 @@ public class HouseholdPage : ContentPage
     private bool busy;
     private string account;
     private readonly HashSet<string> expanded = new();
-    private View Drawer(string key,string title,string subtitle,View details)
-    {
-        var panel=new ContentView {Content=details,IsVisible=expanded.Contains(key)};
-        Button button=null;
-        button=ShoppingUi.Button("",()=>{
-            panel.IsVisible=!panel.IsVisible;
-            if(panel.IsVisible)expanded.Add(key);else expanded.Remove(key);
-            Update();return Task.CompletedTask;
-        },true);
-        button.FontSize=17;button.FontAttributes=FontAttributes.Bold;
-        void Update()
-        {
-            button.Text=title+(panel.IsVisible?"  ▴":"  ▾");
-            SemanticProperties.SetDescription(button,title+", "+subtitle+(panel.IsVisible?", expanded":", collapsed"));
-            SemanticProperties.SetHint(button,panel.IsVisible?"Tap to hide options":"Tap to show options");
-        }
-        Update();
-        var body=new VerticalStackLayout {Spacing=8,Children={button,ShoppingUi.Text(subtitle,13),panel}};
-        return ShoppingUi.Card(body);
-    }
+    private View Drawer(string key,string title,string subtitle,View details)=>new DisclosureSection(title,subtitle,details,expanded.Contains(key),open=>{if(open)expanded.Add(key);else expanded.Remove(key);});
     private async Task Invite(HouseholdInfo household)
     {
         CheckAccount();
