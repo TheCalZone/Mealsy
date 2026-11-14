@@ -26,7 +26,7 @@ public partial class ShoppingListPage : ContentPage
     private DateTimeOffset retryAfter;
     private string householdId, sharedName, listAccount;
     private int generation;
-    private bool syncing, conflict, visible;
+    private bool syncing, conflict, visible, opening;
     private ShoppingSectionDrag sectionDrag;
     private ShoppingItemDrag itemDrag;
     private readonly System.Runtime.CompilerServices.ConditionalWeakTable<View,object> itemDragViews=new();
@@ -177,6 +177,7 @@ public partial class ShoppingListPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing(); visible = true;
+        opening=true;IsEnabled=false;Model.RefreshingList=true;Model.StatusText="Opening your saved lists…";
         Model.RefreshDisplayPreferences();
         FloatingAddButton.HorizontalOptions=AppSettings.Current.ShoppingAddButtonSide=="Left"?LayoutOptions.Start:LayoutOptions.End;
         WidgetShoppingStore.Changed -= WidgetChanged;
@@ -184,6 +185,12 @@ public partial class ShoppingListPage : ContentPage
         try
         {
             var uid = HouseholdService.UserId;
+            if(listAccount!=uid){openingDefault=true;availableHousehold=null;SelectPersonal();}
+            else if(OpenPersonal)SelectPersonal();
+            // Local personal data is available before any cloud/access request. Shared
+            // data still requires current-session membership confirmation below.
+            if(householdId==null)Model.Load(true,null);
+            Model.StatusText=uid==null?"Opening device list…":"Updating your lists…";
             var incoming=IngredientsJson;IngredientsJson=null;var cancelledIncoming=false;
             var requestedPersonal=PersonalListId;PersonalListId=null;
             var requestedHousehold=OpenHouseholdId;OpenHouseholdId=null;
@@ -195,8 +202,6 @@ public partial class ShoppingListPage : ContentPage
                 else requestedPersonal=destination.PersonalListId??"main";
             }
             var explicitPersonal=OpenPersonal||!string.IsNullOrEmpty(requestedPersonal);
-            if(listAccount!=uid){openingDefault=true;availableHousehold=null;}
-            if(listAccount!=uid||OpenPersonal)SelectPersonal();
             OpenPersonal=false;
             if(!string.IsNullOrEmpty(requestedHousehold))
             {
@@ -231,10 +236,12 @@ public partial class ShoppingListPage : ContentPage
             AccountSession.Check(uid);
             Model.Load(IsManualList||cancelledIncoming, incoming);
             _=QuickSuggestions.Refresh();
-            RenderListTabs();StartTimer();
+            Model.StatusText=uid==null?"Saved on this device":"Updating this list…";
+            RenderListTabs();opening=false;IsEnabled=true;StartTimer();
             await SyncAsync();
         }
-        catch (Exception) { SelectPersonal(); Model.Load(true, null); StartTimer(); Model.StatusText = "Personal list opened. Household access could not be confirmed."; RenderListTabs(); }
+        catch (Exception) { SelectPersonal(); Model.Load(true, null); StartTimer(); Model.StatusText = "Personal list opened. Household access could not be confirmed. Reopen Shopping to retry."; RenderListTabs(); }
+        finally {opening=false;IsEnabled=true;Model.RefreshingList=syncing;}
     }
     private void SelectPersonal()
     {
@@ -270,6 +277,7 @@ public partial class ShoppingListPage : ContentPage
         {
             var baseline = Preferences.Get(key + ".synced", "[]");
             var changes = ShoppingListSync.Changes(baseline, sent);
+            Model.RefreshingList=opening||manual||changes.Count>0||HouseholdService.Reads.CheckedAt(HouseholdReadPolicy.List(uid,householdId))==null;
             Model.StatusText = changes.Count > 0 ? AppLocalization.Text("Syncing changes…") : AppLocalization.Text("Checking for updates…");
             var response = await HouseholdService.CallAsync<ShoppingSyncResult>(new {
                 action = changes.Count > 0 ? "patch" : "read", scope = householdId == null ? "personal" : "household", householdId, changes
@@ -319,7 +327,7 @@ public partial class ShoppingListPage : ContentPage
         }
         finally
         {
-            syncing=false;
+            syncing=false;Model.RefreshingList=opening;
             if(failed&&generation==currentGeneration){retryScope=key;retryAfter=DateTimeOffset.UtcNow.AddMinutes(1);}
             else if(!failed)retryScope=null;
         }

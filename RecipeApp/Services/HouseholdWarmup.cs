@@ -4,7 +4,7 @@ namespace RecipeApp.Services;
 
 public record HouseholdQuickView(HouseholdInfo Household,string ShoppingJson,HouseholdWeek Week,DateTimeOffset ListChecked,DateTimeOffset MealsChecked);
 
-/// <summary>Read-only startup warming of the shared list and current week, never historical data.</summary>
+/// <summary>Read-only startup warming of the main personal list, shared list and current week, never historical data.</summary>
 public static class HouseholdWarmup
 {
     private record Saved(string Account,string Household,string Shopping,HouseholdWeek Week,DateTimeOffset ListChecked,DateTimeOffset MealsChecked);
@@ -54,6 +54,7 @@ public static class HouseholdWarmup
         async Task Run()
         {
             var generation=Interlocked.Read(ref revision);
+            var personal=LoadPersonal();
             try
             {
                 var household=await HouseholdService.StatusAsync(force);AccountSession.Check(uid);
@@ -95,7 +96,18 @@ public static class HouseholdWarmup
                 }
             }
             catch(Exception error){AppDiagnostics.Report(error,"household.preload","PRELOAD_FAILURE");}
-            finally{Notify();lock(gate)flights.Remove(uid);owner.TrySetResult(true);}
+            finally{await personal;Notify();lock(gate)flights.Remove(uid);owner.TrySetResult(true);}
+            async Task LoadPersonal()
+            {
+                try
+                {
+                    // Warm the same coalesced read cache used by Shopping. Never write device
+                    // state here: the screen rebases its current edits against this response.
+                    await HouseholdService.CallAsync<ShoppingSyncResult>(new{action="read",scope="personal"},force);
+                    AccountSession.Check(uid);
+                }
+                catch(Exception error){AppDiagnostics.Report(error,"shopping.preload.personal","PRELOAD_FAILURE");}
+            }
         }
     }
     public static void RecordList(string uid,string household,string items)
