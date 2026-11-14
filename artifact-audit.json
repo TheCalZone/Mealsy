@@ -1,0 +1,88 @@
+{
+  "target_sdk": 36,
+  "required_target_sdk": 36,
+  "target_requirement_met": true,
+  "minimum_sdk": 24,
+  "required_minimum_sdk": 24,
+  "minimum_requirement_met": true,
+  "advertising_id_permission": false,
+  "backup_disabled": true,
+  "debuggable": false,
+  "native_64bit_library_count": 12,
+  "native_16kb_failures": [],
+  "native_libraries": [
+    {
+      "library": "lib/arm64-v8a/libassemblies.arm64-v8a.blob.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libarc.bin.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libxamarin-app.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.Globalization.Native.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.IO.Compression.Native.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.Native.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libSystem.Security.Cryptography.Native.Android.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libmono-component-marshal-ilgen.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libmonosgen-2.0.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libmonodroid.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libe_sqlite3.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    },
+    {
+      "library": "lib/arm64-v8a/libdatastore_shared_counter.so",
+      "minimum_load_alignment": 16384,
+      "elf_16kb": true,
+      "zip_16kb": true
+    }
+  ],
+  "limitations": "ELF/ZIP inspection does not replace 16 KB device and final Play-generated APK checks. Signing and store configuration require separate verification."
+}
