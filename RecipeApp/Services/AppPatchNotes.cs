@@ -7,6 +7,10 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,11,14), "Paste checks and remembered shopping sections", new[] {
+            "Pasting flags matching item names, including repeats within the pasted text and checked items. Keep separate rows, skip duplicates or cancel; amounts are not silently combined by Paste. Undo restores the full paste.",
+            "Your section layout is remembered across lists for this account on this device, including custom sections with no items. Existing saved list layouts are picked up automatically when opened. Other household members keep their own layout."
+        }),
         new(new(2026,11,14), "Shopping ready sooner", new[] {
             "Main personal and household shopping lists start preloading at app launch, alongside local recipe loading. Current household meals still preload too.",
             "Shopping shows saved personal items while checking access, with a visible spinner while opening or refreshing. Editing is available as soon as the selected list is ready, while sync continues.",

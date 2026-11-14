@@ -155,10 +155,28 @@ public class ShoppingListDocument
         return result;
     }
 
-    public void AppendText(string text)
+    // Names are compared after quantity/checkbox parsing. Different quantities,
+    // notes or categories still deserve a warning, not an automatic combination.
+    public List<string> PasteDuplicates(string text)
+    {
+        var seen=items.Select(item=>ShoppingQuantity.Identity(item.Name)).ToHashSet();
+        var duplicates=new Dictionary<string,string>();
+        foreach(var item in ParseText(text))
+        {
+            var key=ShoppingQuantity.Identity(item.Name);
+            if(!seen.Add(key))duplicates.TryAdd(key,item.Name);
+        }
+        return duplicates.Values.ToList();
+    }
+    public void AppendText(string text,bool? keepDuplicates=null)
     {
         var additions = ParseText(text);
-        foreach (var item in additions) MergeItem(items,item);
+        var seen=items.Select(item=>ShoppingQuantity.Identity(item.Name)).ToHashSet();
+        foreach (var item in additions)
+        {
+            if(keepDuplicates==null)MergeItem(items,item);
+            else if(keepDuplicates==true||seen.Add(ShoppingQuantity.Identity(item.Name)))items.Add(item);
+        }
         Commit();
     }
 
