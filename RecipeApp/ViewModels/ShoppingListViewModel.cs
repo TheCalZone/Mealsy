@@ -29,13 +29,22 @@ public class ShoppingListViewModel : CustomViewModelBase
         Preferences.Set(ItemOrderKey,JsonSerializer.Serialize(order));RefreshGroups();StatusText="Item order saved on this device";
     }
     private string SectionOrderKey=>StorageKey+".sectionOrder";
-    public List<string> SectionNames()=>ShoppingSectionOrder.Sort(Categories.Concat(document.Items.Select(i=>i.Category)),ShoppingSectionOrder.Read(Preferences.Get(SectionOrderKey,"[]")));
+    private string PreferredSectionOrderKey=>ShoppingListStore.StateKey+".preferredSectionOrder";
+    private List<string> SavedSectionOrder()
+    {
+        if(Preferences.ContainsKey(PreferredSectionOrderKey))return ShoppingSectionOrder.Read(Preferences.Get(PreferredSectionOrderKey,"[]"));
+        var previous=ShoppingSectionOrder.Read(Preferences.Get(SectionOrderKey,"[]"));
+        if(previous.Count>0)Preferences.Set(PreferredSectionOrderKey,JsonSerializer.Serialize(previous));
+        return previous;
+    }
+    public List<string> SectionNames()=>ShoppingSectionOrder.Remember(Categories.Concat(document.Items.Select(i=>i.Category)),SavedSectionOrder());
     public void SaveSectionOrder(IEnumerable<string> order)
     {
-        Preferences.Set(SectionOrderKey,JsonSerializer.Serialize(ShoppingSectionOrder.Sort(SectionNames(),order)));
-        RefreshGroups();StatusText="Section order saved for this list on this device";
+        var remembered=ShoppingSectionOrder.Remember(SectionNames().Concat(SavedSectionOrder()),order);
+        Preferences.Set(PreferredSectionOrderKey,JsonSerializer.Serialize(remembered));
+        RefreshGroups();StatusText="Section order remembered across your lists on this device";
     }
-    public void ResetSectionOrder(){Preferences.Remove(SectionOrderKey);RefreshGroups();StatusText="Default section order restored";}
+    public void ResetSectionOrder(){Preferences.Set(PreferredSectionOrderKey,"[]");Preferences.Remove(SectionOrderKey);RefreshGroups();StatusText="Default section order restored across your lists";}
     private bool householdList;
     public bool HouseholdList {get=>householdList;set=>SetProperty(ref householdList,value);}
     private bool restrictedHousehold;
@@ -324,13 +333,26 @@ public class ShoppingListViewModel : CustomViewModelBase
     }
     private async Task PasteAsync()
     {
-        var text = await Clipboard.Default.GetTextAsync();
+        var account=AccountSession.UserId;var context=StorageKey;
+        void Check(){AccountSession.Check(account);if(StorageKey!=context||IsEditing)throw new InvalidOperationException("Your list changed. Paste again into the list you want.");}
+        var text = await Clipboard.Default.GetTextAsync();Check();
         if (string.IsNullOrWhiteSpace(text)) { await Shell.Current.DisplayAlert("Nothing to paste", "Copy a list with one item per line first.", "OK"); return; }
-        var before = Total;
-        document.AppendText(text);
+        var duplicates=document.PasteDuplicates(text);var keepBoth=true;
+        if(duplicates.Count>0)
+        {
+            var preview=string.Join(", ",duplicates.Take(3).Select(name=>name.Length>28?name[..28]+"…":name));
+            if(duplicates.Count>3)preview+=$" (+{duplicates.Count-3} more)";
+            var choice=await Shell.Current.DisplayActionSheet("Possible duplicates: "+preview+". Checked items and repeated pasted lines count too.","Cancel",null,"Keep both as separate items","Skip duplicates");
+            Check();
+            if(choice!="Keep both as separate items"&&choice!="Skip duplicates")return;
+            keepBoth=choice=="Keep both as separate items";
+        }
+        Check();var before = Total;
+        document.AppendText(text,keepBoth);
         SearchText = "";
-        Changed($"List updated from clipboard · {Total - before} new rows · Compatible amounts combined");
+        Changed($"Pasted {Total - before} new rows"+(duplicates.Count>0?(keepBoth?" · Duplicates kept separately":" · Duplicates skipped"):"")+" · Undo available");
     }
+
     private async Task ShareAsync()
     {
         var choice = await Shell.Current.DisplayActionSheet("Send your shopping list", "Cancel", null, "Share remaining", "Share full list", "Copy remaining", "Copy full list");

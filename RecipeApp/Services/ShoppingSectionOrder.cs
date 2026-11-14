@@ -17,6 +17,9 @@ public static class ShoppingSectionOrder
         return names.OrderBy(name=>{var index=order.FindIndex(n=>n.Equals(name,StringComparison.OrdinalIgnoreCase));return index<0?int.MaxValue:index;})
             .ThenBy(name=>name.Equals("Other",StringComparison.OrdinalIgnoreCase)).ThenBy(name=>name,StringComparer.OrdinalIgnoreCase).ToList();
     }
+    // Retain absent custom sections so clearing a list does not forget their position.
+    public static List<string> Remember(IEnumerable<string> available,IEnumerable<string> saved)
+        =>Sort(Names(saved).Concat(Names(available)),saved);
     public static List<string> Drop(IEnumerable<string> order,string section,string target,bool after)
     {
         var names=Names(order);var source=names.FindIndex(n=>n.Equals(section,StringComparison.OrdinalIgnoreCase));var destination=names.FindIndex(n=>n.Equals(target,StringComparison.OrdinalIgnoreCase));

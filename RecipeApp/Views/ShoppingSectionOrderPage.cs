@@ -19,7 +19,7 @@ public class ShoppingSectionOrderPage:ContentPage
     private void Render()
     {
         drag.Cancel();body.Clear();body.Add(ShoppingUi.Text("Your route around the shop",27,true));
-        body.Add(ShoppingUi.Text("Touch the move icon and drag the section above or below another section. A floating card and a highlighted gap show where it will land. Hold near the top or bottom edge to scroll slowly. Changes save immediately for this list on this device; other household members keep their own layout.",14));
+        body.Add(ShoppingUi.Text("Touch the move icon and drag the section above or below another section. A floating card and a highlighted gap show where it will land. Hold near the top or bottom edge to scroll slowly. Changes are remembered across your lists on this device; other household members keep their own layout.",14));
         body.Add(ShoppingUi.Text("Empty sections are included here so they're ready when you next add an item. Search and Hide collected don't change this order.",13));
         var order=model.SectionNames();
         for(var index=0;index<order.Count;index++)
@@ -34,7 +34,7 @@ public class ShoppingSectionOrderPage:ContentPage
             var down=ShoppingUi.Button("↓",()=>Move(section,1),true);down.WidthRequest=52;down.IsEnabled=index<order.Count-1;SemanticProperties.SetDescription(down,"Move "+section+" down");
             if(showButtons){row.Add(up,2);row.Add(down,3);}var card=ShoppingUi.Card(row);drag.Attach(card,handle,()=>section);body.Add(card);
         }
-        body.Add(ShoppingUi.Button("Restore default order…",async()=>{Check();if(!await DisplayAlert("Restore section order?","Put sections back in alphabetical order, with Other last? Your items and checkmarks are kept.","Restore","Keep my order"))return;Check();model.ResetSectionOrder();Render();},true));
+        body.Add(ShoppingUi.Button("Restore default order…",async()=>{Check();if(!await DisplayAlert("Restore section order?","Restore alphabetical section order across your lists on this device, with Other last? Your items and checkmarks are kept.","Restore","Keep my order"))return;Check();model.ResetSectionOrder();Render();},true));
         body.Add(ShoppingUi.Button("Done",AppNavigation.Back));
     }
     protected override void OnDisappearing(){drag.Cancel();base.OnDisappearing();}

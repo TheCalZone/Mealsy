@@ -47,3 +47,17 @@ public class ShoppingSectionDropTests
         Assert.Equal(new[]{"Bakery","Dairy","Meat","Produce","Other"},names);
     }
 }
+
+public class ShoppingSectionRemembranceTests
+{
+    [Fact]
+    public void EmptyCustomSectionsKeepTheirPositionUntilTheyReturn()
+    {
+        var saved=new[]{"Meat","Pet food","Produce","Dairy","Other"};
+        var remembered=ShoppingSectionOrder.Remember(new[]{"Dairy","Meat","Other"},saved);
+        Assert.Equal(saved,remembered);
+        var afterRestart=ShoppingSectionOrder.Read(System.Text.Json.JsonSerializer.Serialize(remembered));
+        Assert.Equal(new[]{"Meat","Pet food","Dairy"},ShoppingSectionOrder.Sort(new[]{"Dairy","Pet food","Meat"},afterRestart));
+        Assert.Equal(new[]{"Meat","Pet food","Produce","Dairy","Other","Bakery"},ShoppingSectionOrder.Remember(new[]{"Bakery","Dairy"},afterRestart));
+    }
+}
