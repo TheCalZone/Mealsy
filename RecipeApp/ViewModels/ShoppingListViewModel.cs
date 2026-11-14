@@ -107,6 +107,8 @@ public class ShoppingListViewModel : CustomViewModelBase
     public string QuickQuantity { get => quickQuantity; set => SetProperty(ref quickQuantity, value); }
     public string QuickNote { get => quickNote; set => SetProperty(ref quickNote, value); }
     public string SelectedCategory { get => selectedCategory; set => SetProperty(ref selectedCategory, value); }
+    private bool refreshingList;
+    public bool RefreshingList {get=>refreshingList;set{if(SetProperty(ref refreshingList,value)){OnPropertyChanged(nameof(EmptyTitle));OnPropertyChanged(nameof(EmptyMessage));}}}
     public string StatusText { get => statusText; set => SetProperty(ref statusText, value); }
     public int Total => document.Items.Count;
     public int Collected => document.Items.Count(i => i.InBasket);
@@ -114,8 +116,8 @@ public class ShoppingListViewModel : CustomViewModelBase
     public double Progress => Total == 0 ? 0 : (double)Collected / Total;
     public string ProgressText => Total == 0 ? AppLocalization.Text("Ready for your next shop") : AppLocalization.Format("{0} of {1} collected",Collected,Total);
     public string RemainingText => Remaining == 1 ? AppLocalization.Text("1 item left") : AppLocalization.Format("{0} items left",Remaining);
-    public string EmptyTitle => Total == 0 ? AppLocalization.Text("A fresh start") : Remaining == 0 && HideCollected ? AppLocalization.Text("All done!") : AppLocalization.Text("No matching items");
-    public string EmptyMessage => Total == 0 ? AppLocalization.Text("Add your first item above, paste a list, or send ingredients from a recipe.")
+    public string EmptyTitle => Total == 0 && RefreshingList ? "Loading your list…" : Total == 0 ? AppLocalization.Text("A fresh start") : Remaining == 0 && HideCollected ? AppLocalization.Text("All done!") : AppLocalization.Text("No matching items");
+    public string EmptyMessage => Total == 0 && RefreshingList ? "Checking for saved items. Your device changes are kept." : Total == 0 ? AppLocalization.Text("Add your first item above, paste a list, or send ingredients from a recipe.")
         : Remaining == 0 && HideCollected ? "Everything is collected. Turn off Hide collected to review your list."
         : "Try a different search or turn off Hide collected.";
     public bool IsEditing { get => isEditing; set { if (SetProperty(ref isEditing, value)) NotifySummary(); } }

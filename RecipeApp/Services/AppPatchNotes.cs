@@ -7,6 +7,11 @@ public static class AppPatchNotes
 {
     public static IReadOnlyList<AppPatchNote> Entries { get; } = new AppPatchNote[]
     {
+        new(new(2026,11,14), "Shopping ready sooner", new[] {
+            "Main personal and household shopping lists start preloading at app launch, alongside local recipe loading. Current household meals still preload too.",
+            "Shopping shows saved personal items while checking access, with a visible spinner while opening or refreshing. Editing is available as soon as the selected list is ready, while sync continues.",
+            "Preloading shares the existing one-minute read cache and never overwrites pending device edits. No extra background polling or Firebase deployment is needed."
+        }),
         new(new(2026,11,12), "Calmer screens and clearer actions", new[] {
             "Account, Settings, household controls and shopping tools group secondary options into animated drawers that respect reduced motion.",
             "Recipe filters and optional editor details stay out of the way until needed. Ingredient, step and meal actions use compact options menus.",

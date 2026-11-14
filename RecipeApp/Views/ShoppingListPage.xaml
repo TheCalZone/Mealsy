@@ -137,11 +137,12 @@
             <CollectionView.Footer><Grid HeightRequest="80" InputTransparent="True" /></CollectionView.Footer>
         </CollectionView>
 
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <Label Text="{Binding StatusText}" FontSize="{DynamicResource ThemeFont11}" VerticalOptions="Center" MaxLines="2" LineBreakMode="TailTruncation" TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="{Binding StatusText}" SemanticProperties.Hint="Tap for full save or sync details">
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <ActivityIndicator IsRunning="{Binding RefreshingList}" IsVisible="{Binding RefreshingList}" Color="{DynamicResource ThemeAccent}" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" SemanticProperties.Description="Updating shopping list" />
+            <Label Grid.Column="1" Text="{Binding StatusText}" FontSize="{DynamicResource ThemeFont11}" VerticalOptions="Center" MaxLines="2" LineBreakMode="TailTruncation" TextColor="{DynamicResource ThemeText}" SemanticProperties.Description="{Binding StatusText}" SemanticProperties.Hint="Tap for full save or sync details">
                 <Label.GestureRecognizers><TapGestureRecognizer Tapped="SaveStatus_Tapped" /></Label.GestureRecognizers>
             </Label>
-            <Button Grid.Column="1" Text="{loc:Translate 'Undo'}" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
+            <Button Grid.Column="2" Text="{loc:Translate 'Undo'}" Command="{Binding UndoCommand}" Style="{StaticResource QuietButton}" />
         </Grid>
 
         <Border x:Name="ShoppingTools" Grid.RowSpan="2" ZIndex="5" VerticalOptions="End" Margin="0,0,0,80" IsVisible="False" Padding="0" Stroke="{DynamicResource ThemeAccent}" StrokeThickness="3" StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource ThemeSurface}">
