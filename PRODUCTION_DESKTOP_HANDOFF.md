@@ -1,5 +1,7 @@
 # Mealsy production handoff — desktop
 
+**Start here, 14 November 2026:** [LOCAL_DESKTOP_HANDOFF.md](LOCAL_DESKTOP_HANDOFF.md) records current Android/iOS branches, v10 test APK, latest shopping/UI changes, validation limits and desktop continuation steps. Preserve local Firebase edits before updating. Older version/toolchain/blocker claims below may be historical.
+
 **23 October update:** The Android .NET/MAUI 10 migration and Firebase rollout
 are now implemented. Refer to [the current release record](PLAY_RELEASE_2026_10_23.md)
 and [backend evidence](FIREBASE_ROLLOUT_2026_10_23.md). Historical instructions below
