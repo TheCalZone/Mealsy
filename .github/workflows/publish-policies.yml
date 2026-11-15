@@ -6,6 +6,7 @@ on:
     paths:
       - firebase/desktop/privacy/**
       - firebase/desktop/delete-account/**
+      - firebase/desktop/terms/**
       - scripts/build-public-policies.py
       - .github/workflows/publish-policies.yml
 permissions:

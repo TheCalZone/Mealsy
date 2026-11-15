@@ -12,8 +12,8 @@ class Links(HTMLParser):
     def handle_starttag(self,tag,attrs):
         for key,value in attrs:
             if key in ('href','src'):self.links.append(value)
-for page in ('privacy','delete-account'):
-    content=(root/'firebase/desktop'/page/'index.html').read_text()
+for page,title in {'privacy':'Mealsy privacy notice','delete-account':'Delete your Mealsy account','terms':'Mealsy Terms of Service'}.items():
+    content=(root/'firebase/desktop'/page/'index.html').read_text(encoding='utf-8')
     assert 'Callum@brightbark.co.uk' in content and 'Pre-release' not in content
     links=Links();links.feed(content)
     for base in ('https://example.test/','https://thecalzone.github.io/Mealsy/'):
@@ -32,6 +32,6 @@ for page in ('privacy','delete-account'):
             assert response.status==200
             live=response.read(200000).decode()
             assert '<html' in live.lower() and 'Callum@brightbark.co.uk' in live
-            assert ('Mealsy privacy notice' if page=='privacy' else 'Delete your Mealsy account') in live
+            assert title in live
         print('Verified anonymous public HTML:',url)
 print('Policy files and navigation pass. Live hosting checked.' if args.live else 'Policy files and navigation pass; live hosting not verified. Use --live after enabling Pages.')
